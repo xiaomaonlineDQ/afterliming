@@ -101,6 +101,13 @@ F存活：存活到3/6/9/12回合时，该回合黎明抽1张
 
 ## V2.0阶段规划（2026-07-05启动）
 
+### GitHub Pages 部署（2026-07-06）
+- 仓库：https://github.com/xiaomaonlineDQ/-
+- 网站：https://xiaomaonlineDQ.github.io/-/
+- 文件夹：docs/（GitHub Pages 选 master / /docs）
+- 更新方式：本地改文件 → 双击 update.bat → 1-2分钟生效
+- 三个本地脚本（已gitignored，不会被推送）：setup-git.bat / first-push.bat / update.bat
+
 ### 新增Skill
 - `黎明之后_V2.0开发`：覆盖V2.0+版本的全部新增产物开发（AI市长指令/网站/流程图/卡牌数据/V2.0设计稿）
 - 与`黎明之后项目管理`互补：前者管V1.x文档体系，后者管V2.0+新增产出

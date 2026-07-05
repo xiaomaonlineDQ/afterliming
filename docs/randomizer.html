@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>随机工具箱 — 黎明之后</title>
+<meta name="description" content="《黎明之后》随机工具箱：随机抽取卡牌、角色、规则，方便快速查阅和灵感激发。">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="characters.html">角色</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="flowcharts.html">流程图</a></li>
+      <li><a href="randomizer.html">工具箱</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container page-section">
+  <h1 style="margin-bottom:var(--space-sm);">随机工具箱</h1>
+  <p style="color:var(--text-secondary);margin-bottom:var(--space-xl);">
+    随机抽取卡牌、角色、规则——灵感激发与快速查阅。
+  </p>
+
+  <!-- Random Type Selector -->
+  <div class="tabs" id="randomTabs">
+    <button class="tab-btn active" data-type="any">随机一张</button>
+    <button class="tab-btn" data-type="whispers">怪谈卡</button>
+    <button class="tab-btn" data-type="countermeasures">反击卡</button>
+    <button class="tab-btn" data-type="rules">规则卡</button>
+    <button class="tab-btn" data-type="characters">角色卡</button>
+    <button class="tab-btn" data-type="personal_goals">个人目的卡</button>
+  </div>
+
+  <!-- Random Result -->
+  <div class="randomizer-result" id="randomResult" style="margin:var(--space-xl) 0;">
+    <div style="color:var(--text-muted);">点击下方按钮随机抽取</div>
+  </div>
+
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <button class="btn btn-primary" id="randomBtn" style="min-width:160px;">🎲 随机抽取</button>
+    <button class="btn btn-secondary" id="randomBatchBtn">抽取5张</button>
+    <a class="btn btn-ghost" id="detailLink" style="display:none;" href="#">查看详情 →</a>
+  </div>
+
+  <!-- Batch Results -->
+  <div id="batchResults" style="margin-top:var(--space-xl);"></div>
+
+  <!-- Quick Stats -->
+  <div style="margin-top:var(--space-3xl);">
+    <h3 style="margin-bottom:var(--space-lg);text-align:center;">快速统计</h3>
+    <div class="stat-grid" style="max-width:800px;margin:0 auto;">
+      <div class="stat-card" style="cursor:pointer;" onclick="quickRandom('whispers')">
+        <div class="stat-number whisper">36</div>
+        <div class="stat-label">怪谈卡</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;" onclick="quickRandom('countermeasures')">
+        <div class="stat-number countermeasure">30</div>
+        <div class="stat-label">反击卡种类</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;" onclick="quickRandom('rules')">
+        <div class="stat-number rule">52</div>
+        <div class="stat-label">规则卡</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;" onclick="quickRandom('characters')">
+        <div class="stat-number character">12</div>
+        <div class="stat-label">角色卡</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;" onclick="quickRandom('personal_goals')">
+        <div class="stat-number goal">24</div>
+        <div class="stat-label">个人目的卡</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+let currentType = 'any';
+
+// Tab switching
+document.getElementById('randomTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('#randomTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentType = btn.dataset.type;
+});
+
+// Get random card from a specific type or any
+function getRandomCard(type) {
+  let pool = [];
+
+  if (type === 'any') {
+    for (const [t, cards] of Object.entries(CARD_DB)) {
+      cards.forEach(c => pool.push({ ...c, _type: t }));
+    }
+  } else if (CARD_DB[type]) {
+    pool = CARD_DB[type].map(c => ({ ...c, _type: type }));
+  }
+
+  if (pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Get N random unique cards
+function getRandomCards(type, n) {
+  let pool = [];
+
+  if (type === 'any') {
+    for (const [t, cards] of Object.entries(CARD_DB)) {
+      cards.forEach(c => pool.push({ ...c, _type: t }));
+    }
+  } else if (CARD_DB[type]) {
+    pool = CARD_DB[type].map(c => ({ ...c, _type: type }));
+  }
+
+  const result = [];
+  const used = new Set();
+  const actual = Math.min(n, pool.length);
+
+  while (result.length < actual) {
+    const card = pool[Math.floor(Math.random() * pool.length)];
+    if (!used.has(card.id)) {
+      used.add(card.id);
+      result.push(card);
+    }
+  }
+
+  return result;
+}
+
+// Render single result
+function renderResult(card) {
+  const typeClass = TYPE_CSS_CLASS[card._type] || '';
+  const typeName = TYPE_MAP[card._type] || '';
+  const level = card.level || card.difficulty || card.category || '';
+  const levelInfo = LEVEL_MAP[level] || { cn: level, css: '' };
+  const effect = card.effect || card.rule_text || card.skill_effect || card.goal_text || '';
+
+  const result = document.getElementById('randomResult');
+  result.innerHTML = `
+    <div class="card-name" style="color:var(--color-${typeClass});">${card.name}</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;justify-content:center;">
+      <span class="card-badge ${typeClass}">${typeName}</span>
+      ${levelInfo.cn ? `<span class="badge-rarity ${levelInfo.css}">${levelInfo.cn}</span>` : ''}
+    </div>
+    <div class="card-effect">${effect}</div>
+  `;
+
+  // Update detail link
+  const detailLink = document.getElementById('detailLink');
+  detailLink.href = `card-detail.html?id=${card.id}&type=${card._type}`;
+  detailLink.style.display = 'inline-flex';
+}
+
+// Quick random from stats
+function quickRandom(type) {
+  document.querySelectorAll('#randomTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  const tab = document.querySelector(`#randomTabs .tab-btn[data-type="${type}"]`);
+  if (tab) tab.classList.add('active');
+  currentType = type;
+
+  const card = getRandomCard(type);
+  if (card) renderResult(card);
+}
+
+// Single random
+document.getElementById('randomBtn').addEventListener('click', () => {
+  const card = getRandomCard(currentType);
+  if (card) renderResult(card);
+  document.getElementById('batchResults').innerHTML = '';
+});
+
+// Batch random
+document.getElementById('randomBatchBtn').addEventListener('click', () => {
+  const cards = getRandomCards(currentType, 5);
+  const batchDiv = document.getElementById('batchResults');
+
+  batchDiv.innerHTML = `
+    <h3 style="margin-bottom:var(--space-lg);text-align:center;">随机5张</h3>
+    <div class="card-grid" style="max-width:1000px;margin:0 auto;">
+      ${cards.map(card => {
+        const typeClass = TYPE_CSS_CLASS[card._type] || '';
+        const typeName = TYPE_MAP[card._type] || '';
+        const level = card.level || card.difficulty || card.category || '';
+        const levelInfo = LEVEL_MAP[level] || { cn: level, css: '' };
+        const effect = (card.effect || card.rule_text || card.skill_effect || card.goal_text || '').substring(0, 100);
+
+        return `
+          <a href="card-detail.html?id=${card.id}&type=${card._type}" style="text-decoration:none;color:inherit;">
+            <div class="card" style="border-top:3px solid var(--color-${typeClass});">
+              <div class="card-header">
+                <span class="card-title">${card.name}</span>
+              </div>
+              <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+                <span class="card-badge ${typeClass}">${typeName}</span>
+                ${levelInfo.cn ? `<span class="badge-rarity ${levelInfo.css}">${levelInfo.cn}</span>` : ''}
+              </div>
+              <div style="color:var(--text-muted);font-size:0.85rem;line-height:1.5;">${effect}${effect.length >= 100 ? '...' : ''}</div>
+            </div>
+          </a>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  // Also show first card in main result
+  if (cards.length > 0) renderResult(cards[0]);
+});
+
+// Keyboard shortcut
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ' && !e.target.closest('input,textarea')) {
+    e.preventDefault();
+    const card = getRandomCard(currentType);
+    if (card) renderResult(card);
+  }
+});
+</script>
+</body>
+</html>

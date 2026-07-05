@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流程图 — 黎明之后</title>
+<meta name="description" content="《黎明之后》全部流程图：游戏全貌、回合流程、卡牌体系、宣言质询、双维属性、地图、鬼体系、AI市长。">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.mermaid-container {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  overflow-x: auto;
+}
+.mermaid-container svg { max-width: 100%; height: auto; }
+#mermaidTarget { min-height: 400px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="characters.html">角色</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="flowcharts.html">流程图</a></li>
+      <li><a href="randomizer.html">工具箱</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container page-section">
+  <h1 style="margin-bottom:var(--space-sm);">流程图集</h1>
+  <p style="color:var(--text-secondary);margin-bottom:var(--space-xl);">
+    10张流程图，覆盖游戏全部核心机制。点击标签切换图表，支持缩放查看。
+  </p>
+
+  <!-- Flowchart selector tabs -->
+  <div class="tabs" id="flowTabs">
+    <button class="tab-btn active" data-chart="总览">总览：游戏全貌</button>
+    <button class="tab-btn" data-chart="回合流程">回合流程</button>
+    <button class="tab-btn" data-chart="怪谈卡">怪谈卡体系</button>
+    <button class="tab-btn" data-chart="反击卡">反击卡体系</button>
+    <button class="tab-btn" data-chart="宣言质询">宣言质询</button>
+    <button class="tab-btn" data-chart="双维属性">双维属性</button>
+    <button class="tab-btn" data-chart="地图">地图系统</button>
+    <button class="tab-btn" data-chart="鬼体系">鬼体系</button>
+    <button class="tab-btn" data-chart="AI市长">AI市长</button>
+    <button class="tab-btn" data-chart="卡牌总览">卡牌总览</button>
+  </div>
+
+  <div style="text-align:center;margin-bottom:var(--space-lg);">
+    <button class="btn btn-ghost btn-sm" id="zoomOut" title="缩小">🔍−</button>
+    <button class="btn btn-ghost btn-sm" id="zoomReset" title="重置">↺</button>
+    <button class="btn btn-ghost btn-sm" id="zoomIn" title="放大">🔍+</button>
+  </div>
+
+  <div class="mermaid-container">
+    <div id="mermaidTarget"></div>
+  </div>
+
+  <!-- Cross-reference table -->
+  <div style="margin-top:var(--space-2xl);">
+    <h3 style="margin-bottom:var(--space-md);">流程图索引</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:40px;">#</th><th>名称</th><th>内容</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>0</td><td>总览</td><td>游戏全貌：第0天→12回合→终局 / 七大核心机制体系</td></tr>
+          <tr><td>1</td><td>回合流程</td><td>第0天11步详解 + 6阶段标准回合循环（黎明→叙事→物资→自由→宣言→结算）</td></tr>
+          <tr><td>2</td><td>怪谈卡体系</td><td>四等级（流言/异常/怪诞/灾厄）+ 激活条件 + 发动流程</td></tr>
+          <tr><td>3</td><td>反击卡体系</td><td>四等级（基础/觉醒/极致/真理）+ 6条获取路径 + 4区域管理</td></tr>
+          <tr><td>4</td><td>宣言质询</td><td>宣言抹除规则 + 即时质询 + 举报公开规则 + 四分区规则栏</td></tr>
+          <tr><td>5</td><td>双维属性</td><td>健康值/理智值 + 生死判定 + 死亡/化鬼/抹除三种结局</td></tr>
+          <tr><td>6</td><td>地图系统</td><td>A市12地点 + 初始选择 + 每日探索 + 撞鬼机制 + 特殊规则</td></tr>
+          <tr><td>7</td><td>鬼体系</td><td>煞鬼/恶鬼双轨：生成→理智→规则→代价→继承</td></tr>
+          <tr><td>8</td><td>AI市长</td><td>6步工作流 + 叙事技法（四种线索嵌入）+ 卡牌操作原则</td></tr>
+          <tr><td>9</td><td>卡牌总览</td><td>全部卡牌类型关系网络：5类型 + 物资卡的层级关系</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+  </div>
+</footer>
+
+<script src="js/flowcharts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+// Initialize Mermaid
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  themeVariables: {
+    primaryColor: '#1a1a2e',
+    primaryTextColor: '#e8e6f0',
+    primaryBorderColor: '#e94560',
+    lineColor: '#7b68ee',
+    secondaryColor: '#16213e',
+    tertiaryColor: '#0f3460',
+    fontSize: '14px'
+  },
+  flowchart: { useMaxWidth: true, htmlLabels: true }
+});
+
+// Current chart
+let currentChart = '总览';
+let zoomLevel = 1;
+
+async function renderChart(name) {
+  const target = document.getElementById('mermaidTarget');
+  const code = FLOWCHARTS[name];
+
+  if (!code) {
+    target.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:80px;">流程图未找到: ' + name + '</p>';
+    return;
+  }
+
+  target.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:80px;">渲染中...</p>';
+
+  try {
+    const { svg } = await mermaid.render('mermaidSvg', code);
+    target.innerHTML = svg;
+    applyZoom();
+  } catch (err) {
+    target.innerHTML = '<p style="color:var(--danger);text-align:center;padding:40px;">渲染失败: ' + err.message + '</p>';
+  }
+}
+
+function applyZoom() {
+  const svg = document.querySelector('#mermaidTarget svg');
+  if (svg) {
+    svg.style.transform = `scale(${zoomLevel})`;
+    svg.style.transformOrigin = 'top left';
+    svg.style.transition = 'transform 0.2s ease';
+  }
+}
+
+// Tab switching
+document.getElementById('flowTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+
+  document.querySelectorAll('#flowTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  currentChart = btn.dataset.chart;
+  zoomLevel = 1;
+  renderChart(currentChart);
+});
+
+// Zoom controls
+document.getElementById('zoomIn').addEventListener('click', () => {
+  zoomLevel = Math.min(zoomLevel + 0.15, 3);
+  applyZoom();
+});
+
+document.getElementById('zoomOut').addEventListener('click', () => {
+  zoomLevel = Math.max(zoomLevel - 0.15, 0.3);
+  applyZoom();
+});
+
+document.getElementById('zoomReset').addEventListener('click', () => {
+  zoomLevel = 1;
+  applyZoom();
+});
+
+// Initial render
+renderChart('总览');
+</script>
+</body>
+</html>

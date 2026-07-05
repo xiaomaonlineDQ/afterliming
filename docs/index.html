@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黎明之后 — 规则怪谈·推理反击 社交派对游戏</title>
+<meta name="description" content="《黎明之后》是一款规则怪谈×推理反击的社交派对桌游。12名幸存者在鬼的隐形规则支配下求生，推理隐藏规则，发动反击卡，在黎明之前找到真相。">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="characters.html">角色</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="flowcharts.html">流程图</a></li>
+      <li><a href="randomizer.html">工具箱</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container" style="text-align:center;">
+    <h1 class="hero-title">黎明之后</h1>
+    <p class="hero-subtitle">
+      一座被诡异规则笼罩的城市。12个幸存者。<br>
+      鬼隐藏在你们之中，用隐形规则支配一切。<br>
+      推理规则、发动反击、在黎明之前找到真相。
+    </p>
+    <div class="hero-tags">
+      <span class="hero-tag">规则怪谈</span>
+      <span class="hero-tag">推理反击</span>
+      <span class="hero-tag">6-13人</span>
+      <span class="hero-tag">社交派对</span>
+      <span class="hero-tag">12回合</span>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="rules.html" class="btn btn-primary">快速入门</a>
+      <a href="cards.html" class="btn btn-secondary">探索卡牌</a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="page-section" style="background:var(--bg-surface);">
+  <div class="container">
+    <h2 style="text-align:center;margin-bottom:var(--space-xl);">数字概览</h2>
+    <div class="stat-grid">
+      <div class="stat-card animate-in stagger-1">
+        <div class="stat-number character">12</div>
+        <div class="stat-label">幸存者角色</div>
+      </div>
+      <div class="stat-card animate-in stagger-1">
+        <div class="stat-number whisper">36</div>
+        <div class="stat-label">怪谈卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-2">
+        <div class="stat-number countermeasure">62</div>
+        <div class="stat-label">反击卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-2">
+        <div class="stat-number rule">52</div>
+        <div class="stat-label">规则卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-3">
+        <div class="stat-number goal">24</div>
+        <div class="stat-label">个人目的卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-3">
+        <div class="stat-number" style="color:var(--text-accent);">12</div>
+        <div class="stat-label">A市地点</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Game Overview -->
+<section class="page-section">
+  <div class="container">
+    <h2 style="text-align:center;margin-bottom:var(--space-xl);">这游戏怎么玩？</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--space-xl);max-width:1000px;margin:0 auto;">
+
+      <div class="card animate-in stagger-1">
+        <h3 style="color:var(--color-whisper);margin-bottom:var(--space-sm);">规则怪谈</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          鬼拥有隐藏规则卡，这些规则支配着整座城市的行为边界。人类不知道规则内容，只能通过观察和推理来猜测——说错规则的人会付出代价。
+        </p>
+      </div>
+
+      <div class="card animate-in stagger-2">
+        <h3 style="color:var(--color-counter);margin-bottom:var(--space-sm);">推理反击</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          人类通过宣言来猜测规则：宣言正确→规则被抹除；宣言错误→承受惩罚。成功推理后还能发动反击卡，扭转局势。
+        </p>
+      </div>
+
+      <div class="card animate-in stagger-3">
+        <h3 style="color:var(--color-rule);margin-bottom:var(--space-sm);">双维求生</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          每个幸存者都有健康值和理智值。物资匮乏会扣健康，精神冲击会扣理智。任一归零，你就完了——而死亡并不总是终点。
+        </p>
+      </div>
+
+      <div class="card animate-in stagger-4">
+        <h3 style="color:var(--color-character);margin-bottom:var(--space-sm);">AI市长主持</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          游戏中不需要真人做主持人。AI市长接管叙事、判定规则、记录事件，在每个回合讲述城市的诡异故事。真人市长也可以用AI辅助。
+        </p>
+      </div>
+
+    </div>
+
+    <div style="text-align:center;margin-top:var(--space-2xl);">
+      <a href="rules.html" class="btn btn-primary">完整规则 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- Card Types Preview -->
+<section class="page-section" style="background:var(--bg-surface);">
+  <div class="container">
+    <h2 style="text-align:center;margin-bottom:var(--space-xl);">五类卡牌</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-lg);max-width:1000px;margin:0 auto;">
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-whisper);">
+        <h4 style="color:var(--color-whisper-glow);margin-bottom:8px;">怪谈卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">鬼的武器。36张四等级，激活后改变游戏规则，制造混乱与恐惧。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">流言16 · 异常10 · 怪诞6 · 灾厄4</div>
+      </div>
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-counter);">
+        <h4 style="color:var(--color-counter-glow);margin-bottom:8px;">反击卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">人的武器。62张四等级，推理成功后发动，扭转局势。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">基础36 · 觉醒16 · 极致8 · 真理2</div>
+      </div>
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-rule);">
+        <h4 style="color:var(--color-rule-glow);margin-bottom:8px;">规则卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">游戏的核心。52张三类，鬼持有隐藏规则，人类通过宣言推理抹除。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">普通28 · 特殊24</div>
+      </div>
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-character);">
+        <h4 style="color:var(--color-character-glow);margin-bottom:8px;">角色卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">你是谁？12个独特角色，每个人有自己的特殊技能和背景故事。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">命运操控者3 · 攻击者3 · 自保型2 · 情报型2 · 资源型2</div>
+      </div>
+
+    </div>
+
+    <div style="text-align:center;margin-top:var(--space-2xl);">
+      <a href="cards.html" class="btn btn-secondary">浏览全部卡牌 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+    <p style="margin-top:4px;font-size:0.8rem;">项目版本 V2.0 · 五个图鉴全部竣工 · 182张物理卡</p>
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>

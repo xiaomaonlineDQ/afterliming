@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>游戏规则 — 黎明之后</title>
+<meta name="description" content="《黎明之后》完整游戏规则：回合流程、双维属性、宣言质询、交易系统、地图系统、AI市长机制。">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="characters.html">角色</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="flowcharts.html">流程图</a></li>
+      <li><a href="randomizer.html">工具箱</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container page-section">
+  <h1 style="margin-bottom:var(--space-sm);">游戏规则</h1>
+  <p style="color:var(--text-secondary);margin-bottom:var(--space-xl);">
+    从零开始了解《黎明之后》的完整规则体系。每个机制都有详细展开。
+  </p>
+
+  <!-- Quick Stats -->
+  <div class="stat-grid" style="margin-bottom:var(--space-2xl);">
+    <div class="stat-card">
+      <div class="stat-number" style="color:var(--text-accent);">6-13</div>
+      <div class="stat-label">玩家人数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" style="color:var(--text-accent);">12</div>
+      <div class="stat-label">回合</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" style="color:var(--text-accent);">1</div>
+      <div class="stat-label">鬼 vs 11</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" style="color:var(--text-accent);">2-3h</div>
+      <div class="stat-label">游戏时长</div>
+    </div>
+  </div>
+
+  <!-- Rules Accordion -->
+  <div class="accordion">
+    <button class="accordion-header">一、游戏概览与核心概念</button>
+    <div class="accordion-body">
+      <p><strong>《黎明之后》</strong>是一款规则怪谈×推理反击的社交派对桌游。</p>
+      <p style="margin-top:12px;"><strong>核心设定：</strong></p>
+      <ul style="margin-left:20px;line-height:2;">
+        <li>12名幸存者被困在A市，城市被诡异的隐形规则支配。</li>
+        <li>其中1人是<strong style="color:var(--color-whisper);">煞鬼</strong>——他持有隐藏规则卡，这些规则影响所有玩家的行为。</li>
+        <li>人类的胜利条件：在12回合内推理并抹除所有隐藏规则，或用反击卡击杀鬼。</li>
+        <li>鬼的胜利条件：在12回合结束时至少1条隐藏规则未被抹除，或所有人类死亡/化鬼。</li>
+      </ul>
+      <p style="margin-top:12px;"><strong>双维属性：</strong></p>
+      <ul style="margin-left:20px;line-height:2;">
+        <li><strong style="color:var(--success);">健康值</strong>：初始7，每日黎明扣除1。归零=死亡。</li>
+        <li><strong style="color:var(--info);">理智值</strong>：初始7，受怪谈和规则影响。归零=化鬼。</li>
+        <li>死亡转化为恶鬼（新鬼继承旧鬼规则继续对抗人类）；化鬼直接成为恶鬼。</li>
+      </ul>
+      <p style="margin-top:12px;"><strong>五类卡牌：</strong></p>
+      <ul style="margin-left:20px;line-height:2;">
+        <li>怪谈卡（鬼用）· 反击卡（人用）· 规则卡（核心）· 角色卡（身份）· 物资卡（生存）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-header">二、第0天：游戏设置</button>
+    <div class="accordion-body">
+      <p><strong>第0天</strong>是游戏开始前的准备阶段，共11步：</p>
+      <ol style="margin-left:20px;line-height:2.2;">
+        <li><strong>角色分配</strong>：每位人类玩家从洗切的角色卡中随机抽取1张。</li>
+        <li><strong>鬼身份确定</strong>：秘密抽取鬼身份卡，确定煞鬼。</li>
+        <li><strong>地图设置</strong>：铺设A市12地点地图板，每个玩家选择初始地点。</li>
+        <li><strong>AI市长初始化</strong>：输入玩家编号、角色名、初始地点。</li>
+        <li><strong>开局随机判定</strong>：AI市长随机分配初始物资等。</li>
+        <li><strong>煞鬼选择规则</strong>：鬼从规则牌库中抽取并秘密选择隐藏规则。</li>
+        <li><strong>AI市长生成煞鬼故事</strong>：基于鬼的初始地点和隐藏规则生成N段故事。</li>
+        <li><strong>基础反击卡分配</strong>：每人从基础反击卡中选取1张，洗切后抽2张（开局共3张）。</li>
+        <li><strong>个人目的卡分配</strong>：每人抽取1张秘密个人目的卡。</li>
+        <li><strong>初始物资分配</strong>：按角色和地点获得初始物资。</li>
+        <li><strong>回合指示卡初始化</strong>：每人获得对应角色属性的四维度分隔符。</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-header">三、12回合流程</button>
+    <div class="accordion-body">
+      <p>每个回合（Day 1-12）包含以下阶段：</p>
+      <ol style="margin-left:20px;line-height:2.2;">
+        <li><strong>市长的叙事</strong>：AI市长讲述一段煞鬼故事（基于隐藏规则生成的叙事）。</li>
+        <li><strong>物资补给</strong>：官方补给或地图探索，二选一。</li>
+        <li><strong>交易阶段</strong>：玩家之间自愿交易物资卡。</li>
+        <li><strong>宣言阶段</strong>：人类玩家可以宣言猜测隐藏规则。</li>
+        <li><strong>质询阶段</strong>：人类可以质询鬼的行为是否触犯规则。</li>
+        <li><strong>怪谈激活</strong>：鬼检查是否有怪谈卡满足激活条件。</li>
+        <li><strong>反击卡发动</strong>：满足发动条件的反击卡可以在合适时机发动。</li>
+        <li><strong>黎明阶段</strong>：AI市长结算本回合数值变更、判定生死。</li>
+      </ol>
+      <p style="margin-top:12px;color:var(--text-muted);">详细完整流程请参阅<a href="flowcharts.html">流程图</a>。</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-header">四、宣言与质询系统</button>
+    <div class="accordion-body">
+      <p><strong>宣言：</strong>人类玩家猜测隐藏规则的具体内容。</p>
+      <ul style="margin-left:20px;line-height:2;">
+        <li>每个回合每人有 <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;">?+1</code> 次宣言机会（?为基础次数，+1为奖励）。</li>
+        <li><strong>宣言正确</strong> → 规则被抹除，获得反击卡抽取机会（智慧机制）。</li>
+        <li><strong>宣言错误</strong> → 理智 -1。</li>
+      </ul>
+      <p style="margin-top:12px;"><strong>质询：</strong>人类玩家质疑鬼的行为是否触犯了某条公开规则。</p>
+      <ul style="margin-left:20px;line-height:2;">
+        <li>每位玩家整局游戏只有 <strong>2次</strong> 质询机会，不限时机。</li>
+        <li>质询成功 → 鬼受到惩罚，质询者抽1张反击卡或物资卡。</li>
+        <li>质询失败 → 质询者理智 -2。</li>
+      </ul>
+      <p style="margin-top:12px;"><strong>公开规则栏：</strong>被宣言抹除的规则会公开到规则栏板上，所有人可见（四分区物理板）。</p>
+      <p style="margin-top:12px;color:var(--text-muted);">详细完整流程请参阅<a href="flowcharts.html">流程图</a>。</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-header">五、地图与探索系统</button>
+    <div class="accordion-body">
+      <p><strong>A市12地点：</strong></p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-sm);margin:var(--space-md) 0;">
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">市政府大楼</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">中心医院</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">警察局</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">大学校园</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">大型超市</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">地铁站</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">老旧小区</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">工业园区</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">废弃工厂</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">公园广场</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">殡仪馆</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">大厂</div>
+      </div>
+      <ul style="margin-left:20px;line-height:2;">
+        <li>第0天每位玩家选择一个初始地点（煞鬼也选）。</li>
+        <li>每回合Day 1起可以在地图板上移动到相邻地点。</li>
+        <li>在同一地点的玩家可以互相交易、交流信息。</li>
+        <li>每个地点有对应的特殊规则卡（12×2=24张）。</li>
+        <li><strong>撞鬼机制</strong>：当人类和鬼在同一地点时可能触发特殊事件。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-header">六、AI市长系统</button>
+    <div class="accordion-body">
+      <p>AI市长是游戏的<strong>必需</strong>组成部分（真人市长也使用AI辅助）。</p>
+      <p style="margin-top:12px;"><strong>6步工作流程：</strong></p>
+      <ol style="margin-left:20px;line-height:2.2;">
+        <li>确认玩家编号和角色名</li>
+        <li>开局随机判定（随机分配初始物资等）</li>
+        <li>确认初始选择 + 生成煞鬼初始故事（基于隐藏规则生成N段故事）</li>
+        <li>每回合：记录宣言 + 讲述故事段 + 规则变更确认</li>
+        <li>回合结束：数值结算判定</li>
+        <li>终局：生成全玩家生存日记</li>
+      </ol>
+      <p style="margin-top:12px;"><strong>核心原则：</strong></p>
+      <ul style="margin-left:20px;line-height:2;">
+        <li>市长是冷静的末世书记官——不是DM，不闲聊，零冗余。</li>
+        <li>"宣言即合法"——玩家互相监督卡牌合法性，市长只记录。</li>
+        <li>不主动透露任何未公开宣言的信息。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-header">七、胜利条件与终局</button>
+    <div class="accordion-body">
+      <p><strong>人类胜利：</strong></p>
+      <ul style="margin-left:20px;line-height:2;">
+        <li>在12回合内推理并抹除全部隐藏规则；或</li>
+        <li>用反击卡或其他手段击杀全部鬼。</li>
+      </ul>
+      <p style="margin-top:12px;"><strong>鬼胜利：</strong></p>
+      <ul style="margin-left:20px;line-height:2;">
+        <li>12回合结束时仍有至少1条隐藏规则未被抹除；或</li>
+        <li>所有人类玩家死亡或化鬼。</li>
+      </ul>
+      <p style="margin-top:12px;"><strong>终局：</strong>无论谁赢，AI市长都会生成一份全玩家生存日记，记录这场游戏中发生的故事。</p>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:var(--space-2xl);">
+    <a href="flowcharts.html" class="btn btn-primary">查看流程图 →</a>
+    <a href="cards.html" class="btn btn-secondary" style="margin-left:12px;">查看卡牌 →</a>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>

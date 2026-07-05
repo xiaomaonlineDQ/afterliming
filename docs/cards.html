@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡牌图鉴 — 黎明之后</title>
+<meta name="description" content="浏览《黎明之后》全部156种卡牌：怪谈卡36张、反击卡30种62张、规则卡52张、角色卡12张、个人目的卡24张。">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="characters.html">角色</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="flowcharts.html">流程图</a></li>
+      <li><a href="randomizer.html">工具箱</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container page-section">
+  <h1 style="margin-bottom:var(--space-sm);">卡牌图鉴</h1>
+  <p style="color:var(--text-secondary);margin-bottom:var(--space-xl);">
+    共 <strong style="color:var(--text-primary);">156种</strong> / <strong style="color:var(--text-primary);">188张</strong> 物理卡 · 点击任意卡牌查看完整详情
+  </p>
+
+  <!-- Tabs -->
+  <div class="tabs" id="typeTabs">
+    <button class="tab-btn active" data-type="all">全部</button>
+    <button class="tab-btn" data-type="whispers">怪谈卡 (36)</button>
+    <button class="tab-btn" data-type="countermeasures">反击卡 (30种)</button>
+    <button class="tab-btn" data-type="rules">规则卡 (52)</button>
+    <button class="tab-btn" data-type="characters">角色卡 (12)</button>
+    <button class="tab-btn" data-type="personal_goals">个人目的卡 (24)</button>
+  </div>
+
+  <!-- Filters -->
+  <div style="display:flex;gap:var(--space-md);flex-wrap:wrap;align-items:center;margin-bottom:var(--space-lg);">
+    <input type="text" class="search-box" id="cardSearch" placeholder="搜索卡牌名称...">
+    <div class="filter-bar" id="levelFilters" style="margin-bottom:0;"></div>
+  </div>
+
+  <!-- Card Grid -->
+  <div class="card-grid" id="cardGrid"></div>
+
+  <div id="noResults" style="display:none;text-align:center;padding:var(--space-3xl);color:var(--text-muted);">
+    没有找到匹配的卡牌
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+// --- State ---
+let currentType = 'all';
+let currentLevel = 'all';
+let currentSearch = '';
+
+// --- Level filters per type ---
+const LEVEL_FILTERS = {
+  whispers: ['all', '流言', '异常', '怪诞', '灾厄'],
+  countermeasures: ['all', '基础', '觉醒', '极致', '真理'],
+  rules: ['all', 'T1', 'T2', 'T3'],
+  characters: ['all', '命运操控者', '攻击者', '自保型', '情报型', '资源型'],
+  personal_goals: ['all'],
+  all: []
+};
+
+function renderLevelFilters(type) {
+  const container = document.getElementById('levelFilters');
+  const levels = LEVEL_FILTERS[type] || [];
+  if (levels.length <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = levels.map((l, i) =>
+    `<button class="filter-btn ${i === 0 ? 'active' : ''}" data-level="${l}">${l === 'all' ? '全部等级' : l}</button>`
+  ).join('');
+
+  // Add click handlers
+  container.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentLevel = btn.dataset.level;
+      renderCards();
+    });
+  });
+}
+
+function filterCards() {
+  let cards = [];
+  const dbKey = currentType === 'all' ? null : currentType;
+
+  if (dbKey && CARD_DB[dbKey]) {
+    cards = CARD_DB[dbKey].map(c => ({ ...c, _type: dbKey }));
+  } else {
+    for (const [type, typeCards] of Object.entries(CARD_DB)) {
+      typeCards.forEach(c => cards.push({ ...c, _type: type }));
+    }
+  }
+
+  // Level filter
+  if (currentLevel !== 'all') {
+    cards = cards.filter(c => (c.level || c.difficulty || c.category) === currentLevel);
+  }
+
+  // Search
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    cards = cards.filter(c => c.name.toLowerCase().includes(q));
+  }
+
+  return cards;
+}
+
+function renderCards() {
+  const grid = document.getElementById('cardGrid');
+  const noResults = document.getElementById('noResults');
+  const cards = filterCards();
+
+  if (cards.length === 0) {
+    grid.innerHTML = '';
+    noResults.style.display = 'block';
+    return;
+  }
+
+  noResults.style.display = 'none';
+
+  grid.innerHTML = cards.map(card => {
+    const typeClass = TYPE_CSS_CLASS[card._type] || '';
+    const level = card.level || card.difficulty || card.category || '';
+    const levelInfo = LEVEL_MAP[level] || { cn: level, css: '' };
+    const effect = (card.effect || card.rule_text || card.skill_effect || card.goal_text || '').substring(0, 120);
+
+    return `
+      <a href="card-detail.html?id=${card.id}&type=${card._type}" style="text-decoration:none;color:inherit;">
+        <div class="card" style="border-top:3px solid var(--color-${typeClass});">
+          <div class="card-header">
+            <span class="card-title">${card.name}</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+            <span class="card-badge ${typeClass}">${TYPE_MAP[card._type]}</span>
+            ${levelInfo.cn ? `<span class="badge-rarity ${levelInfo.css}">${levelInfo.cn}</span>` : ''}
+          </div>
+          <div style="color:var(--text-muted);font-size:0.85rem;line-height:1.5;">
+            ${effect}${effect.length >= 120 ? '...' : ''}
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
+// --- Tab switching ---
+document.getElementById('typeTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+
+  document.querySelectorAll('#typeTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentType = btn.dataset.type;
+  currentLevel = 'all';
+  renderLevelFilters(currentType);
+  renderCards();
+});
+
+// --- Search ---
+document.getElementById('cardSearch').addEventListener('input', (e) => {
+  currentSearch = e.target.value;
+  renderCards();
+});
+
+// --- Init ---
+renderLevelFilters('all');
+renderCards();
+</script>
+</body>
+</html>

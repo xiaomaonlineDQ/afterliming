@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>游戏规则 — 黎明之后</title>
 <meta name="description" content="《黎明之后》完整游戏规则：回合流程、双维属性、宣言质询、交易系统、地图系统、AI市长机制。">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/main.css?v=2026071017">
 </head>
 <body>
 
@@ -16,10 +16,9 @@
     <ul class="nav-links">
       <li><a href="index.html">首页</a></li>
       <li><a href="cards.html">卡牌图鉴</a></li>
-      <li><a href="characters.html">角色</a></li>
       <li><a href="rules.html">规则</a></li>
-      <li><a href="flowcharts.html">流程图</a></li>
-      <li><a href="randomizer.html">工具箱</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
     </ul>
   </div>
 </nav>
@@ -33,7 +32,7 @@
   <!-- Quick Stats -->
   <div class="stat-grid" style="margin-bottom:var(--space-2xl);">
     <div class="stat-card">
-      <div class="stat-number" style="color:var(--text-accent);">6-13</div>
+      <div class="stat-number" style="color:var(--text-accent);">6-12</div>
       <div class="stat-label">玩家人数</div>
     </div>
     <div class="stat-card">
@@ -64,13 +63,13 @@
       </ul>
       <p style="margin-top:12px;"><strong>双维属性：</strong></p>
       <ul style="margin-left:20px;line-height:2;">
-        <li><strong style="color:var(--success);">健康值</strong>：初始7，每日黎明扣除1。归零=死亡。</li>
-        <li><strong style="color:var(--info);">理智值</strong>：初始7，受怪谈和规则影响。归零=化鬼。</li>
-        <li>死亡转化为恶鬼（新鬼继承旧鬼规则继续对抗人类）；化鬼直接成为恶鬼。</li>
+        <li><strong style="color:var(--success);">健康值</strong>：初始6，递增黎明扣除（第1天-1/第2天-2/第3天起-3封顶）。归零=死亡。</li>
+        <li><strong style="color:var(--info);">理智值</strong>：初始6，受怪谈和规则影响。归零=化鬼。特殊修正：乐天派7/豪门3/懦弱4。</li>
+        <li>健康归零→死亡（退出游戏）；理智归零→化鬼（被同化为恶鬼）。</li>
       </ul>
-      <p style="margin-top:12px;"><strong>五类卡牌：</strong></p>
+      <p style="margin-top:12px;"><strong>六类卡牌：</strong></p>
       <ul style="margin-left:20px;line-height:2;">
-        <li>怪谈卡（鬼用）· 反击卡（人用）· 规则卡（核心）· 角色卡（身份）· 物资卡（生存）</li>
+        <li>怪谈卡（鬼用）· 反击卡（人用）· 规则卡（核心）· 角色卡（身份）· 物资卡（生存）· 个人目的卡（动机）</li>
       </ul>
     </div>
   </div>
@@ -118,7 +117,8 @@
     <div class="accordion-body">
       <p><strong>宣言：</strong>人类玩家猜测隐藏规则的具体内容。</p>
       <ul style="margin-left:20px;line-height:2;">
-        <li>每个回合每人有 <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;">?+1</code> 次宣言机会（?为基础次数，+1为奖励）。</li>
+        <li><strong>固定宣言</strong>：每成为回合玩家1次获得1次宣言机会。</li>
+        <li><strong>追加宣言</strong>：整局+1次，cost=健康-1。</li>
         <li><strong>宣言正确</strong> → 规则被抹除，获得反击卡抽取机会（智慧机制）。</li>
         <li><strong>宣言错误</strong> → 理智 -1。</li>
       </ul>
@@ -136,20 +136,20 @@
   <div class="accordion">
     <button class="accordion-header">五、地图与探索系统</button>
     <div class="accordion-body">
-      <p><strong>A市12地点：</strong></p>
+      <p><strong>A市12地点（东西两区各6个）：</strong></p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-sm);margin:var(--space-md) 0;">
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">市政府大楼</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">中心医院</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">警察局</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">大学校园</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">大型超市</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">地铁站</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">老旧小区</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">工业园区</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">废弃工厂</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">公园广场</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">殡仪馆</div>
-        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">大厂</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">1. 医院（东）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">2. 大学（东）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">3. 酒吧（东）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">4. 市图书馆（东）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">5. 大厂写字楼（东）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">6. 菜市场（东）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">7. 大排档（西）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">8. 羽毛球馆（西）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">9. 市博物馆（西）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">10. 商业步行街（西）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">11. 网吧（西）</div>
+        <div class="card" style="padding:var(--space-sm);text-align:center;font-size:0.85rem;">12. KTV（西）</div>
       </div>
       <ul style="margin-left:20px;line-height:2;">
         <li>第0天每位玩家选择一个初始地点（煞鬼也选）。</li>

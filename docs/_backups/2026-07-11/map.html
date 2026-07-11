@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A市地图 — 黎明之后</title>
+<meta name="description" content="《黎明之后》A市地图：东区西区共12个地点，第0天闹鬼模拟 + 第1天黎明设置 + 地图探索全流程模拟。含骰子判定 + 真实卡牌抽卡。">
+<link rel="stylesheet" href="css/main.css?v=2026071017">
+<style>
+/* === Map Page Specific Styles === */
+
+.map-hero {
+  padding: var(--space-2xl) 0 var(--space-lg);
+  text-align: center;
+}
+.map-hero h1 { font-family: var(--font-display); margin-bottom: var(--space-sm); }
+.map-hero p { color: var(--text-secondary); max-width: 700px; margin: 0 auto; }
+
+/* Map Container */
+.map-container {
+  position: relative;
+  max-width: 1000px;
+  margin: 0 auto var(--space-2xl);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-lg);
+  background: var(--bg-surface);
+}
+.map-container img { width: 100%; height: auto; display: block; }
+.map-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+.map-marker { position: absolute; pointer-events: auto; cursor: pointer; z-index: 2; }
+.map-marker .dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-whisper);
+  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 16px rgba(192,57,43,0.7), 0 0 40px rgba(192,57,43,0.3);
+  transition: all var(--transition-base); position: relative;
+}
+.map-marker:hover .dot,
+.map-marker.active .dot {
+  background: var(--color-whisper-glow);
+  box-shadow: 0 0 24px rgba(231,76,60,0.9), 0 0 60px rgba(231,76,60,0.5);
+  transform: scale(1.3);
+}
+.map-marker .label {
+  position: absolute; top: -28px; left: 50%; transform: translateX(-50%);
+  white-space: nowrap; font-size: 0.75rem; font-weight: 700; color: #fff;
+  background: rgba(192,57,43,0.9); padding: 2px 8px; border-radius: var(--radius-sm);
+  opacity: 0; transition: opacity var(--transition-fast); pointer-events: none;
+}
+.map-marker:hover .label, .map-marker.active .label { opacity: 1; }
+.map-marker .num {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  font-size: 0.7rem; font-weight: 700; color: #fff; pointer-events: none;
+}
+
+/* District */
+.district-section { margin-bottom: var(--space-2xl); }
+.district-title {
+  display: flex; align-items: center; gap: var(--space-md);
+  margin-bottom: var(--space-lg); padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.district-title .district-badge {
+  font-size: 0.8rem; font-weight: 700; padding: 4px 14px;
+  border-radius: var(--radius-xl); letter-spacing: 0.05em;
+}
+.district-badge.east { background: rgba(46,134,193,0.2); color: var(--color-counter-glow); border: 1px solid rgba(46,134,193,0.3); }
+.district-badge.west { background: rgba(142,68,173,0.2); color: var(--color-character-glow); border: 1px solid rgba(142,68,173,0.3); }
+.district-title h2 { font-size: 1.3rem; margin: 0; }
+
+/* Location Grid */
+.location-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--space-md); }
+
+/* Location Card */
+.location-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: var(--space-lg);
+  cursor: pointer; transition: all var(--transition-base);
+  position: relative; overflow: hidden;
+}
+.location-card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%; background: var(--border-medium);
+  transition: all var(--transition-base);
+}
+.location-card:hover { border-color: var(--border-medium); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.location-card.highlight::before { background: var(--color-whisper-glow); }
+.location-card.east-card:hover::before,
+.location-card.east-card.highlight::before { background: var(--color-counter-glow); }
+.location-card.west-card:hover::before,
+.location-card.west-card.highlight::before { background: var(--color-character-glow); }
+.location-card .loc-header { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm); }
+.location-card .loc-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg-hover); border: 1px solid var(--border-medium);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); flex-shrink: 0;
+}
+.location-card:hover .loc-num { background: var(--color-whisper); color: #fff; border-color: var(--color-whisper); }
+.location-card .loc-name { font-size: 1.1rem; font-weight: 700; }
+.location-card .loc-district { font-size: 0.72rem; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-sm); margin-left: auto; }
+.loc-district.east-tag { background: rgba(46,134,193,0.15); color: var(--color-counter-glow); }
+.loc-district.west-tag { background: rgba(142,68,173,0.15); color: var(--color-character-glow); }
+
+/* Status badges inside card */
+.loc-status { display: flex; gap: var(--space-xs); margin-bottom: var(--space-sm); flex-wrap: wrap; }
+.loc-status .status-badge {
+  font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.status-badge.supply { background: rgba(200,146,62,0.15); color: var(--color-rule-glow); border: 1px solid rgba(200,146,62,0.3); }
+.status-badge.event { background: rgba(46,134,193,0.15); color: var(--color-counter-glow); border: 1px solid rgba(46,134,193,0.3); }
+.status-badge.no-event { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border-subtle); }
+.status-badge.ghost { background: rgba(192,57,43,0.15); color: var(--color-whisper-glow); border: 1px solid rgba(192,57,43,0.3); }
+.status-badge.no-ghost { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border-subtle); }
+.status-badge.explored { background: rgba(127,111,158,0.2); color: var(--color-character-glow); border: 1px solid rgba(127,111,158,0.3); }
+
+/* Rules inside card */
+.location-card .rules-list { display: flex; flex-direction: column; gap: var(--space-sm); }
+.location-card .rule-item {
+  display: flex; align-items: flex-start; gap: var(--space-sm);
+  padding: var(--space-sm); background: var(--bg-surface);
+  border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);
+}
+.location-card .rule-item .rule-icon {
+  width: 20px; height: 20px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700; flex-shrink: 0; color: #fff;
+}
+.rule-icon.t1 { background: var(--color-whisper); }
+.rule-icon.t2 { background: var(--color-rule); }
+.rule-icon.t3 { background: #607d8b; }
+.location-card .rule-item .rule-text { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+.location-card .rule-item .rule-cost { font-size: 0.72rem; font-weight: 700; color: var(--color-whisper-glow); white-space: nowrap; flex-shrink: 0; }
+
+/* ===== Simulator Sections ===== */
+.simulator-section {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); padding: var(--space-xl);
+  margin-bottom: var(--space-2xl);
+}
+.simulator-section h2 { margin-bottom: var(--space-xs); }
+.simulator-section .sim-desc { color: var(--text-secondary); margin-bottom: var(--space-lg); }
+.sim-controls { display: flex; gap: var(--space-md); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-lg); }
+.sim-select {
+  background: var(--bg-surface); border: 1px solid var(--border-medium);
+  color: var(--text-primary); padding: 8px 16px; border-radius: var(--radius-md);
+  font-size: 0.9rem; font-family: var(--font-sans); cursor: pointer;
+}
+.sim-select:focus { outline: none; border-color: var(--color-whisper); }
+.sim-result {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: var(--space-lg);
+  min-height: 100px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 0.9rem;
+}
+.sim-result.active { color: var(--text-primary); flex-direction: column; align-items: flex-start; gap: var(--space-md); }
+.sim-result .ghost-location { font-size: 1.3rem; font-weight: 700; color: var(--color-whisper-glow); }
+.sim-result .revealed-rules { display: flex; flex-direction: column; gap: var(--space-sm); width: 100%; }
+
+/* Exploration two-column layout */
+.explore-layout { display: grid; grid-template-columns: 1fr 380px; gap: var(--space-lg); width: 100%; align-items: start; }
+@media (max-width: 860px) { .explore-layout { grid-template-columns: 1fr; } }
+
+/* Step-by-step */
+.explore-steps { display: flex; flex-direction: column; gap: var(--space-sm); }
+.explore-step {
+  display: flex; align-items: flex-start; gap: var(--space-sm);
+  padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+.explore-step.current { border-color: var(--color-rule-glow); background: rgba(200,146,62,0.08); }
+.explore-step.ghost-hit { border-color: var(--color-whisper-glow); background: rgba(192,57,43,0.08); }
+.explore-step .step-icon { font-size: 1.3rem; flex-shrink: 0; width: 36px; text-align: center; }
+.explore-step .step-body { flex: 1; }
+.explore-step .step-body .step-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.explore-step .step-body .step-title { font-weight: 700; font-size: 0.95rem; }
+.explore-step .step-body .step-detail { font-size: 0.82rem; color: var(--text-secondary); margin-top: var(--space-xs); line-height: 1.5; }
+
+/* Setup summary grid */
+.setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-sm); width: 100%; }
+.setup-item {
+  display: flex; align-items: center; gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md);
+  background: var(--bg-hover); border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+.setup-item:hover { border-color: var(--border-medium); }
+.setup-item .si-num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--bg-surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 700; color: var(--text-muted); flex-shrink: 0;
+}
+.setup-item .si-name { font-weight: 700; font-size: 0.85rem; min-width: 60px; }
+.setup-item .si-stats { display: flex; gap: var(--space-xs); margin-left: auto; }
+.setup-item .si-tag {
+  font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: var(--radius-sm); white-space: nowrap;
+}
+.si-tag.supplies { background: rgba(200,146,62,0.2); color: var(--color-rule-glow); }
+.si-tag.event-yes { background: rgba(46,134,193,0.2); color: var(--color-counter-glow); }
+.si-tag.event-no { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+.si-tag.ghost-yes { background: rgba(192,57,43,0.2); color: var(--color-whisper-glow); }
+.si-tag.ghost-no { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+.si-tag.ghost-na { background: rgba(255,255,255,0.03); color: var(--text-muted); font-style: italic; }
+
+/* Dice display */
+.dice-row { display: flex; gap: var(--space-xs); align-items: center; flex-wrap: wrap; }
+.dice-face {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: var(--radius-md);
+  background: var(--bg-surface); border: 2px solid var(--border-medium);
+  font-size: 1.6rem; line-height: 1; color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+.dice-face.rolling {
+  animation: dice-shake 0.3s ease-in-out;
+  border-color: var(--color-rule-glow);
+  box-shadow: 0 0 12px rgba(200,146,62,0.3);
+}
+@keyframes dice-shake {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-15deg); }
+  75% { transform: rotate(15deg); }
+}
+.dice-total {
+  font-size: 1.4rem; font-weight: 700; color: var(--color-rule-glow);
+  padding: 0 var(--space-sm);
+}
+
+/* Consequence banner */
+.consequence-banner {
+  padding: var(--space-md); border-radius: var(--radius-md);
+  font-size: 0.9rem; font-weight: 700; margin-top: var(--space-xs);
+}
+.consequence-banner.turn-ghost {
+  background: rgba(192,57,43,0.12); border: 1px solid rgba(192,57,43,0.3); color: var(--color-whisper-glow);
+}
+.consequence-banner.non-turn-ghost {
+  background: rgba(192,57,43,0.2); border: 1px solid rgba(192,57,43,0.5); color: var(--color-whisper-glow);
+}
+.consequence-banner.safe {
+  background: rgba(46,134,193,0.1); border: 1px solid rgba(46,134,193,0.2); color: var(--color-counter-glow);
+}
+
+/* Card Draw Panel */
+.card-draw-panel {
+  background: var(--bg-surface); border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: var(--space-md);
+  position: sticky; top: var(--space-lg);
+}
+.card-draw-panel h3 {
+  font-size: 0.9rem; margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-sm);
+  padding-bottom: var(--space-sm); border-bottom: 1px solid var(--border-subtle);
+}
+.card-draw-panel .draw-section { margin-bottom: var(--space-md); }
+.card-draw-panel .draw-label {
+  font-size: 0.72rem; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-xs);
+}
+.card-draw-panel .draw-cards-empty {
+  color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: var(--space-md);
+}
+.mini-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-xs); transition: all var(--transition-fast);
+  position: relative; overflow: hidden;
+}
+.mini-card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%;
+}
+.mini-card.supply-card::before { background: var(--color-rule-glow); }
+.mini-card.counter-card::before { background: var(--color-counter-glow); }
+.mini-card .mini-name { font-weight: 700; font-size: 0.82rem; margin-bottom: 2px; }
+.mini-card .mini-level { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px; }
+.mini-card .mini-effect { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4; }
+.mini-card .mini-copies { font-size: 0.62rem; color: var(--text-muted); margin-top: 2px; }
+
+.draw-stats { display: flex; gap: var(--space-xs); flex-wrap: wrap; margin-bottom: var(--space-md); }
+.draw-stat {
+  font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-sm);
+}
+.draw-stat.supply { background: rgba(200,146,62,0.15); color: var(--color-rule-glow); border: 1px solid rgba(200,146,62,0.25); }
+.draw-stat.counter { background: rgba(46,134,193,0.15); color: var(--color-counter-glow); border: 1px solid rgba(46,134,193,0.25); }
+.draw-stat.ghost { background: rgba(192,57,43,0.15); color: var(--color-whisper-glow); border: 1px solid rgba(192,57,43,0.25); }
+
+/* Player count info */
+.player-count-info {
+  display: inline-flex; align-items: center; gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md); border-radius: var(--radius-md);
+  font-size: 0.72rem; font-weight: 700;
+}
+.player-count-info.d6 { background: rgba(200,146,62,0.12); color: var(--color-rule-glow); border: 1px solid rgba(200,146,62,0.25); }
+.player-count-info.d12 { background: rgba(192,57,43,0.12); color: var(--color-whisper-glow); border: 1px solid rgba(192,57,43,0.25); }
+
+/* Animation */
+@keyframes pulse-marker {
+  0%, 100% { box-shadow: 0 0 16px rgba(192,57,43,0.7), 0 0 40px rgba(192,57,43,0.3); }
+  50% { box-shadow: 0 0 28px rgba(231,76,60,1), 0 0 60px rgba(231,76,60,0.6); }
+}
+.map-marker.pulse .dot { animation: pulse-marker 1.5s infinite; }
+
+
+/* Responsive */
+@media (max-width: 768px) {
+  .location-grid { grid-template-columns: 1fr; }
+  .setup-grid { grid-template-columns: repeat(2, 1fr); }
+  .sim-controls { flex-direction: column; align-items: stretch; }
+  .map-marker .dot { width: 20px; height: 20px; }
+  .map-marker .label { font-size: 0.65rem; top: -22px; padding: 1px 6px; }
+  .dice-face { width: 36px; height: 36px; font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="map-hero">
+  <div class="container">
+    <h1>A市地图</h1>
+    <p>一座被诡异规则笼罩的城市。东区西区共12个地点，每个地点绑定2条特殊规则。第0天闹鬼地点确定 → 第1天黎明骰子设置 → 每回合地图探索含真实抽卡。</p>
+  </div>
+</section>
+
+<!-- Map Image -->
+<div class="container">
+  <div class="map-container" id="mapContainer">
+    <img src="images/map.png" alt="A市地图" id="mapImage"
+         onerror="this.style.display='none';document.getElementById('mapFallback').style.display='flex';">
+    <div id="mapFallback" style="display:none;min-height:400px;align-items:center;justify-content:center;background:var(--bg-surface);color:var(--text-muted);flex-direction:column;gap:var(--space-md);">
+      <span style="font-size:3rem;">🗺️</span>
+      <span>地图图片加载中…</span>
+    </div>
+    <div class="map-overlay" id="mapOverlay"></div>
+  </div>
+</div>
+
+<!-- Location Detail Cards -->
+<div class="container page-section" style="padding-top:0;">
+  
+  <!-- East District -->
+  <div class="district-section">
+    <div class="district-title">
+      <span class="district-badge east">东区</span>
+      <h2>Eastern District</h2>
+    </div>
+    <div class="location-grid" id="eastGrid"></div>
+  </div>
+
+  <!-- West District -->
+  <div class="district-section">
+    <div class="district-title">
+      <span class="district-badge west">西区</span>
+      <h2>Western District</h2>
+    </div>
+    <div class="location-grid" id="westGrid"></div>
+  </div>
+
+  <!-- ============ 第1天黎明地图设置 ============ -->
+  <div class="simulator-section" id="day1Setup">
+    <h2>🌅 第1天黎明 · 地图设置</h2>
+    <p class="sim-desc">
+      模拟市长在第1天黎明对全部12个地点进行的三随机判定。<br>
+      <strong>物资数量</strong>：根据游戏人数掷骰子（<span style="color:var(--color-rule-glow);">6-9人→1D6掷1-6</span> / <span style="color:var(--color-whisper-glow);">10-12人→2D6掷2-12</span>）<br>
+      <strong>事件判定</strong>：抛硬币（人面=是） · <strong>鬼判定</strong>：仅限含事件地点再抛硬币（鬼面=是）
+    </p>
+    <div class="sim-controls">
+      <label style="display:flex;align-items:center;gap:var(--space-sm);color:var(--text-secondary);font-size:0.85rem;">
+        👥 游戏人数：
+        <select class="sim-select" id="setupPlayerCount" onchange="updatePlayerCountBadge()">
+          <option value="6">6人局</option>
+          <option value="7">7人局</option>
+          <option value="8">8人局</option>
+          <option value="9" selected>9人局</option>
+          <option value="10">10人局</option>
+          <option value="11">11人局</option>
+          <option value="12">12人局</option>
+        </select>
+      </label>
+      <span class="player-count-info d6" id="pcBadgeSetup">🎲 1D6 (1~6)</span>
+      <button class="btn btn-primary" id="btnDay1Setup">🎲 生成第1天黎明地图设置</button>
+      <button class="btn" id="btnResetSetup" style="display:none;background:var(--bg-surface);border:1px solid var(--border-medium);color:var(--text-secondary);">🔄 重新生成</button>
+    </div>
+    <div class="sim-result" id="day1Result">
+      选择人数 → 点击「生成」按钮 → 市长掷骰子对12个地点执行三判定……
+    </div>
+  </div>
+
+  <!-- ============ 地图探索模拟器 ============ -->
+  <div class="simulator-section" id="exploreSim">
+    <h2>🧭 地图探索模拟器</h2>
+    <p class="sim-desc">
+      模拟回合玩家（或非回合玩家）执行地图探索的完整流程，并<strong style="color:var(--color-rule-glow);">真实从牌库中抽卡</strong>展示。<br>
+      流程：<strong>健康-1</strong> → <strong>物资获取</strong>（骰子数张物资卡） → <strong>事件判定</strong>（抛硬币抽1张反击卡） → <strong>撞鬼处理</strong><br>
+      <span style="color:var(--text-muted);font-size:0.8rem;">需先完成上方「第1天黎明地图设置」才能使用。</span>
+    </p>
+    <div class="sim-controls">
+      <label style="display:flex;align-items:center;gap:var(--space-sm);color:var(--text-secondary);font-size:0.85rem;">
+        👥 人数：
+        <select class="sim-select" id="explorePlayerCount" onchange="updateExplorerBadge()">
+          <option value="6">6人</option>
+          <option value="7">7人</option>
+          <option value="8">8人</option>
+          <option value="9" selected>9人</option>
+          <option value="10">10人</option>
+          <option value="11">11人</option>
+          <option value="12">12人</option>
+        </select>
+      </label>
+      <span class="player-count-info d6" id="pcBadgeExplore">🎲 1D6 (1~6)</span>
+      <label style="display:flex;align-items:center;gap:var(--space-sm);color:var(--text-secondary);font-size:0.85rem;">
+        🎭 身份：
+        <select class="sim-select" id="explorePlayerType">
+          <option value="turn">回合玩家（主角光环）</option>
+          <option value="nonturn">非回合玩家（高风险）</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:var(--space-sm);color:var(--text-secondary);font-size:0.85rem;">
+        📍 地点：
+        <select class="sim-select" id="exploreLocation"></select>
+      </label>
+      <button class="btn btn-primary" id="btnExplore" disabled>🔍 开始探索</button>
+    </div>
+    <div class="sim-result" id="exploreResult">
+      请先完成「第1天黎明地图设置」……
+    </div>
+  </div>
+
+  <!-- ============ 闹鬼模拟器（第0天） ============ -->
+  <div class="simulator-section" id="simulator">
+    <h2>👻 闹鬼模拟器（第0天）</h2>
+    <p class="sim-desc">模拟第0天市长掷骰子确定闹鬼地点的流程。选择游戏人数规模和开放区域，查看闹鬼地点及其公开的特殊规则。</p>
+    
+    <div class="sim-controls">
+      <select class="sim-select" id="simPlayers">
+        <option value="6">6人局</option>
+        <option value="7">7人局</option>
+        <option value="8">8人局</option>
+        <option value="9" selected>9人局</option>
+        <option value="10">10人局</option>
+        <option value="11">11人局</option>
+        <option value="12">12人局</option>
+      </select>
+      <select class="sim-select" id="simZone">
+        <option value="auto" selected>自动判定开放区域</option>
+        <option value="east">仅东区</option>
+        <option value="west">仅西区</option>
+        <option value="both">双区开放</option>
+      </select>
+      <button class="btn btn-primary" id="simRoll">掷骰子确定闹鬼地点</button>
+    </div>
+    
+    <div class="sim-result" id="simResult">
+      点击「掷骰子」开始模拟……
+    </div>
+  </div>
+
+</div>
+
+<script src="js/data.js"></script>
+<script>
+// ========================================
+// Map Marker Positions (hardcoded)
+// ========================================
+const MARKER_POSITIONS = {
+  1:  { x: 79.3, y: 32.7 },
+  2:  { x: 66.3, y: 18.5 },
+  3:  { x: 57.1, y: 85.6 },
+  4:  { x: 80.8, y: 48 },
+  5:  { x: 78.4, y: 69.4 },
+  6:  { x: 63.6, y: 72.1 },
+  7:  { x: 23.9, y: 83.4 },
+  8:  { x: 19.1, y: 20.9 },
+  9:  { x: 15.2, y: 40.1 },
+  10: { x: 32.4, y: 62.3 },
+  11: { x: 14.6, y: 57 },
+  12: { x: 13.6, y: 75.1 }
+};
+
+// ========================================
+// Location Data
+// ========================================
+const locations = [
+  { id: 1,  name: '医院',       district: 'east', rules: [
+    { text: '不能和其他人有任何肢体接触', cost: '-2' },
+    { text: '必须一直面露悲伤', cost: '-2', limit: '每回合每人最多3次' }
+  ]},
+  { id: 2,  name: '大学',       district: 'east', rules: [
+    { text: '回合玩家只能选择官方供给', cost: '-3', limit: '每回合触发一次' },
+    { text: '不能盯着某个人连续看超过3个数', cost: '-1' }
+  ]},
+  { id: 3,  name: '酒吧',       district: 'east', rules: [
+    { text: '每人每回合结算前必须使用饮品物资卡', cost: '-2', limit: '每回合每人最多一次' },
+    { text: '不能全中文发言', cost: '-2', limit: '每回合每人最多三次' }
+  ]},
+  { id: 4,  name: '市图书馆',   district: 'east', rules: [
+    { text: '交流必须耳语', cost: '-1', limit: '每回合每人只能触发一次' },
+    { text: '桌面上不能摆放任何液体', cost: '-1', limit: '每回合每人最多5次' }
+  ]},
+  { id: 5,  name: '大厂写字楼', district: 'east', rules: [
+    { text: '坐姿必须保持端正', cost: '-1' },
+    { text: '不能触碰手机', cost: '-1' }
+  ]},
+  { id: 6,  name: '菜市场',     district: 'east', rules: [
+    { text: '不能说数字', cost: '-1' },
+    { text: '不能明显地思考或计算', cost: '-3', limit: '每回合每人可触发两次' }
+  ]},
+  { id: 7,  name: '大排档',     district: 'west', rules: [
+    { text: '每回合获取物资阶段必须选择探索地图获取物资', cost: '-3' },
+    { text: '每人每回合结算前必须使用食品物资卡', cost: '-2', limit: '每回合每人最多一次' }
+  ]},
+  { id: 8,  name: '羽毛球馆',   district: 'west', rules: [
+    { text: '发言结束后必须做出打羽毛球中挥舞拍子的动作', cost: '-1' },
+    { text: '任何一个别人做出挥舞拍子的动作后必须做出挥舞拍子的动作', cost: '-1', limit: '每回合每人最多三次' }
+  ]},
+  { id: 9,  name: '市博物馆',   district: 'west', rules: [
+    { text: '不能有任何动作', cost: '-1', limit: '每回合每人最多两次' },
+    { text: '不能抬起胳膊', cost: '-1' }
+  ]},
+  { id: 10, name: '商业步行街', district: 'west', rules: [
+    { text: '不能在回合结算前不使用任何物资卡', cost: '-2', limit: '每回合每人一次' },
+    { text: '不能拒绝别人的要求', cost: '-2' }
+  ]},
+  { id: 11, name: '网吧',       district: 'west', rules: [
+    { text: '发言时必须做出敲击键盘的样子', cost: '-1' },
+    { text: '坐姿必须保持懒散', cost: '-1' }
+  ]},
+  { id: 12, name: 'KTV',        district: 'west', rules: [
+    { text: '说话必须唱出来', cost: '-2', limit: '每回合每人最多两次（公开规则无限制）' },
+    { text: '一个人说话时其他人不能发出差不多分贝的声音·不能抢麦', cost: '-3' }
+  ]}
+];
+
+// ========================================
+// Global State
+// ========================================
+let mapSetup = null; // { [id]: { supplies: int, hasEvent: bool, hasGhost: bool, diceRolls: [] } }
+let supplyDeck = []; // Remaining supply cards in deck (NOT drawn yet)
+let counterDeck = []; // Remaining countermeasure cards in deck
+
+// ========================================
+// Dice Utility
+// ========================================
+const DICE_FACES = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+
+function roll1D6() { return Math.floor(Math.random() * 6) + 1; }
+function roll2D6() { return roll1D6() + roll1D6(); }
+
+function getDiceForPlayerCount(count) {
+  const n = parseInt(count);
+  if (n <= 9) {
+    const val = roll1D6();
+    return { rolls: [val], total: val, type: '1D6', is1D6: true };
+  } else {
+    const r1 = roll1D6(), r2 = roll1D6();
+    return { rolls: [r1, r2], total: r1 + r2, type: '2D6', is1D6: false };
+  }
+}
+
+function renderDiceHTML(diceResult) {
+  const faces = diceResult.rolls.map(r => DICE_FACES[r - 1]).join(' ');
+  return `<span class="dice-row">
+    <span class="dice-face">${faces}</span>
+    <span class="dice-total">= ${diceResult.total}</span>
+    <span style="font-size:0.72rem;color:var(--text-muted);">(${diceResult.type})</span>
+  </span>`;
+}
+
+// ========================================
+// Card Deck Builder
+// ========================================
+function buildSupplyDeck() {
+  const deck = [];
+  if (typeof CARD_DB !== 'undefined' && CARD_DB.supplies) {
+    CARD_DB.supplies.forEach(card => {
+      for (let i = 0; i < (card.copies || 1); i++) {
+        deck.push({ ...card, _uid: card.id + '_' + i });
+      }
+    });
+  }
+  // Shuffle (Fisher-Yates)
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+function buildCounterDeck() {
+  const deck = [];
+  if (typeof CARD_DB !== 'undefined' && CARD_DB.countermeasures) {
+    CARD_DB.countermeasures.forEach(card => {
+      for (let i = 0; i < (card.copies || 1); i++) {
+        deck.push({ ...card, _uid: card.id + '_' + i });
+      }
+    });
+  }
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+function drawCards(deck, count) {
+  const drawn = [];
+  for (let i = 0; i < count && deck.length > 0; i++) {
+    drawn.push(deck.pop());
+  }
+  return drawn;
+}
+
+function renderMiniCard(card, cls) {
+  return `<div class="mini-card ${cls}-card">
+    <div class="mini-name">${card.name}</div>
+    <div class="mini-level">${card.level || ''}${card.copies > 1 ? ' · 牌库库存' + card.copies + '张' : ''}</div>
+    <div class="mini-effect">${card.effect || ''}</div>
+    ${card.flavor ? `<div class="mini-copies" style="color:var(--text-muted);font-style:italic;">${card.flavor.substring(0, 50)}…</div>` : ''}
+  </div>`;
+}
+
+// ========================================
+// Player Count Badge Updates
+// ========================================
+function updatePlayerCountBadge() {
+  const sel = document.getElementById('setupPlayerCount');
+  const badge = document.getElementById('pcBadgeSetup');
+  updateBadge(sel, badge);
+}
+
+function updateExplorerBadge() {
+  const sel = document.getElementById('explorePlayerCount');
+  const badge = document.getElementById('pcBadgeExplore');
+  updateBadge(sel, badge);
+}
+
+function updateBadge(select, badge) {
+  const n = parseInt(select.value);
+  if (n <= 9) {
+    badge.textContent = '🎲 1D6 (1~6)';
+    badge.className = 'player-count-info d6';
+  } else {
+    badge.textContent = '🎲🎲 2D6 (2~12)';
+    badge.className = 'player-count-info d12';
+  }
+}
+
+// ========================================
+// Render Location Cards
+// ========================================
+function getRuleIconClass(cost) {
+  const n = parseInt(cost);
+  if (n <= -3) return 't1';
+  if (n === -2) return 't2';
+  return 't3';
+}
+
+function renderLocationCard(loc) {
+  const setup = mapSetup ? mapSetup[loc.id] : null;
+  
+  let statusHTML = '';
+  if (setup) {
+    const diceInfo = setup.diceResult ? `（${setup.diceResult.type} → ${setup.diceResult.total}）` : '';
+    statusHTML = `<div class="loc-status">
+      <span class="status-badge supply">📦 ×${setup.supplies} ${diceInfo}</span>
+      <span class="status-badge ${setup.hasEvent ? 'event' : 'no-event'}">${setup.hasEvent ? '⚡ 事件' : '—'}</span>
+      <span class="status-badge ${setup.hasGhost ? 'ghost' : 'no-ghost'}">${setup.hasGhost ? '👻 有鬼' : '—'}</span>
+    </div>`;
+  }
+
+  const rulesHTML = loc.rules.map(r => `
+    <div class="rule-item">
+      <span class="rule-icon ${getRuleIconClass(r.cost)}">${r.cost}</span>
+      <span class="rule-text">${r.text}${r.limit ? ' <span style="color:var(--text-muted);font-size:0.72rem;">[' + r.limit + ']</span>' : ''}</span>
+    </div>
+  `).join('');
+
+  return `
+    <div class="location-card ${loc.district}-card" data-loc="${loc.id}" onclick="selectExploreLocation(${loc.id})">
+      <div class="loc-header">
+        <span class="loc-num">${loc.id}</span>
+        <span class="loc-name">${loc.name}</span>
+        <span class="loc-district ${loc.district}-tag">${loc.district === 'east' ? '东区' : '西区'}</span>
+      </div>
+      ${statusHTML}
+      <div class="rules-list">${rulesHTML}</div>
+    </div>
+  `;
+}
+
+function renderAllCards() {
+  const eastLocs = locations.filter(l => l.district === 'east');
+  const westLocs = locations.filter(l => l.district === 'west');
+  document.getElementById('eastGrid').innerHTML = eastLocs.map(renderLocationCard).join('');
+  document.getElementById('westGrid').innerHTML = westLocs.map(renderLocationCard).join('');
+}
+
+// ========================================
+// Highlight & Scroll
+// ========================================
+function highlightLocation(id) {
+  document.querySelectorAll('.location-card').forEach(c => c.classList.remove('highlight'));
+  document.querySelectorAll('.map-marker').forEach(m => m.classList.remove('active', 'pulse'));
+  
+  const card = document.querySelector(`.location-card[data-loc="${id}"]`);
+  const marker = document.getElementById(`marker-${id}`);
+  
+  if (card) {
+    card.classList.add('highlight');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if (marker) {
+    marker.classList.add('active', 'pulse');
+    setTimeout(() => marker.classList.remove('pulse'), 2500);
+  }
+}
+
+// ========================================
+// Map Markers
+// ========================================
+function createMapMarkers() {
+  const overlay = document.getElementById('mapOverlay');
+  const img = document.getElementById('mapImage');
+  
+  if (!img.complete) {
+    img.onload = placeMarkers;
+  } else {
+    placeMarkers();
+  }
+  
+  function placeMarkers() {
+    overlay.innerHTML = '';
+    locations.forEach(loc => {
+      const pos = MARKER_POSITIONS[loc.id] || { x: 50, y: 50 };
+      
+      const marker = document.createElement('div');
+      marker.className = 'map-marker';
+      marker.id = `marker-${loc.id}`;
+      marker.style.left = pos.x + '%';
+      marker.style.top = pos.y + '%';
+      marker.title = `${loc.id}. ${loc.name}`;
+      
+      marker.innerHTML = `
+        <span class="label">${loc.id}. ${loc.name}</span>
+        <div class="dot">
+          <span class="num">${loc.id}</span>
+        </div>
+      `;
+      
+      marker.addEventListener('click', () => selectExploreLocation(loc.id));
+      overlay.appendChild(marker);
+    });
+  }
+}
+
+// ========================================
+// Utility: Get cost label/class
+// ========================================
+function getCostLabel(cost) {
+  const n = parseInt(cost);
+  return n <= -3 ? 'T1 (重度)' : n === -2 ? 'T2 (中度)' : 'T3 (轻度)';
+}
+function getCostClass(cost) {
+  const n = parseInt(cost);
+  return n <= -3 ? 't1' : n === -2 ? 't2' : 't3';
+}
+
+// ========================================
+// Day 1 Setup
+// ========================================
+function rollDay1Setup() {
+  const playerCount = parseInt(document.getElementById('setupPlayerCount').value);
+  supplyDeck = buildSupplyDeck();
+  counterDeck = buildCounterDeck();
+  mapSetup = {};
+  
+  locations.forEach(loc => {
+    // Step 1: Supplies — dice roll based on player count
+    const diceResult = getDiceForPlayerCount(playerCount);
+    
+    // Step 2: Event (coin flip — heads/人面 = yes)
+    const hasEvent = Math.random() < 0.5;
+    
+    // Step 3: Ghost (coin flip — tails/鬼面 = yes) — only for locations with events
+    const hasGhost = hasEvent ? (Math.random() < 0.5) : false;
+    
+    mapSetup[loc.id] = {
+      supplies: diceResult.total,
+      diceResult: diceResult,
+      hasEvent,
+      hasGhost,
+      playerCount
+    };
+  });
+  
+  // Update UI
+  renderAllCards();
+  updateExploreLocationDropdown();
+  
+  // Enable explore
+  document.getElementById('btnExplore').disabled = false;
+  document.getElementById('exploreResult').innerHTML = '选择一个地点和人数，点击「开始探索」模拟完整流程……';
+  document.getElementById('exploreResult').className = 'sim-result';
+  
+  // Show reset
+  document.getElementById('btnResetSetup').style.display = 'inline-flex';
+  
+  // Render summary
+  renderSetupSummary();
+}
+
+function renderSetupSummary() {
+  const resultDiv = document.getElementById('day1Result');
+  resultDiv.className = 'sim-result active';
+  
+  let eventCount = 0, ghostCount = 0, totalSupplies = 0;
+  locations.forEach(loc => {
+    const s = mapSetup[loc.id];
+    if (s.hasEvent) eventCount++;
+    if (s.hasGhost) ghostCount++;
+    totalSupplies += s.supplies;
+  });
+
+  const diceType = mapSetup[Object.keys(mapSetup)[0]]?.diceResult?.type || '?';
+  const playerCount = mapSetup[Object.keys(mapSetup)[0]]?.playerCount || '?';
+  
+  const eastLocs = locations.filter(l => l.district === 'east');
+  const westLocs = locations.filter(l => l.district === 'west');
+  
+  function renderSetupItems(locs) {
+    return locs.map(loc => {
+      const s = mapSetup[loc.id];
+      const diceHTML = s.diceResult ? renderDiceHTML(s.diceResult) : '';
+      let ghostTag;
+      if (s.hasGhost) ghostTag = '<span class="si-tag ghost-yes">👻有鬼</span>';
+      else if (s.hasEvent) ghostTag = '<span class="si-tag ghost-no">无鬼</span>';
+      else ghostTag = '<span class="si-tag ghost-na">—</span>';
+      
+      return `
+        <div class="setup-item">
+          <span class="si-num">${loc.id}</span>
+          <span class="si-name">${loc.name}</span>
+          <span class="si-stats">
+            <span class="si-tag supplies">${diceHTML} 📦${s.supplies}</span>
+            <span class="si-tag ${s.hasEvent ? 'event-yes' : 'event-no'}">${s.hasEvent ? '⚡事件' : '—'}</span>
+            ${ghostTag}
+          </span>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  resultDiv.innerHTML = `
+    <div style="display:flex;align-items:center;gap:var(--space-lg);flex-wrap:wrap;margin-bottom:var(--space-sm);">
+      <span style="color:var(--text-muted);">👥 ${playerCount}人局 · ${diceType} · 统计：</span>
+      <span style="font-weight:700;color:var(--color-rule-glow);">📦 总物资 ${totalSupplies}</span>
+      <span style="font-weight:700;color:var(--color-counter-glow);">⚡ 含事件地点 ${eventCount}/12</span>
+      <span style="font-weight:700;color:var(--color-whisper-glow);">👻 有鬼地点 ${ghostCount}/12</span>
+    </div>
+    <div style="width:100%;">
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--space-sm);font-weight:700;">东区</div>
+      <div class="setup-grid" style="margin-bottom:var(--space-md);">${renderSetupItems(eastLocs)}</div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--space-sm);font-weight:700;">西区</div>
+      <div class="setup-grid">${renderSetupItems(westLocs)}</div>
+    </div>
+  `;
+}
+
+function resetDay1Setup() {
+  mapSetup = null;
+  supplyDeck = [];
+  counterDeck = [];
+  renderAllCards();
+  updateExploreLocationDropdown();
+  document.getElementById('btnExplore').disabled = true;
+  document.getElementById('btnResetSetup').style.display = 'none';
+  document.getElementById('day1Result').className = 'sim-result';
+  document.getElementById('day1Result').innerHTML = '选择人数 → 点击「生成」按钮 → 市长掷骰子对12个地点执行三判定……';
+  document.getElementById('exploreResult').className = 'sim-result';
+  document.getElementById('exploreResult').innerHTML = '请先完成「第1天黎明地图设置」……';
+}
+
+// ========================================
+// Exploration Dropdown
+// ========================================
+function updateExploreLocationDropdown() {
+  const select = document.getElementById('exploreLocation');
+  select.innerHTML = locations.map(loc => {
+    const districtLabel = loc.district === 'east' ? '东区' : '西区';
+    return `<option value="${loc.id}">${loc.id}. ${districtLabel} · ${loc.name}</option>`;
+  }).join('');
+}
+
+function selectExploreLocation(id) {
+  const dropdown = document.getElementById('exploreLocation');
+  if (dropdown) dropdown.value = id;
+  highlightLocation(id);
+  if (mapSetup) {
+    document.getElementById('exploreSim').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    document.getElementById('day1Setup').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ========================================
+// Exploration Simulator with Real Card Drawing
+// ========================================
+function executeExplore() {
+  if (!mapSetup) return;
+  if (supplyDeck.length === 0) supplyDeck = buildSupplyDeck();
+  if (counterDeck.length === 0) counterDeck = buildCounterDeck();
+  
+  const locId = parseInt(document.getElementById('exploreLocation').value);
+  const playerType = document.getElementById('explorePlayerType').value;
+  const playerCount = parseInt(document.getElementById('explorePlayerCount').value);
+  const loc = locations.find(l => l.id === locId);
+  const setup = mapSetup[locId];
+  
+  const resultDiv = document.getElementById('exploreResult');
+  resultDiv.className = 'sim-result active';
+  
+  const districtLabel = loc.district === 'east' ? '东区' : '西区';
+  const diceType = playerCount <= 9 ? '1D6' : '2D6';
+  
+  // Draw actual cards
+  let drawnSupplies = [];
+  let drawnCounter = null;
+  
+  if (setup.supplies > 0) {
+    drawnSupplies = drawCards(supplyDeck, setup.supplies);
+  }
+  if (setup.hasEvent) {
+    const counterDraw = drawCards(counterDeck, 1);
+    if (counterDraw.length > 0) drawnCounter = counterDraw[0];
+  }
+  
+  // === Build Card Draw Panel (right side) ===
+  let panelHTML = '';
+  panelHTML = `<div class="card-draw-panel">
+    <h3>🂠 本次探索抽卡结果</h3>
+    <div class="draw-stats">
+      <span class="draw-stat supply">📦 物资牌库剩余 ${supplyDeck.length} 张</span>
+      <span class="draw-stat counter">⚡ 反击牌库剩余 ${counterDeck.length} 张</span>
+    </div>`;
+  
+  // Supply cards section
+  panelHTML += `<div class="draw-section">
+    <div class="draw-label">📦 物资卡 · 抽了 ${drawnSupplies.length} 张</div>`;
+  if (drawnSupplies.length === 0) {
+    panelHTML += `<div class="draw-cards-empty">${setup.supplies > 0 ? '牌库已空！' : '该地点物资数量为 0，无事发生'}</div>`;
+  } else {
+    panelHTML += drawnSupplies.map(c => renderMiniCard(c, 'supply')).join('');
+  }
+  panelHTML += `</div>`;
+  
+  // Countermeasure section
+  panelHTML += `<div class="draw-section">
+    <div class="draw-label">⚡ 反击卡 · ${drawnCounter ? '抽了 1 张' : '无'}</div>`;
+  if (drawnCounter) {
+    panelHTML += renderMiniCard(drawnCounter, 'counter');
+  } else if (setup.hasEvent) {
+    panelHTML += `<div class="draw-cards-empty">反击牌库已空！</div>`;
+  } else {
+    panelHTML += `<div class="draw-cards-empty">该地点不含事件，无事发生</div>`;
+  }
+  panelHTML += `</div>`;
+  
+  // Ghost section
+  if (setup.hasGhost) {
+    panelHTML += `<div class="draw-section">
+      <div class="draw-label">👻 撞鬼 · 特殊规则激活</div>
+      ${loc.rules.map(r => `<div class="mini-card supply-card" style="padding:var(--space-sm) var(--space-md);">
+        <div class="mini-name">${r.text}</div>
+        <div class="mini-level">代价 ${r.cost} · ${r.limit || '无限制'}</div>
+      </div>`).join('')}
+    </div>`;
+  }
+  
+  // === Build Steps (left side) ===
+  let stepsHTML = '';
+  
+  // Step 0: Declaration
+  stepsHTML += `
+    <div class="explore-step">
+      <span class="step-icon">📢</span>
+      <div class="step-body">
+        <div class="step-label">步骤 0</div>
+        <div class="step-title">公开宣言 · 选择地图探索</div>
+        <div class="step-detail">${playerType === 'turn' ? '回合玩家' : '非回合玩家（通过技能/卡牌效果）'}公开宣言：放弃官方补给，选择探索 <strong>${districtLabel}·${loc.name}</strong></div>
+      </div>
+    </div>`;
+  
+  // Step 1: Health -1
+  stepsHTML += `
+    <div class="explore-step">
+      <span class="step-icon">❤️‍🩹</span>
+      <div class="step-body">
+        <div class="step-label">步骤 1</div>
+        <div class="step-title">健康 -1（探索耗费体力）</div>
+        <div class="step-detail">给自己放置一枚 <strong style="color:var(--color-whisper-glow);">健康-1指示物</strong>。探索总是有代价的。</div>
+      </div>
+    </div>`;
+  
+  // Step 2a: Supplies
+  if (drawnSupplies.length > 0) {
+    const supplyDetail = `已从物资牌库顶抽取 ${drawnSupplies.length} 张（牌库剩余 ${supplyDeck.length} 张）：<br>
+            ${drawnSupplies.map(c => `<span style="display:inline-block;margin:2px 4px;padding:2px 6px;background:rgba(200,146,62,0.12);border-radius:var(--radius-sm);font-size:0.78rem;">${c.name}（${c.effect}）</span>`).join(' ')}`;
+    
+    stepsHTML += `
+      <div class="explore-step current">
+        <span class="step-icon">📦</span>
+        <div class="step-body">
+          <div class="step-label">步骤 2a</div>
+          <div class="step-title">物资获取：掷${diceType} → 🎲 <strong style="color:var(--color-rule-glow);">${setup.diceResult.total}点</strong> → 抽 <strong>${drawnSupplies.length}</strong> 张物资卡</div>
+          <div class="step-detail">${supplyDetail}</div>
+        </div>
+      </div>`;
+  } else {
+    stepsHTML += `
+      <div class="explore-step">
+        <span class="step-icon">📦</span>
+        <div class="step-body">
+          <div class="step-label">步骤 2a</div>
+          <div class="step-title">物资获取：掷${diceType} → ${setup.diceResult.total}点 → 但${setup.supplies > 0 ? '牌库已空' : '该地点物资数量为 0'}，无物资可获取</div>
+          <div class="step-detail">${setup.supplies > 0 ? '物资牌库已耗尽！需要重洗弃牌堆。' : '该地点在第1天黎明设置中物资数量为 0。'}</div>
+        </div>
+      </div>`;
+  }
+  
+  // Step 2b: Event
+  if (setup.hasEvent) {
+    if (drawnCounter) {
+      const counterDetail = `<strong>${drawnCounter.name}</strong>（${drawnCounter.level || ''}）<br>
+              ${drawnCounter.effect || ''}<br>
+              <span style="color:var(--text-muted);font-size:0.78rem;">按反击卡流程：获取 → 置于未激活区 → 等待激活时机。</span>`;
+      
+      stepsHTML += `
+        <div class="explore-step current">
+          <span class="step-icon">⚡</span>
+          <div class="step-body">
+            <div class="step-label">步骤 2b</div>
+            <div class="step-title">事件判定：掷硬币 → <strong style="color:var(--color-counter-glow);">人面（是）</strong> → 抽到反击卡</div>
+            <div class="step-detail">${counterDetail}</div>
+          </div>
+        </div>`;
+    } else {
+      stepsHTML += `
+        <div class="explore-step">
+          <span class="step-icon">⚡</span>
+          <div class="step-body">
+            <div class="step-label">步骤 2b</div>
+            <div class="step-title">事件判定：掷硬币 → 人面（是） → 但反击牌库已空！</div>
+            <div class="step-detail">需要重洗弃牌堆。</div>
+          </div>
+        </div>`;
+    }
+  } else {
+    stepsHTML += `
+      <div class="explore-step">
+        <span class="step-icon">⚡</span>
+        <div class="step-body">
+          <div class="step-label">步骤 2b</div>
+          <div class="step-title">事件判定：掷硬币 → <strong style="color:var(--text-muted);">鬼面（否）</strong></div>
+          <div class="step-detail">该地点不含事件。无事发生。</div>
+        </div>
+      </div>`;
+  }
+  
+  // Step 2c: Ghost
+  if (setup.hasGhost) {
+    stepsHTML += `
+      <div class="explore-step ghost-hit">
+        <span class="step-icon">👻</span>
+        <div class="step-body">
+          <div class="step-label">步骤 2c</div>
+          <div class="step-title">鬼判定：掷硬币 → <strong style="color:var(--color-whisper-glow);">鬼面（是）⚠️ 撞鬼！</strong></div>
+          <div class="step-detail">第1天黎明设置中该地点有鬼！触发撞鬼处理……</div>
+        </div>
+      </div>`;
+    
+    if (playerType === 'turn') {
+      stepsHTML += `
+        <div class="consequence-banner turn-ghost">
+          🛡️ 回合玩家撞鬼（主角光环）：
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-sm);width:100%;margin-top:var(--space-xs);">
+          <div style="display:flex;align-items:flex-start;gap:var(--space-sm);padding:var(--space-sm) var(--space-md);background:rgba(192,57,43,0.06);border-radius:var(--radius-sm);">
+            <span style="font-size:1.1rem;">1️⃣</span>
+            <span><strong style="color:var(--color-whisper-glow);">理智 -1</strong>：给自己放置一枚理智-1指示物。虽然可怕，但你挺住了。</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:var(--space-sm);padding:var(--space-sm) var(--space-md);background:rgba(192,57,43,0.06);border-radius:var(--radius-sm);">
+            <span style="font-size:1.1rem;">2️⃣</span>
+            <span><strong style="color:var(--color-whisper-glow);">特殊规则激活</strong>：从规则牌库中检索出 <strong>${loc.name}</strong> 绑定的2条特殊规则，置于公开规则栏「影响全体」分区，立刻生效（鬼也必须遵守）。若规则已被其他途径抽走/弃置，则无法补上。</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:var(--space-sm);padding:var(--space-sm) var(--space-md);background:rgba(46,134,193,0.06);border-radius:var(--radius-sm);">
+            <span style="font-size:1.1rem;">3️⃣</span>
+            <span><strong style="color:var(--color-counter-glow);">不被同化</strong>：回合玩家有"主角保护"，不会变成鬼。你带着伤继续游戏。</span>
+          </div>
+        </div>`;
+    } else {
+      const survivingHumans = Math.floor(Math.random() * 8) + 2;
+      stepsHTML += `
+        <div class="consequence-banner non-turn-ghost">
+          💀 非回合玩家撞鬼 → 化为恶鬼！
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-sm);width:100%;margin-top:var(--space-xs);">
+          <div style="display:flex;align-items:flex-start;gap:var(--space-sm);padding:var(--space-sm) var(--space-md);background:rgba(192,57,43,0.08);border-radius:var(--radius-sm);">
+            <span style="font-size:1.1rem;">1️⃣</span>
+            <span><strong style="color:var(--color-whisper-glow);">被同化</strong>：你立刻变成<strong style="color:var(--color-whisper-glow);">恶鬼</strong>。角色卡替换、物资卡按同化流程处理。</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:var(--space-sm);padding:var(--space-sm) var(--space-md);background:rgba(192,57,43,0.08);border-radius:var(--radius-sm);">
+            <span style="font-size:1.1rem;">2️⃣</span>
+            <span><strong style="color:var(--color-whisper-glow);">恶鬼面板</strong>：理智上限 5/5 · 抽取隐藏规则数 = 存活人类数（模拟值：<strong>${survivingHumans}</strong>）</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:var(--space-sm);padding:var(--space-sm) var(--space-md);background:rgba(192,57,43,0.08);border-radius:var(--radius-sm);">
+            <span style="font-size:1.1rem;">3️⃣</span>
+            <span><strong style="color:var(--color-whisper-glow);">特殊规则激活</strong>：${loc.name}绑定的2条特殊规则检索公开。</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:var(--space-sm);padding:var(--space-sm) var(--space-md);background:rgba(192,57,43,0.12);border-radius:var(--radius-sm);border:1px solid rgba(192,57,43,0.2);">
+            <span style="font-size:1.1rem;">⚠️</span>
+            <span><strong>恶鬼代价</strong>：理智只有5，每回合不用规则侵蚀人类就 -2理智。</span>
+          </div>
+        </div>`;
+    }
+    
+    stepsHTML += `
+      <div style="width:100%;">
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--space-sm);">📜 ${loc.name} 绑定的特殊规则：</div>
+        <div class="revealed-rules">
+          ${loc.rules.map(r => `
+            <div class="rule-item" style="background:rgba(192,57,43,0.08);border-color:rgba(192,57,43,0.2);">
+              <span class="rule-icon ${getCostClass(r.cost)}">${r.cost}</span>
+              <span class="rule-text" style="color:var(--text-primary);">${r.text}${r.limit ? ' <span style="color:var(--text-muted);font-size:0.72rem;">[' + r.limit + ']</span>' : ''}</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${getCostLabel(r.cost)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  } else {
+    stepsHTML += `
+      <div class="explore-step">
+        <span class="step-icon">👻</span>
+        <div class="step-body">
+          <div class="step-label">步骤 2c</div>
+          <div class="step-title">鬼判定：${setup.hasEvent ? '掷硬币 → <strong style="color:var(--color-counter-glow);">人面（否）</strong>' : '<strong style="color:var(--text-muted);">跳过</strong>（该地点不含事件 → 无鬼判定）'}</div>
+          <div class="step-detail">${setup.hasEvent ? '有事件但无鬼。安全探索！' : '该地点不含事件，按规则不进行鬼判定。安全！'}</div>
+        </div>
+      </div>
+      <div class="consequence-banner safe">
+        ✅ 安全探索：物资和事件（如有）照常获取，没有撞鬼。
+      </div>`;
+  }
+  
+  // Assemble layout
+  resultDiv.innerHTML = `<div class="explore-layout">
+    <div class="explore-steps">${stepsHTML}</div>
+    ${panelHTML}
+  </div>`;
+  
+  highlightLocation(locId);
+  document.getElementById('exploreSim').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ========================================
+// Ghost Simulator (Day 0)
+// ========================================
+function rollGhost() {
+  const players = parseInt(document.getElementById('simPlayers').value);
+  let zone = document.getElementById('simZone').value;
+  
+  if (zone === 'auto') {
+    zone = players <= 8 ? (Math.random() < 0.5 ? 'east' : 'west') : 'both';
+  }
+  
+  let possibleLocations;
+  if (zone === 'both') {
+    possibleLocations = locations;
+  } else {
+    possibleLocations = locations.filter(l => l.district === zone);
+  }
+  
+  const roll = Math.floor(Math.random() * 12) + 1;
+  let selectedLocation;
+  
+  if (zone === 'both') {
+    const mappedId = ((roll - 1) % 6) + 1;
+    const pair = locations.filter(l => l.id === mappedId || l.id === mappedId + 6);
+    const coinFlip = Math.random() < 0.5;
+    selectedLocation = coinFlip ? pair[0] : pair[1];
+  } else {
+    const mappedId = ((roll - 1) % 6) + 1;
+    const zoneLocs = locations.filter(l => l.district === zone);
+    selectedLocation = zoneLocs.find(l => l.id === mappedId) || zoneLocs.find(l => l.id === mappedId + 6);
+    if (!selectedLocation) {
+      selectedLocation = zoneLocs[mappedId - 1];
+    }
+  }
+  
+  if (!selectedLocation) {
+    selectedLocation = possibleLocations[0];
+  }
+  
+  const zoneLabel = zone === 'east' ? '仅东区' : zone === 'west' ? '仅西区' : '双区开放';
+  const resultDiv = document.getElementById('simResult');
+  
+  resultDiv.className = 'sim-result active';
+  resultDiv.innerHTML = `
+    <div style="display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;">
+      <span style="color:var(--text-muted);">🎲 掷出点数：<strong style="color:var(--text-primary);">${roll}</strong></span>
+      <span style="color:var(--text-muted);">开放区域：<strong style="color:var(--text-primary);">${zoneLabel}</strong></span>
+      <span style="color:var(--text-muted);">${zone === 'both' ? '🏅 硬币裁定' : ''}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;">
+      <span style="color:var(--text-muted);">闹鬼地点：</span>
+      <span class="ghost-location">📍 ${selectedLocation.district === 'east' ? '东区' : '西区'} · ${selectedLocation.name}（#${selectedLocation.id}）</span>
+    </div>
+    <div style="color:var(--color-whisper-glow);font-size:0.85rem;margin-top:var(--space-xs);">
+      ⚠️ 以下特殊规则已检索公开，立即生效（鬼也必须遵守，可被质询）：
+    </div>
+    <div class="revealed-rules">
+      ${selectedLocation.rules.map(r => `
+        <div class="rule-item" style="background:rgba(192,57,43,0.08);border-color:rgba(192,57,43,0.2);">
+          <span class="rule-icon ${getCostClass(r.cost)}">${r.cost}</span>
+          <span class="rule-text" style="color:var(--text-primary);">${r.text}${r.limit ? ' <span style="color:var(--text-muted);font-size:0.72rem;">[' + r.limit + ']</span>' : ''}</span>
+          <span style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${getCostLabel(r.cost)}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  
+  highlightLocation(selectedLocation.id);
+}
+
+// ========================================
+// Init
+// ========================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderAllCards();
+  createMapMarkers();
+  updateExploreLocationDropdown();
+  updatePlayerCountBadge();
+  updateExplorerBadge();
+  
+  // Ghost simulator
+  document.getElementById('simRoll').addEventListener('click', rollGhost);
+  
+  // Day 1 setup
+  document.getElementById('btnDay1Setup').addEventListener('click', rollDay1Setup);
+  document.getElementById('btnResetSetup').addEventListener('click', resetDay1Setup);
+  
+  // Exploration
+  document.getElementById('btnExplore').addEventListener('click', executeExplore);
+  
+  // Mobile nav toggle
+  const navToggle = document.querySelector('.nav-toggle');
+  const navLinks = document.querySelector('.nav-links');
+  if (navToggle && navLinks) {
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+    });
+  }
+});
+</script>
+
+</body>
+</html>

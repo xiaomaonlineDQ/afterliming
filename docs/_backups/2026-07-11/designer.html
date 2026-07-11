@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设计师对话 — 黎明之后</title>
+<meta name="description" content="《黎明之后》设计幕后：产品报告、概念关系图、抽卡概率分析、游戏流程图集。深入了解这款规则怪谈桌游的设计哲学。">
+<link rel="stylesheet" href="css/main.css?v=2026071017">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container page-section">
+  <h1 style="margin-bottom:var(--space-sm);">设计师对话</h1>
+  <p style="color:var(--text-secondary);margin-bottom:var(--space-xl);">
+    深入了解《黎明之后》的设计哲学、数据分析和幕后思考。
+    这些内容来自设计过程中积累的产出物，面向<strong style="color:var(--text-accent);">出版方、投资人、资深玩家</strong>。
+  </p>
+
+  <div class="designer-grid">
+
+    <!-- Card 1: 产品报告 -->
+    <div class="design-card" id="product-report">
+      <div class="dc-header">
+        <div class="dc-icon purple">📊</div>
+        <div>
+          <div class="dc-title">产品报告</div>
+          <div class="dc-subtitle">设计哲学 · 竞争分析 · 市场定位</div>
+        </div>
+      </div>
+      <div class="dc-body">
+        <p style="margin-bottom:var(--space-md);">
+          一份12页的完整产品演示，面向出版方和投资人。涵盖游戏核心理念、四维规则骨架、
+          双维属性系统、AI市长创新、卡牌生态体系、角色设计方法论和市场竞争差异化分析。
+        </p>
+        <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-bottom:var(--space-md);">
+          <span class="dc-tag">封面概览</span>
+          <span class="dc-tag">设计哲学</span>
+          <span class="dc-tag">规则骨架</span>
+          <span class="dc-tag">卡牌生态</span>
+          <span class="dc-tag">竞争分析</span>
+          <span class="dc-tag">路线图</span>
+        </div>
+        <details style="margin-top:var(--space-md);">
+          <summary style="cursor:pointer;color:var(--color-counter);font-weight:600;">查看设计哲学摘要</summary>
+          <div style="margin-top:var(--space-md);padding:var(--space-md);background:var(--bg-surface);border-radius:var(--radius-md);line-height:1.8;">
+            <p style="margin-bottom:var(--space-md);"><strong>核心设计理念：规则即敌人</strong></p>
+            <p>大多数桌游中的"规则"是约束玩家的框架。在《黎明之后》中，规则本身就是敌人——
+              它们是鬼的武器，是隐藏的陷阱，是人类必须推理和抹除的目标。</p>
+            <p style="margin-top:var(--space-md);"><strong>四层创新：</strong></p>
+            <ul style="padding-left:var(--space-lg);color:var(--text-secondary);">
+              <li><strong>规则维度：</strong>52张规则卡构成动态规则引擎，鬼持有隐藏规则，人类通过宣言推理抹除</li>
+              <li><strong>宣言维度：</strong>"宣言即合法"原则——玩家互相监督，市长只记录不做法官</li>
+              <li><strong>双维维度：</strong>健康值+理智值的双轨求生，任一归零即出局（死亡/化鬼）</li>
+              <li><strong>AI维度：</strong>AI市长接管叙事和裁判，真人市长用AI辅助——降低主持门槛</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+        <a href="产品报告.html" class="btn btn-primary" style="display:inline-flex;margin-top:var(--space-sm);">
+          查看产品报告 →
+        </a>
+      </div>
+      <div class="dc-footer">
+        <span class="dc-tag">12页完整演示</span>
+        <span style="font-size:0.8rem;color:var(--text-muted);">独立HTML · 已生成</span>
+      </div>
+    </div>
+
+    <!-- Card 2: 概念关系图 -->
+    <div class="design-card" id="concept-map">
+      <div class="dc-header">
+        <div class="dc-icon amber">🔗</div>
+        <div>
+          <div class="dc-title">概念关系图</div>
+          <div class="dc-subtitle">机制网络 · 卡牌交互 · 系统全景</div>
+        </div>
+      </div>
+      <div class="dc-body">
+        <p style="margin-bottom:var(--space-md);">
+          可视化展示《黎明之后》全系统的概念关系网络：五大卡牌类型如何交互、
+          双维属性如何联动、人类与鬼的对抗如何在机制层面形成闭环。
+        </p>
+        <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-bottom:var(--space-md);">
+          <span class="dc-tag">角色↔卡牌</span>
+          <span class="dc-tag">人类↔鬼</span>
+          <span class="dc-tag">宣言↔质询</span>
+          <span class="dc-tag">健康↔理智</span>
+          <span class="dc-tag">AI市长中枢</span>
+        </div>
+        <details style="margin-top:var(--space-md);">
+          <summary style="cursor:pointer;color:var(--color-counter);font-weight:600;">查看核心关系摘要</summary>
+          <div style="margin-top:var(--space-md);padding:var(--space-md);background:var(--bg-surface);border-radius:var(--radius-md);line-height:1.8;">
+            <p style="margin-bottom:var(--space-md);"><strong>三大核心闭环：</strong></p>
+            <ul style="padding-left:var(--space-lg);color:var(--text-secondary);">
+              <li><strong>规则闭环：</strong>鬼设规则 → 人类触犯扣理智 → 人类宣言推理 → 抹除规则 → 鬼更换规则 → 循环</li>
+              <li><strong>生存闭环：</strong>物资消耗扣健康 → 健康归零死亡 → 理智扣罚 → 理智归零化鬼 → 更多鬼加速扣理智 → 恶性循环</li>
+              <li><strong>信息闭环：</strong>AI市长生成故事 → 玩家从故事推理规则 → 宣言验证 → 规则抹除进入公开区 → 市长追加新故事 → 循环</li>
+            </ul>
+            <p style="margin-top:var(--space-md);color:var(--text-muted);font-size:0.85rem;">
+              💡 完整交互式关系图可缩放、点击节点查看详情。
+            </p>
+          </div>
+        </details>
+      </div>
+        <a href="概念关系图.html" class="btn btn-primary" style="display:inline-flex;margin-top:var(--space-sm);">
+          查看概念关系图 →
+        </a>
+      </div>
+      <div class="dc-footer">
+        <span class="dc-tag">交互式可视化</span>
+        <span style="font-size:0.8rem;color:var(--text-muted);">独立HTML · 已生成</span>
+      </div>
+    </div>
+
+    <!-- Card 3: 抽卡概率报告 -->
+    <div class="design-card" id="probability-report">
+      <div class="dc-header">
+        <div class="dc-icon blue">🎲</div>
+        <div>
+          <div class="dc-title">抽卡概率分析</div>
+          <div class="dc-subtitle">数据驱动 · 平衡性验证 · 期望值计算</div>
+        </div>
+      </div>
+      <div class="dc-body">
+        <p style="margin-bottom:var(--space-md);">
+          对《黎明之后》全部卡牌抽取系统进行概率建模：反击卡6条获取途径的期望值、
+          规则卡T1/T2/T3分布、物资卡五等级抽取概率、怪谈卡激活时序分析。
+        </p>
+        <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-bottom:var(--space-md);">
+          <span class="dc-tag">反击卡期望</span>
+          <span class="dc-tag">规则卡分布</span>
+          <span class="dc-tag">物资抽取率</span>
+          <span class="dc-tag">怪谈激活序</span>
+          <span class="dc-tag">平衡性验证</span>
+        </div>
+        <details style="margin-top:var(--space-md);">
+          <summary style="cursor:pointer;color:var(--color-counter);font-weight:600;">查看关键数据</summary>
+          <div style="margin-top:var(--space-md);padding:var(--space-md);background:var(--bg-surface);border-radius:var(--radius-md);line-height:1.8;">
+            <p style="margin-bottom:var(--space-md);"><strong>反击卡6条获取途径期望值（8人局12回合）：</strong></p>
+            <table style="width:100%;font-size:0.85rem;">
+              <tr><th>途径</th><th>单次触发率</th><th>12回合期望</th></tr>
+              <tr><td>A 初始 + 开局抽</td><td>100%</td><td>3张/人</td></tr>
+              <tr><td>B 技能/事件获取</td><td>变数</td><td>~2-4张/局</td></tr>
+              <tr><td>C 不屈（死亡/化鬼）</td><td>触发时100%</td><td>~1-2次/局</td></tr>
+              <tr><td>D 智慧（抹除2/4/6次）</td><td>累积进度</td><td>~0-3次/局</td></tr>
+              <tr><td>E 奖赏（质询成功）</td><td>~30%成功率</td><td>~1-3次/局</td></tr>
+              <tr><td>F 存活（3/6/9/12回合）</td><td>自动触发</td><td>最多4张/人</td></tr>
+            </table>
+            <p style="margin-top:var(--space-md);color:var(--text-accent);font-size:0.85rem;">
+              结论：12回合8人局，人类方平均每人可获得5-8张反击卡，形成充足的策略博弈空间。
+            </p>
+          </div>
+        </details>
+      </div>
+        <a href="抽卡概率报告.html" class="btn btn-primary" style="display:inline-flex;margin-top:var(--space-sm);">
+          查看抽卡概率报告 →
+        </a>
+      </div>
+      <div class="dc-footer">
+        <span class="dc-tag">概率建模报告</span>
+        <span style="font-size:0.8rem;color:var(--text-muted);">独立HTML · 已生成</span>
+      </div>
+    </div>
+
+    <!-- Card 4: 流程图集 -->
+    <div class="design-card" id="flowchart-link">
+      <div class="dc-header">
+        <div class="dc-icon coral">🗺️</div>
+        <div>
+          <div class="dc-title">游戏流程图集</div>
+          <div class="dc-subtitle">6张SVG流程图 · 可缩放交互</div>
+        </div>
+      </div>
+      <div class="dc-body">
+        <p style="margin-bottom:var(--space-md);">
+          涵盖游戏全貌的6张手绘SVG流程图：总时间线、人类生存循环、鬼的杀戮循环、
+          宣言质询博弈、双维属性判定、地图探索全链路。每张图可缩放查看细节。
+        </p>
+        <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-bottom:var(--space-md);">
+          <span class="dc-tag">总时间线</span>
+          <span class="dc-tag">生存循环</span>
+          <span class="dc-tag">杀戮循环</span>
+          <span class="dc-tag">宣言博弈</span>
+          <span class="dc-tag">双维判定</span>
+          <span class="dc-tag">地图探索</span>
+        </div>
+        <a href="flowcharts.html" class="btn btn-primary" style="display:inline-flex;margin-top:var(--space-sm);">
+          查看完整流程图集 →
+        </a>
+      </div>
+      <div class="dc-footer">
+        <span class="dc-tag">6张SVG图</span>
+        <span style="font-size:0.8rem;color:var(--text-muted);">已集成至网站流程图页</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Design Notes Section -->
+  <div class="section-divider"></div>
+
+  <h2 style="text-align:center;margin-bottom:var(--space-xl);">设计笔记</h2>
+  <p style="text-align:center;color:var(--text-muted);margin-bottom:var(--space-2xl);max-width:700px;margin-left:auto;margin-right:auto;">
+    以下是一些设计过程中的关键决策和思考，记录为什么《黎明之后》是现在这个样子。
+  </p>
+
+  <div style="max-width:800px;margin:0 auto;">
+
+    <div class="accordion">
+      <div class="accordion-header">为什么叫"规则怪谈"而不是"恐怖"？</div>
+      <div class="accordion-body">
+        <p>恐怖依赖惊吓，怪谈依赖日常中的异常。</p>
+        <p style="margin-top:var(--space-sm);">我们刻意避开血腥、跳吓等传统恐怖元素，转而营造"日常生活中的规则突然失效"的不安感。电梯无故停在某层、食堂的食物莫名变成灰——这些不是超自然鬼怪，而是<strong>世界本身的秩序被扭曲</strong>。这更贴近东方怪谈传统（如《聊斋》《世界奇妙物语》），也更容易被大众接受。</p>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <div class="accordion-header">"宣言即合法"是怎么来的？</div>
+      <div class="accordion-body">
+        <p>这是整个游戏设计中最关键的哲学转折。</p>
+        <p style="margin-top:var(--space-sm);">早期设计中AI市长需要验证每张卡牌的合法性——这在社交派对场景中不可行（谁能记住156种卡的所有激活条件？）。于是我们转向<strong>"宣言即合法"</strong>原则：玩家自己检查卡牌合法性，相互监督，市长只记录不做法官。</p>
+        <p style="margin-top:var(--space-sm);">这带来了三个好处：①大幅降低AI市长复杂度 ②玩家之间的互相监督本身就是社交互动 ③"滥用卡牌"本身成为一种博弈策略（你可以违规，但被质询就惨了）。</p>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <div class="accordion-header">健康值和理智值的双轨设计</div>
+      <div class="accordion-body">
+        <p>双轨不是装饰——它改变了整个游戏的死亡叙事。</p>
+        <p style="margin-top:var(--space-sm);">大多数生存游戏中"死亡=出局"，但在《黎明之后》中，健康归零=死亡（物理出局），理智归零=化鬼（变成敌人）。这创造了两个完全不同的失败路径和玩家体验：</p>
+        <ul style="margin-top:var(--space-sm);padding-left:var(--space-lg);color:var(--text-secondary);">
+          <li><strong>健康→死亡：</strong>物资匮乏 → 身体崩溃 → 物理出局 → 触发"不屈"给队友抽卡</li>
+          <li><strong>理智→化鬼：</strong>精神崩溃 → 被鬼同化 → 变成敌人 → 加速幸存者的理智消耗</li>
+        </ul>
+        <p style="margin-top:var(--space-sm);">化鬼玩家<strong>不会出局</strong>——他们换个阵营继续玩，甚至可能比当人类时更有趣。</p>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <div class="accordion-header">AI市长的故事生成算法</div>
+      <div class="accordion-body">
+        <p>AI市长生成故事的核心不是"写恐怖小说"，而是<strong>"画靶子包住箭"</strong>。</p>
+        <p style="margin-top:var(--space-sm);">每条隐藏规则是一支"箭"——玩家要找到它。AI市长的故事是"靶子"——围绕规则画出的日常场景。故事不说出规则，只让玩家感觉"某个方向不对"。</p>
+        <p style="margin-top:var(--space-sm);">四种线索嵌入技法：</p>
+        <ul style="margin-top:var(--space-sm);padding-left:var(--space-lg);color:var(--text-secondary);">
+          <li><strong>隐喻置换：</strong>用日常词汇替换规则术语（"不能认可的表达"→"妈妈喜欢别人家的孩子"）</li>
+          <li><strong>缺失强调：</strong>描述一个东西"不见了"但不说是什么</li>
+          <li><strong>秩序扭曲：</strong>描述一件小事变得反常（电梯每到午夜停在同一层）</li>
+          <li><strong>重复回响：</strong>同一个细节在多个故事中出现（灰西装、闭眼胸针）</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>

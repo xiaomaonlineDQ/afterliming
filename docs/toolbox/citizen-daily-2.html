@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>黎明日报 · 市民日报</title>
+<link rel="stylesheet" href="../css/main.css?v=2026071116">
+<style>
+/* ========== Vintage Newspaper Style ========== */
+:root {
+  --news-bg: #f5f0e8;
+  --news-paper: #faf7f0;
+  --news-ink: #2c2416;
+  --news-ink-light: #5c4a2e;
+  --news-ink-muted: #8a7560;
+  --news-accent: #8b2500;
+  --news-divider: #c4b8a8;
+  --news-highlight: #fdf3cf;
+  --news-masthead-h: 100px;
+  --news-date-h: 28px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+.news-page {
+  height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--news-bg);
+  font-family: Georgia, 'Times New Roman', 'Noto Serif SC', 'SimSun', 'STSong', serif;
+  color: var(--news-ink);
+  /* Subtle paper texture */
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(139,119,90,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(139,119,90,0.04) 0%, transparent 50%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139,119,90,0.015) 2px, rgba(139,119,90,0.015) 4px);
+}
+
+/* ── Masthead ── */
+.news-masthead {
+  text-align: center; padding: 18px var(--space-lg) 12px;
+  border-bottom: 3px double var(--news-ink);
+  flex-shrink: 0; background: var(--news-paper);
+  position: relative; z-index: 10;
+}
+.news-masthead .news-title {
+  font-size: 2.6rem; font-weight: 900; letter-spacing: 0.25em;
+  color: var(--news-ink); line-height: 1.1;
+  font-family: 'SimHei', 'STHeiti', 'Microsoft YaHei', serif;
+  text-shadow: 1px 1px 0 rgba(139,119,90,0.15);
+}
+.news-masthead .news-subtitle {
+  font-size: 0.7rem; letter-spacing: 0.4em; color: var(--news-ink-muted);
+  margin-top: 2px; text-transform: uppercase; font-family: Georgia, serif;
+}
+.news-masthead .news-edition {
+  position: absolute; right: var(--space-md); top: 14px;
+  font-size: 0.62rem; color: var(--news-ink-muted);
+  text-align: right; line-height: 1.5;
+}
+.news-masthead .news-edition .edition-num {
+  display: block; font-size: 0.85rem; font-weight: 900; color: var(--news-accent);
+}
+.news-masthead .news-stamp {
+  position: absolute; left: var(--space-md); top: 20px;
+  width: 52px; height: 52px; border: 2px solid var(--news-accent);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 900; color: var(--news-accent);
+  transform: rotate(-12deg); opacity: 0.7; line-height: 1.2; text-align: center;
+}
+
+/* ── Date Bar ── */
+.news-date-bar {
+  display: flex; align-items: center; justify-content: center; gap: 24px;
+  padding: 6px var(--space-md); flex-shrink: 0;
+  border-bottom: 1px solid var(--news-divider);
+  background: var(--news-paper); font-size: 0.68rem; color: var(--news-ink-muted);
+  font-family: Georgia, 'Times New Roman', serif; position: relative; z-index: 9;
+}
+.news-date-bar .date-sep {
+  width: 4px; height: 4px; border-radius: 50%; background: var(--news-ink-muted);
+}
+.news-date-bar .nav-btn {
+  background: none; border: 1px solid var(--news-divider);
+  color: var(--news-ink-muted); cursor: pointer; font-size: 0.62rem;
+  padding: 2px 8px; border-radius: 3px; font-family: inherit;
+  transition: all 0.15s;
+}
+.news-date-bar .nav-btn:hover { border-color: var(--news-ink); color: var(--news-ink); }
+.news-date-bar .day-nav { display: flex; align-items: center; gap: 4px; }
+.news-date-bar .day-num { font-size: 0.85rem; font-weight: 900; color: var(--news-ink); min-width: 50px; text-align: center; }
+
+/* ── Content: Newspaper Layout ── */
+.news-content {
+  flex: 1; overflow-y: auto; padding: var(--space-md);
+  background: var(--news-bg);
+}
+.news-paper-sheet {
+  max-width: 900px; margin: 0 auto;
+  background: var(--news-paper);
+  border: 1px solid var(--news-divider);
+  box-shadow: 0 2px 12px rgba(44,36,22,0.1), 0 0 0 8px var(--news-bg), 0 0 0 9px var(--news-divider);
+  padding: 0;
+  min-height: 60vh;
+}
+
+/* ── Headline ── */
+.news-headline {
+  padding: var(--space-lg) var(--space-lg) var(--space-sm);
+  border-bottom: 2px solid var(--news-ink);
+}
+.news-headline h2 {
+  font-size: 1.5rem; font-weight: 900; line-height: 1.3;
+  color: var(--news-ink); letter-spacing: 0.05em;
+  font-family: 'SimHei', 'STHeiti', 'Microsoft YaHei', serif;
+}
+.news-headline .headline-sub {
+  font-size: 0.85rem; color: var(--news-ink-light); margin-top: 4px;
+  font-style: italic; font-family: Georgia, serif;
+}
+
+/* ── Multi-Column Articles ── */
+.news-columns {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 0; padding: var(--space-md) var(--space-lg);
+}
+.news-col {
+  padding: 0 var(--space-md);
+  border-right: 1px dotted var(--news-divider);
+}
+.news-col:last-child { border-right: none; }
+.news-col:first-child { padding-left: 0; }
+.news-article {
+  margin-bottom: var(--space-md); padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--news-divider);
+}
+.news-article:last-child { border-bottom: none; margin-bottom: 0; }
+.news-article .article-citizen {
+  font-size: 0.85rem; font-weight: 900; color: var(--news-ink);
+  margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+  font-family: 'SimHei', 'STHeiti', 'Microsoft YaHei', serif;
+}
+.news-article .article-citizen .citizen-portrait {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--news-highlight); display: flex; align-items: center;
+  justify-content: center; font-size: 0.85rem;
+  border: 1px solid var(--news-divider);
+}
+.news-article .article-citizen .citizen-title {
+  font-size: 0.6rem; font-weight: 400; color: var(--news-ink-muted);
+  font-family: Georgia, serif;
+}
+.news-article .article-decl {
+  font-size: 0.72rem; line-height: 1.6; color: var(--news-ink-light);
+  margin-left: 34px; padding: 3px 0;
+}
+.news-article .article-decl .decl-bullet {
+  color: var(--news-accent); font-weight: 900; margin-right: 4px;
+}
+.news-article .article-decl .decl-type {
+  font-size: 0.58rem; color: var(--news-ink-muted);
+  padding: 0 4px; border: 1px solid var(--news-divider);
+  border-radius: 2px; margin-left: 4px; font-family: Georgia, serif;
+}
+.news-article .no-decls {
+  font-size: 0.65rem; color: var(--news-ink-muted);
+  font-style: italic; margin-left: 34px;
+}
+
+/* ── Bottom Section ── */
+.news-bottom {
+  padding: var(--space-md) var(--space-lg);
+  border-top: 2px solid var(--news-ink);
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);
+}
+.news-bottom h4 {
+  font-size: 0.75rem; font-weight: 900; margin-bottom: 6px;
+  color: var(--news-ink); letter-spacing: 0.05em;
+  font-family: 'SimHei', 'STHeiti', 'Microsoft YaHei', serif;
+}
+.news-bottom .summary-item {
+  font-size: 0.65rem; line-height: 1.6; color: var(--news-ink-light);
+  display: flex; align-items: baseline; gap: 6px;
+}
+.news-bottom .summary-count {
+  font-weight: 900; color: var(--news-accent); min-width: 24px; text-align: right;
+}
+.news-notes {
+  font-size: 0.65rem; color: var(--news-ink-muted);
+  font-style: italic; line-height: 1.6;
+  padding: 6px 10px; border: 1px dashed var(--news-divider);
+  border-radius: 3px; background: var(--news-highlight);
+  min-height: 40px;
+}
+
+/* ── Footer ── */
+.news-footer {
+  text-align: center; padding: 8px 0;
+  font-size: 0.58rem; color: var(--news-ink-muted);
+  border-top: 1px solid var(--news-divider);
+  margin: 0 var(--space-lg); font-family: Georgia, serif;
+}
+
+/* ── No-game state ── */
+.news-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 40vh; gap: 12px;
+}
+.news-empty .empty-icon { font-size: 3rem; opacity: 0.3; }
+.news-empty .empty-text { font-size: 0.85rem; color: var(--news-ink-muted); font-style: italic; }
+.news-empty .empty-btn {
+  margin-top: 8px; font-size: 0.75rem; padding: 8px 24px;
+  border: 2px solid var(--news-ink); background: transparent;
+  color: var(--news-ink); cursor: pointer; font-family: inherit;
+  font-weight: 700; transition: all 0.15s;
+}
+.news-empty .empty-btn:hover { background: var(--news-ink); color: var(--news-paper); }
+
+/* ── Edit Panel (compact, slide-down) ── */
+.news-edit-toggle {
+  position: fixed; bottom: 16px; right: 16px; z-index: 300;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 2px solid var(--news-ink); background: var(--news-paper);
+  color: var(--news-ink); cursor: pointer; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(44,36,22,0.2); transition: all 0.15s;
+}
+.news-edit-toggle:hover { background: var(--news-ink); color: var(--news-paper); }
+
+.news-edit-panel {
+  position: fixed; inset: 0; z-index: 250;
+  background: rgba(44,36,22,0.8); display: none;
+  justify-content: center; align-items: flex-start; padding-top: 5vh;
+}
+.news-edit-panel.show { display: flex; }
+.news-edit-card {
+  background: var(--news-paper); border: 3px solid var(--news-ink);
+  max-width: 640px; width: 95%; max-height: 85vh; overflow-y: auto;
+  padding: var(--space-lg); position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.news-edit-card h3 {
+  font-size: 1.1rem; font-weight: 900; margin-bottom: var(--space-md);
+  color: var(--news-ink); font-family: 'SimHei', 'STHeiti', serif;
+  border-bottom: 2px solid var(--news-ink); padding-bottom: 8px;
+}
+.news-edit-card .edit-section { margin-bottom: var(--space-md); }
+.news-edit-card .edit-section h4 {
+  font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--news-ink-light);
+}
+.news-edit-card .citizen-chip-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.news-edit-card .edit-chip {
+  font-size: 0.68rem; padding: 4px 10px; border-radius: 4px;
+  border: 1px solid var(--news-divider); background: var(--news-paper);
+  color: var(--news-ink); cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.news-edit-card .edit-chip:hover { border-color: var(--news-ink); }
+.news-edit-card .edit-chip.active {
+  border-color: var(--news-ink); background: var(--news-ink);
+  color: var(--news-paper); font-weight: 900;
+}
+.news-edit-card .edit-search {
+  width: 100%; padding: 8px 12px; font-size: 0.75rem;
+  border: 1px solid var(--news-divider); background: var(--news-paper);
+  color: var(--news-ink); font-family: inherit; outline: none;
+}
+.news-edit-card .edit-search:focus { border-color: var(--news-ink); }
+.news-edit-card .edit-search-results {
+  border: 1px solid var(--news-divider); max-height: 180px;
+  overflow-y: auto; margin-top: 4px; display: none;
+}
+.news-edit-card .edit-search-results.show { display: block; }
+.news-edit-card .edit-result-item {
+  padding: 6px 10px; cursor: pointer; font-size: 0.7rem;
+  border-bottom: 1px solid var(--news-divider); display: flex;
+  align-items: center; justify-content: space-between;
+}
+.news-edit-card .edit-result-item:hover { background: var(--news-highlight); }
+.news-edit-card .edit-decl-list { margin-top: 6px; }
+.news-edit-card .edit-decl-item {
+  display: flex; align-items: center; gap: 8px; padding: 4px 0;
+  font-size: 0.7rem; border-bottom: 1px dotted var(--news-divider);
+}
+.news-edit-card .edit-decl-item .del-btn {
+  color: var(--news-accent); cursor: pointer; font-weight: 900;
+  margin-left: auto; font-size: 0.75rem;
+}
+.news-edit-card .edit-notes {
+  width: 100%; padding: 8px; font-size: 0.72rem;
+  border: 1px solid var(--news-divider); background: var(--news-highlight);
+  color: var(--news-ink); font-family: inherit; resize: vertical;
+  min-height: 60px; outline: none;
+}
+.news-edit-card .edit-actions {
+  display: flex; gap: 8px; justify-content: flex-end; margin-top: var(--space-md);
+}
+.news-edit-card .edit-btn {
+  padding: 8px 20px; font-size: 0.75rem; font-weight: 700;
+  border: 2px solid var(--news-ink); cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.news-edit-card .edit-btn.save { background: var(--news-ink); color: var(--news-paper); }
+.news-edit-card .edit-btn.save:hover { opacity: 0.85; }
+.news-edit-card .edit-btn.cancel { background: transparent; color: var(--news-ink); }
+.news-edit-card .edit-btn.cancel:hover { background: var(--news-ink); color: var(--news-paper); }
+.news-edit-card .edit-btn.reset {
+  background: transparent; color: var(--news-accent); border-color: var(--news-accent);
+  font-size: 0.68rem; margin-right: auto;
+}
+
+/* ── Death / Ghost Markers ── */
+.citizen-dead .citizen-portrait { opacity: 0.4; filter: grayscale(1); }
+.citizen-dead .article-citizen { text-decoration: line-through; color: var(--news-ink-muted); }
+.citizen-ghost .citizen-portrait { opacity: 0.6; filter: sepia(0.6); }
+.citizen-ghost .article-citizen { color: var(--news-ink-light); font-style: italic; }
+.citizen-chip-marker { font-size: 0.65rem; margin-left: 2px; }
+.citizen-chip-marker.dead { color: var(--news-accent); }
+.citizen-chip-marker.ghost { color: #6b5a8a; }
+.article-dead-banner {
+  font-size: 0.6rem; color: var(--news-accent); font-weight: 700;
+  margin-left: 34px; letter-spacing: 0.1em;
+}
+
+/* ── Status edit row (HP / SAN / status) ── */
+.edit-status-row {
+  display: flex; gap: 12px; align-items: center; margin-bottom: 8px;
+  padding: 8px; border: 1px dotted var(--news-divider); border-radius: 4px;
+  background: var(--news-highlight);
+}
+.edit-status-row label { font-size: 0.65rem; color: var(--news-ink-muted); }
+.edit-status-field {
+  display: flex; align-items: center; gap: 4px;
+}
+.edit-status-field .sf-val {
+  width: 48px; padding: 3px 6px; font-size: 0.7rem; text-align: center;
+  border: 1px solid var(--news-divider); background: var(--news-paper);
+  color: var(--news-ink); font-family: inherit; border-radius: 3px;
+}
+.edit-status-field select {
+  font-size: 0.7rem; padding: 3px 6px;
+  border: 1px solid var(--news-divider); background: var(--news-paper);
+  color: var(--news-ink); font-family: inherit; border-radius: 3px;
+}
+
+/* ── Round Advance Dialog (vintage newspaper clipping) ── */
+.round-dialog-overlay {
+  position: fixed; inset: 0; z-index: 400; display: none;
+  background: rgba(44,36,22,0.85);
+  justify-content: center; align-items: flex-start; padding-top: 8vh;
+}
+.round-dialog-overlay.show { display: flex; }
+.round-dialog-card {
+  background: var(--news-paper); border: 3px solid var(--news-ink);
+  max-width: 520px; width: 92%; padding: var(--space-lg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  max-height: 80vh; overflow-y: auto;
+}
+.round-dialog-card h3 {
+  font-size: 1.2rem; font-weight: 900; color: var(--news-ink);
+  text-align: center; border-bottom: 2px double var(--news-ink);
+  padding-bottom: 8px; margin-bottom: 12px;
+  font-family: 'SimHei','STHeiti',serif;
+}
+.round-dialog-card .rd-section {
+  margin-bottom: 12px; padding: 8px 10px;
+  border: 1px solid var(--news-divider); border-radius: 4px;
+  background: var(--news-highlight);
+}
+.round-dialog-card .rd-section h4 {
+  font-size: 0.75rem; font-weight: 900; color: var(--news-accent);
+  margin-bottom: 4px; font-family: 'SimHei','STHeiti',serif;
+}
+.round-dialog-card .rd-section .rd-text {
+  font-size: 0.68rem; color: var(--news-ink-light); line-height: 1.5;
+}
+.round-dialog-card .rd-section .rd-list {
+  list-style: none; padding: 0; margin: 4px 0 0 0;
+}
+.round-dialog-card .rd-section .rd-list li {
+  font-size: 0.65rem; color: var(--news-ink-light); line-height: 1.5;
+  padding: 2px 0; border-bottom: 1px dotted var(--news-divider);
+}
+.round-dialog-card .rd-section .rd-list li:last-child { border-bottom: none; }
+.round-dialog-card .rd-actions {
+  display: flex; gap: 8px; justify-content: center; margin-top: 16px;
+}
+.round-dialog-card .rd-btn {
+  padding: 8px 24px; font-size: 0.75rem; font-weight: 700;
+  border: 2px solid var(--news-ink); cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.round-dialog-card .rd-btn.confirm { background: var(--news-ink); color: var(--news-paper); }
+.round-dialog-card .rd-btn.confirm:hover { opacity: 0.85; }
+.round-dialog-card .rd-btn.cancel { background: transparent; color: var(--news-ink); }
+.round-dialog-card .rd-btn.cancel:hover { background: var(--news-ink); color: var(--news-paper); }
+
+/* ── Timeline Overlay (vintage archives) ── */
+.timeline-overlay {
+  position: fixed; inset: 0; z-index: 400; display: none;
+  background: rgba(44,36,22,0.88);
+  justify-content: center; align-items: flex-start; padding-top: 5vh;
+}
+.timeline-overlay.show { display: flex; }
+.timeline-card {
+  background: var(--news-paper); border: 3px solid var(--news-ink);
+  max-width: 680px; width: 94%; padding: var(--space-lg);
+  box-shadow: 0 8px 36px rgba(0,0,0,0.5);
+  max-height: 85vh; overflow-y: auto;
+}
+.timeline-card h3 {
+  font-size: 1.2rem; font-weight: 900; color: var(--news-ink);
+  text-align: center; border-bottom: 2px double var(--news-ink);
+  padding-bottom: 8px; margin-bottom: 12px;
+  font-family: 'SimHei','STHeiti',serif;
+}
+.timeline-card .tl-close {
+  position: absolute; top: 8px; right: 12px; cursor: pointer;
+  font-size: 1.2rem; color: var(--news-ink-muted); background: none; border: none;
+}
+.timeline-card .tl-day-block {
+  margin-bottom: 12px; padding: 8px 10px;
+  border: 1px solid var(--news-divider); border-radius: 4px;
+}
+.timeline-card .tl-day-block h4 {
+  font-size: 0.8rem; font-weight: 900; color: var(--news-ink);
+  border-bottom: 1px dotted var(--news-divider); padding-bottom: 4px;
+  margin-bottom: 6px; font-family: 'SimHei','STHeiti',serif;
+}
+.timeline-card .tl-day-block .tl-records {
+  list-style: none; padding: 0; margin: 0;
+}
+.timeline-card .tl-day-block .tl-records li {
+  font-size: 0.62rem; color: var(--news-ink-light); line-height: 1.6;
+  padding: 1px 0; display: flex; gap: 8px;
+}
+.timeline-card .tl-day-block .tl-records li .tl-citizen {
+  font-weight: 700; min-width: 48px; color: var(--news-ink);
+}
+.timeline-card .tl-settlement-block {
+  margin-bottom: 12px; padding: 8px 10px;
+  border: 2px solid var(--news-accent); border-radius: 4px;
+  background: var(--news-highlight);
+}
+.timeline-card .tl-settlement-block h4 {
+  font-size: 0.8rem; font-weight: 900; color: var(--news-accent);
+  border-bottom: 1px solid var(--news-accent); padding-bottom: 4px;
+  margin-bottom: 6px; font-family: 'SimHei','STHeiti',serif;
+}
+.timeline-card .tl-settlement-block .tl-settle-text {
+  font-size: 0.65rem; color: var(--news-ink-light); line-height: 1.6;
+}
+.timeline-card .tl-end-block {
+  text-align: center; padding: 12px; margin-top: 8px;
+  border: 2px dashed var(--news-accent); border-radius: 6px;
+  font-size: 0.8rem; color: var(--news-accent); font-weight: 700;
+}
+.timeline-card .tl-empty {
+  text-align: center; padding: 24px; font-size: 0.8rem;
+  color: var(--news-ink-muted); font-style: italic;
+}
+
+/* ── End game button ── */
+.news-end-btn {
+  margin-left: 8px; font-size: 0.62rem; padding: 2px 10px;
+  border: 1px solid var(--news-accent); background: transparent;
+  color: var(--news-accent); cursor: pointer; font-family: inherit;
+  border-radius: 3px; transition: all 0.15s;
+}
+.news-end-btn:hover { background: var(--news-accent); color: var(--news-paper); }
+
+/* ── Day summary bar (above fold) ── */
+.news-summary-bar {
+  padding: 8px var(--space-lg); display: flex; gap: 16px; align-items: center;
+  border-bottom: 1px solid var(--news-divider); flex-wrap: wrap;
+  font-size: 0.68rem; color: var(--news-ink-light);
+}
+.news-summary-bar .ss-item { display: flex; align-items: center; gap: 4px; }
+.news-summary-bar .ss-val { font-weight: 900; color: var(--news-ink); }
+
+/* Responsive */
+@media (max-width: 700px) {
+  .news-columns { grid-template-columns: 1fr; }
+  .news-col { border-right: none; border-bottom: 1px dotted var(--news-divider); padding: 0 0 var(--space-sm) 0; }
+  .news-col:last-child { border-bottom: none; }
+  .news-masthead .news-title { font-size: 1.8rem; }
+  .news-masthead .news-stamp { display: none; }
+  .news-masthead .news-edition { position: static; text-align: center; margin-top: 6px; }
+  .news-bottom { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body class="news-page">
+
+<!-- ═══════════ MASTHEAD ═══════════ -->
+<div class="news-masthead">
+  <div class="news-stamp">号<br>外</div>
+  <div class="news-edition">
+    <span class="edition-num">No. 001</span>
+    黎明日报社出版
+  </div>
+  <div class="news-title">黎 明 日 报</div>
+  <div class="news-subtitle">AFTER DAWN · CITIZEN DAILY</div>
+</div>
+
+<!-- ═══════════ DATE BAR ═══════════ -->
+<div class="news-date-bar">
+  <span>公元2026年7月11日</span>
+  <span class="date-sep"></span>
+  <div class="day-nav">
+    <button class="nav-btn" onclick="prevDay()" title="前一天">◀ 前日</button>
+    <span class="day-num" id="newsDayNum">第0天</span>
+    <button class="nav-btn" onclick="nextDay()" title="后一天">次日 ▶</button>
+  </div>
+  <span class="date-sep"></span>
+  <span>A市·旧城区特别报道</span>
+  <span class="date-sep"></span>
+  <button class="nav-btn" onclick="advanceRound()" id="btnAdvance">🔒 封印本日</button>
+  <button class="nav-btn" onclick="showTimeline()" title="查阅档案">📜 档案</button>
+  <button class="news-end-btn" onclick="endGameManually()" id="btnEndGame">🏁 终刊</button>
+</div>
+
+<!-- ═══════════ CONTENT ═══════════ -->
+<main class="news-content" id="newsContent">
+  <!-- Rendered by JS -->
+</main>
+
+<!-- ═══════════ EDIT BUTTON ═══════════ -->
+<button class="news-edit-toggle" onclick="toggleEditPanel()" title="编辑">✎</button>
+
+<!-- ═══════════ EDIT PANEL ═══════════ -->
+<div class="news-edit-panel" id="editPanel">
+  <div class="news-edit-card">
+    <h3>✎ 编辑新闻稿</h3>
+
+    <div class="edit-section">
+      <h4>🎭 选择市民</h4>
+      <div class="citizen-chip-row" id="editCitizenChips"></div>
+    </div>
+
+    <div class="edit-section" id="editActiveSection" style="display:none;">
+      <h4>❤️ 状态管理</h4>
+      <div class="edit-status-row">
+        <div class="edit-status-field">
+          <label>HP</label>
+          <input type="number" class="sf-val" id="editHP" min="0" max="20" onchange="onEditStatusChange()">
+        </div>
+        <div class="edit-status-field">
+          <label>SAN</label>
+          <input type="number" class="sf-val" id="editSAN" min="0" max="20" onchange="onEditStatusChange()">
+        </div>
+        <div class="edit-status-field">
+          <label>状态</label>
+          <select id="editStatus" onchange="onEditStatusChange()">
+            <option value="alive">👤 存活</option>
+            <option value="ghost">👻 化鬼</option>
+            <option value="transferred">📤 已转移</option>
+          </select>
+        </div>
+      </div>
+
+      <h4>🔍 添加宣言</h4>
+      <input type="text" class="edit-search" id="editSearch"
+        placeholder="搜索反击卡 / 物资卡 / 怪谈卡 / 技能…" autocomplete="off">
+      <div class="edit-search-results" id="editSearchResults"></div>
+
+      <h4 style="margin-top:12px;">📝 已记录宣言</h4>
+      <div class="edit-decl-list" id="editDeclList">
+        <div style="font-size:0.65rem;color:var(--news-ink-muted);font-style:italic;">暂无宣言</div>
+      </div>
+
+      <h4 style="margin-top:12px;">🗒️ 备注</h4>
+      <textarea class="edit-notes" id="editNotes" placeholder="市长备注…"></textarea>
+    </div>
+
+    <div class="edit-actions">
+      <button class="edit-btn reset" onclick="resetGame()">🔄 新对局</button>
+      <button class="edit-btn cancel" onclick="toggleEditPanel()">取消</button>
+      <button class="edit-btn save" onclick="saveAndClose()">✅ 付印</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ ROUND ADVANCE DIALOG ═══════════ -->
+<div class="round-dialog-overlay" id="roundDialogOverlay">
+  <div class="round-dialog-card">
+    <h3>📰 黎明特讯 · 封印本日</h3>
+    <div id="roundDialogContent"></div>
+  </div>
+</div>
+
+<!-- ═══════════ TIMELINE OVERLAY ═══════════ -->
+<div class="timeline-overlay" id="timelineOverlay">
+  <div class="timeline-card" style="position:relative;">
+    <button class="tl-close" onclick="closeTimeline()" style="position:sticky;top:0;float:right;">✕</button>
+    <h3>📜 A市档案馆 · 全记录</h3>
+    <div id="timelineContent"></div>
+  </div>
+</div>
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script src="../js/data.js?v=2026070800"></script>
+<script>
+'use strict';
+
+// ============================================================
+// GLOBAL STATE (same storage key as citizen-daily.html)
+// ============================================================
+const STORAGE_KEY = 'dawn_citizen_daily_v1';
+const SETTLEMENT_KEY = 'dawn_settlement_v1';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
+
+let STATE = loadState() || {
+  gameStarted: false,
+  playerCount: 6,
+  citizens: [],
+  currentDay: 0
+};
+
+let editActiveIdx = 0;
+let searchTimeout = null;
+let CARD_INDEX = [];
+
+// ============================================================
+// SETTLEMENT STORAGE (shared across all daily files)
+// ============================================================
+function loadSettlement() {
+  try { const raw = localStorage.getItem(SETTLEMENT_KEY); return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+}
+function saveSettlement(s) { localStorage.setItem(SETTLEMENT_KEY, JSON.stringify(s)); }
+function getSettlement() {
+  let s = loadSettlement();
+  if (!s) {
+    s = { gameStarted: false, rounds: {}, gameEnded: false, endReason: null, endedAt: null };
+    saveSettlement(s);
+  }
+  return s;
+}
+
+// ============================================================
+// GHOST HELPERS
+// ============================================================
+function isGhost(c) {
+  return c && (c.status === 'ghost' || c.status === 'transferred' || c.health <= 0 || c.sanity <= 0);
+}
+function isTransferred(c) {
+  return c && c.status === 'transferred';
+}
+function isDead(c) {
+  return c && (c.status === 'transferred' || (c.health <= 0 && c.sanity <= 0));
+}
+
+// ============================================================
+// CARD INDEX
+// ============================================================
+function buildCardIndex() {
+  CARD_INDEX = [];
+  if (CARD_DB.countermeasures) {
+    CARD_DB.countermeasures.forEach(c => {
+      CARD_INDEX.push({ id: c.id, name: c.name, type: '反击卡', level: c.level, label: '反击卡·' + c.level, tagClass: 'tag-cm', action: c.trigger_condition ? c.trigger_condition.substring(0,25) : '使用' });
+    });
+  }
+  if (CARD_DB.supplies) {
+    CARD_DB.supplies.forEach(c => {
+      CARD_INDEX.push({ id: c.id, name: c.name, type: '物资卡', level: c.level, label: '物资卡·' + c.level, tagClass: 'tag-sup', action: '使用' });
+    });
+  }
+  if (CARD_DB.whispers) {
+    CARD_DB.whispers.forEach(c => {
+      CARD_INDEX.push({ id: c.id, name: c.name, type: '怪谈卡', level: c.level, label: '怪谈卡·' + c.level, tagClass: 'tag-whisper', action: c.trigger_condition ? c.trigger_condition.substring(0,25) : '发动' });
+    });
+  }
+  if (CARD_DB.characters) {
+    CARD_DB.characters.forEach(ch => {
+      CARD_INDEX.push({ id: 'skill_' + ch.id, name: '【' + (ch.skill_name || '技能') + '】', type: '技能', level: ch.name, label: '技能·' + ch.name, tagClass: 'tag-skill', action: '发动' });
+    });
+  }
+}
+
+// ============================================================
+// EMOJI MAP
+// ============================================================
+function getCharEmoji(id) {
+  const map = { 'ch_001': '😄', 'ch_002': '🍀', 'ch_003': '🤕', 'ch_004': '🧠', 'ch_005': '😶', 'ch_006': '💼', 'ch_007': '👁️', 'ch_008': '👑', 'ch_009': '🛵', 'ch_010': '🔍', 'ch_011': '📋', 'ch_012': '✊' };
+  return map[id] || '👤';
+}
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  buildCardIndex();
+  ensureDayExists();
+  renderNewspaper();
+
+  // Search input
+  const searchEl = document.getElementById('editSearch');
+  if (searchEl) {
+    searchEl.addEventListener('input', onEditSearch);
+    searchEl.addEventListener('focus', onEditSearch);
+    searchEl.addEventListener('blur', () => {
+      setTimeout(() => document.getElementById('editSearchResults').classList.remove('show'), 200);
+    });
+  }
+
+  // Notes save
+  const notesEl = document.getElementById('editNotes');
+  if (notesEl) {
+    notesEl.addEventListener('input', onEditNotesChange);
+  }
+
+  // Edit panel close on backdrop
+  document.getElementById('editPanel').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) toggleEditPanel();
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' && e.ctrlKey) { e.preventDefault(); prevDay(); }
+    if (e.key === 'ArrowRight' && e.ctrlKey) { e.preventDefault(); nextDay(); }
+    if (e.key === 'Escape') {
+      document.getElementById('editPanel').classList.remove('show');
+      document.getElementById('roundDialogOverlay').classList.remove('show');
+      document.getElementById('timelineOverlay').classList.remove('show');
+    }
+  });
+
+  // Auto-start setup if no game
+  if (!STATE.gameStarted || STATE.citizens.length === 0) {
+    setTimeout(() => autoStartGame(), 500);
+  }
+
+  updateDayDisplay();
+});
+
+// ============================================================
+// AUTO START (first-time setup)
+// ============================================================
+function autoStartGame() {
+  if (!CARD_DB.characters || CARD_DB.characters.length === 0) return;
+
+  const chars = CARD_DB.characters.slice(0, 6);
+  const citizens = chars.map(ch => ({
+    id: ch.id, name: ch.name, level: ch.level || '',
+    health: ch.health || 6, sanity: ch.sanity || 6,
+    status: 'alive',
+    skill: ch.skill_name || '', skillEffect: ch.skill_effect || '',
+    days: { 0: { declarations: [], notes: '' } }
+  }));
+
+  STATE = { gameStarted: true, playerCount: 6, citizens, currentDay: 0 };
+  saveState();
+  renderNewspaper();
+}
+
+// ============================================================
+// DAY MANAGEMENT
+// ============================================================
+function ensureDayExists() {
+  if (!STATE.citizens) return;
+  STATE.citizens.forEach(c => {
+    if (!c.days) c.days = {};
+    if (!c.days[STATE.currentDay]) c.days[STATE.currentDay] = { declarations: [], notes: '' };
+  });
+}
+
+function updateDayDisplay() {
+  document.getElementById('newsDayNum').textContent = '第' + STATE.currentDay + '天';
+  const btn = document.getElementById('btnAdvance');
+  const endBtn = document.getElementById('btnEndGame');
+  const settlement = getSettlement();
+
+  if (settlement && settlement.gameEnded) {
+    btn.textContent = '📰 已终刊';
+    btn.style.opacity = '0.5';
+    btn.onclick = null;
+    if (endBtn) { endBtn.style.display = 'none'; }
+  } else if (STATE.currentDay >= 12) {
+    btn.textContent = '✅ 完结';
+    btn.style.opacity = '0.5';
+    btn.onclick = null;
+  } else {
+    btn.textContent = '🔒 封印本日';
+    btn.style.opacity = '1';
+    btn.onclick = advanceRound;
+    if (endBtn) { endBtn.style.display = ''; }
+  }
+}
+
+function prevDay() {
+  if (STATE.currentDay > 0) { STATE.currentDay--; renderNewspaper(); updateDayDisplay(); }
+}
+function nextDay() {
+  if (STATE.currentDay < 12) { STATE.currentDay++; renderNewspaper(); updateDayDisplay(); }
+}
+function advanceRound() {
+  if (STATE.currentDay >= 12) return;
+  openRoundDialog();
+}
+
+// ============================================================
+// NEWSPAPER RENDERING
+// ============================================================
+function renderNewspaper() {
+  const container = document.getElementById('newsContent');
+
+  if (!STATE.gameStarted || !STATE.citizens || STATE.citizens.length === 0) {
+    container.innerHTML = `
+      <div class="news-paper-sheet">
+        <div class="news-empty">
+          <div class="empty-icon">📰</div>
+          <div class="empty-text">本报尚未创刊</div>
+          <div class="empty-text" style="font-size:0.72rem;">请点击右下角 ✎ 编辑按钮开始记录</div>
+          <button class="empty-btn" onclick="quickSetup()">📝 快速创刊</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  ensureDayExists();
+  const day = STATE.currentDay;
+  const citizens = STATE.citizens;
+  const allDecls = [];
+
+  // Collect all declarations for this day
+  citizens.forEach(c => {
+    const decls = c.days[day]?.declarations || [];
+    decls.forEach(d => {
+      allDecls.push({ citizen: c, decl: d });
+    });
+  });
+
+  // Group by citizen for column distribution
+  const citizenBlocks = citizens.map(c => ({
+    citizen: c,
+    decls: c.days[day]?.declarations || [],
+    notes: c.days[day]?.notes || ''
+  }));
+
+  // Distribute to 3 columns
+  const cols = [[], [], []];
+  citizenBlocks.forEach((block, i) => {
+    cols[i % 3].push(block);
+  });
+
+  // Count totals
+  let totalDecls = 0;
+  let totalCM = 0, totalSup = 0, totalSkill = 0, totalWhisper = 0;
+  allDecls.forEach(d => {
+    totalDecls++;
+    if (d.decl.type === '反击卡') totalCM++;
+    else if (d.decl.type === '物资卡') totalSup++;
+    else if (d.decl.type === '技能') totalSkill++;
+    else if (d.decl.type === '怪谈卡') totalWhisper++;
+  });
+
+  // Build headline
+  let headline = '';
+  let headlineSub = '';
+  if (allDecls.length === 0) {
+    headline = '是日平安无事';
+    headlineSub = 'A市迎来平静的一天，市民们暂无特别举动。';
+  } else if (allDecls.length === 1) {
+    const d = allDecls[0];
+    headline = d.citizen.name + '今日有所行动';
+    headlineSub = '使用' + d.decl.type + '「' + d.decl.name + '」' + d.decl.action + '。';
+  } else {
+    headline = 'A市风云涌动：' + allDecls.length + '项行动记录在案';
+    headlineSub = citizens.length + '位市民中，今日共记录' + allDecls.length + '项使用/宣言。';
+  }
+
+  let html = '<div class="news-paper-sheet">';
+
+  // Headline
+  html += '<div class="news-headline">';
+  html += '<h2>' + headline + '</h2>';
+  html += '<div class="headline-sub">' + headlineSub + '</div>';
+  html += '</div>';
+
+  // Summary bar
+  html += '<div class="news-summary-bar">';
+  html += '<span class="ss-item">📋 <span class="ss-val">' + totalDecls + '</span> 条记录</span>';
+  if (totalCM > 0) html += '<span class="ss-item">⚔️ <span class="ss-val">' + totalCM + '</span> 反击</span>';
+  if (totalSup > 0) html += '<span class="ss-item">🎒 <span class="ss-val">' + totalSup + '</span> 物资</span>';
+  if (totalWhisper > 0) html += '<span class="ss-item">👻 <span class="ss-val">' + totalWhisper + '</span> 怪谈</span>';
+  if (totalSkill > 0) html += '<span class="ss-item">⭐ <span class="ss-val">' + totalSkill + '</span> 技能</span>';
+  html += '</div>';
+
+  // Columns
+  html += '<div class="news-columns">';
+  for (let ci = 0; ci < 3; ci++) {
+    html += '<div class="news-col">';
+    cols[ci].forEach(block => {
+      const c = block.citizen;
+      const ghost = isGhost(c);
+      const dead = isDead(c);
+      let rowClass = '';
+      if (dead) rowClass = ' citizen-dead';
+      else if (ghost) rowClass = ' citizen-ghost';
+
+      html += '<div class="news-article' + rowClass + '">';
+      html += '<div class="article-citizen">';
+      html += '<span class="citizen-portrait">' + getCharEmoji(c.id) + '</span>';
+      html += c.name;
+      if (dead) html += '<span class="citizen-chip-marker dead">☠️ 已销户</span>';
+      else if (ghost) html += '<span class="citizen-chip-marker ghost">👻 已化鬼</span>';
+      html += '<span class="citizen-title">' + (c.level || '') + '</span>';
+      html += '</div>';
+
+      if (dead) {
+        html += '<div class="article-dead-banner">⚰️ 该市民档案已封存 — 户籍注销</div>';
+      } else if (block.decls.length === 0) {
+        html += '<div class="no-decls">—— 是日无特别举动 ——</div>';
+      } else {
+        block.decls.forEach(d => {
+          html += '<div class="article-decl">';
+          html += '<span class="decl-bullet">▸</span>';
+          html += '<strong>' + d.cardName + '</strong>';
+          html += '<span class="decl-type">' + d.cardType + '</span>';
+          html += ' — ' + d.action;
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Bottom section
+  html += '<div class="news-bottom">';
+  html += '<div>';
+  html += '<h4>📊 市民快照</h4>';
+  citizens.forEach(c => {
+    const dCount = (c.days[day]?.declarations || []).length;
+    let statusIcon = '';
+    if (isDead(c)) statusIcon = ' ☠️';
+    else if (isGhost(c)) statusIcon = ' 👻';
+    html += '<div class="summary-item"><span class="summary-count">' + dCount + '</span> ' + c.name + statusIcon + '</div>';
+  });
+  html += '</div>';
+  html += '<div>';
+  html += '<h4>🗒️ 市长批注</h4>';
+  const allNotes = citizens.map(c => {
+    const n = (c.days[day]?.notes || '').trim();
+    return n ? c.name + '：' + n : '';
+  }).filter(Boolean).join('；');
+  html += '<div class="news-notes">' + (allNotes || '本日暂无市长批注。') + '</div>';
+  html += '</div>';
+  html += '</div>';
+
+  // Footer
+  html += '<div class="news-footer">本报由黎明日报社自动排版印刷 · 第' + day + '天号外 · 存续于A市档案馆</div>';
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ============================================================
+// EDIT PANEL
+// ============================================================
+function toggleEditPanel() {
+  const panel = document.getElementById('editPanel');
+  const isOpen = panel.classList.contains('show');
+
+  if (isOpen) {
+    panel.classList.remove('show');
+  } else {
+    if (!STATE.gameStarted || !STATE.citizens || STATE.citizens.length === 0) {
+      quickSetup();
+    }
+    buildEditCitizenChips();
+    selectEditCitizen(editActiveIdx);
+    panel.classList.add('show');
+    setTimeout(() => document.getElementById('editSearch')?.focus(), 100);
+  }
+}
+
+function buildEditCitizenChips() {
+  const row = document.getElementById('editCitizenChips');
+  if (!row || !STATE.citizens) return;
+  row.innerHTML = STATE.citizens.map((c, i) => {
+    let marker = '';
+    if (isDead(c)) marker = ' ☠️';
+    else if (isGhost(c)) marker = ' 👻';
+    return '<button class="edit-chip' + (i === editActiveIdx ? ' active' : '') + '"'
+      + ' onclick="selectEditCitizen(' + i + ')">' + getCharEmoji(c.id) + ' ' + c.name + marker + '</button>';
+  }).join('');
+}
+
+function selectEditCitizen(idx) {
+  editActiveIdx = idx;
+  buildEditCitizenChips();
+  document.getElementById('editActiveSection').style.display = 'block';
+  renderEditDeclarations();
+  const c = STATE.citizens[idx];
+  if (c) {
+    document.getElementById('editNotes').value = c.days[STATE.currentDay]?.notes || '';
+    document.getElementById('editHP').value = typeof c.health === 'number' ? c.health : (c.health || 6);
+    document.getElementById('editSAN').value = typeof c.sanity === 'number' ? c.sanity : (c.sanity || 6);
+    document.getElementById('editStatus').value = c.status || 'alive';
+  }
+}
+
+function renderEditDeclarations() {
+  const c = STATE.citizens[editActiveIdx];
+  if (!c) return;
+  ensureDayExists();
+  const decls = c.days[STATE.currentDay]?.declarations || [];
+  const list = document.getElementById('editDeclList');
+
+  if (decls.length === 0) {
+    list.innerHTML = '<div style="font-size:0.65rem;color:var(--news-ink-muted);font-style:italic;">暂无宣言</div>';
+  } else {
+    list.innerHTML = decls.map((d, i) => {
+      let tagCls = 'tag-cm';
+      if (d.cardType === '物资卡') tagCls = 'tag-sup';
+      else if (d.cardType === '技能') tagCls = 'tag-skill';
+      else if (d.cardType === '怪谈卡') tagCls = 'tag-whisper';
+      return `<div class="edit-decl-item">
+        <span class="tag ${tagCls}" style="font-size:0.58rem;">${d.cardType}</span>
+        <span><strong>${d.cardName}</strong> <span style="color:var(--news-ink-muted);">${d.action}</span></span>
+        <span class="del-btn" onclick="removeEditDecl(${i})">✕</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+function removeEditDecl(idx) {
+  const c = STATE.citizens[editActiveIdx];
+  if (!c) return;
+  const decls = c.days[STATE.currentDay]?.declarations || [];
+  decls.splice(idx, 1);
+  saveState();
+  renderEditDeclarations();
+}
+
+function onEditSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(doEditSearch, 100);
+}
+
+function doEditSearch() {
+  const query = document.getElementById('editSearch').value.trim().toLowerCase();
+  const resultsDiv = document.getElementById('editSearchResults');
+  if (query.length < 1) { resultsDiv.classList.remove('show'); return; }
+
+  let results = CARD_INDEX.filter(item =>
+    item.name.toLowerCase().includes(query) ||
+    item.type.includes(query) ||
+    item.level.toLowerCase().includes(query) ||
+    item.label.toLowerCase().includes(query)
+  ).slice(0, 12);
+
+  if (results.length === 0) {
+    resultsDiv.innerHTML = '<div style="padding:8px;text-align:center;font-size:0.65rem;color:var(--news-ink-muted);">未找到匹配项</div>';
+  } else {
+    resultsDiv.innerHTML = results.map(r => `
+      <div class="edit-result-item">
+        <span><strong>${r.name}</strong> <span style="color:var(--news-ink-muted);font-size:0.62rem;">${r.label}</span></span>
+        <button class="edit-chip" style="font-size:0.6rem;padding:2px 8px;"
+          onclick="addEditDecl('${r.id}','${escapeHTML(r.name)}','${r.type}','${escapeHTML(r.level)}','${escapeHTML(r.action || '使用')}')">+ 添加</button>
+      </div>
+    `).join('');
+  }
+  resultsDiv.classList.add('show');
+}
+
+function addEditDecl(cardId, cardName, cardType, cardLevel, action) {
+  const c = STATE.citizens[editActiveIdx];
+  if (!c) return;
+  ensureDayExists();
+  c.days[STATE.currentDay].declarations.push({
+    cardId, cardName, cardType, cardLevel, action, timestamp: Date.now()
+  });
+  saveState();
+  renderEditDeclarations();
+  document.getElementById('editSearch').value = '';
+  document.getElementById('editSearchResults').classList.remove('show');
+}
+
+function onEditNotesChange() {
+  const c = STATE.citizens[editActiveIdx];
+  if (!c) return;
+  ensureDayExists();
+  c.days[STATE.currentDay].notes = document.getElementById('editNotes').value;
+}
+
+function onEditStatusChange() {
+  const c = STATE.citizens[editActiveIdx];
+  if (!c) return;
+  c.health = parseInt(document.getElementById('editHP').value) || 0;
+  c.sanity = parseInt(document.getElementById('editSAN').value) || 0;
+  c.status = document.getElementById('editStatus').value;
+  saveState();
+}
+
+function saveAndClose() {
+  // Also save HP/SAN/status from form
+  const c = STATE.citizens[editActiveIdx];
+  if (c) {
+    c.health = parseInt(document.getElementById('editHP').value) || 0;
+    c.sanity = parseInt(document.getElementById('editSAN').value) || 0;
+    c.status = document.getElementById('editStatus').value;
+  }
+  saveState();
+  renderNewspaper();
+  document.getElementById('editPanel').classList.remove('show');
+}
+
+// ============================================================
+// ROUND ADVANCE DIALOG
+// ============================================================
+function openRoundDialog() {
+  const day = STATE.currentDay;
+  const nextDay = day + 1;
+  const citizens = STATE.citizens;
+
+  // Dawn deduction: all alive citizens lose 1 HP
+  const aliveCitizens = citizens.filter(c => !isGhost(c));
+  const ghosts = citizens.filter(c => isGhost(c) && !isDead(c));
+
+  // Survival reward (F mechanism): citizens alive for >= 3 rounds
+  const survivalEligible = citizens.filter(c => {
+    if (isGhost(c)) return false;
+    const daysAlive = Object.keys(c.days || {}).filter(d => {
+      const dd = parseInt(d);
+      return dd <= day;
+    }).length;
+    return daysAlive >= 3;
+  });
+
+  let html = '';
+
+  // Dawn deduction section
+  html += '<div class="rd-section">';
+  html += '<h4>🌅 黎明扣减（第' + day + '天→第' + nextDay + '天）</h4>';
+  if (aliveCitizens.length === 0) {
+    html += '<div class="rd-text">无存活市民，无需扣减。</div>';
+  } else {
+    html += '<div class="rd-text">以下 <strong>' + aliveCitizens.length + '</strong> 位存活市民将扣除 <strong>1 HP</strong>：</div>';
+    html += '<ul class="rd-list">';
+    aliveCitizens.forEach(c => {
+      html += '<li>' + getCharEmoji(c.id) + ' ' + c.name + '（HP: ' + c.health + ' → ' + Math.max(0, c.health - 1) + '）</li>';
+    });
+    html += '</ul>';
+  }
+  html += '</div>';
+
+  // Survival reward section
+  html += '<div class="rd-section">';
+  html += '<h4>🎁 生存奖励（F机制）</h4>';
+  if (survivalEligible.length === 0) {
+    html += '<div class="rd-text">暂无市民满足生存奖励条件（需存活≥3回合）。</div>';
+  } else {
+    html += '<div class="rd-text">以下 <strong>' + survivalEligible.length + '</strong> 位市民有资格获得物资卡：</div>';
+    html += '<ul class="rd-list">';
+    survivalEligible.forEach(c => {
+      html += '<li>' + getCharEmoji(c.id) + ' ' + c.name + '</li>';
+    });
+    html += '</ul>';
+  }
+  html += '</div>';
+
+  // Ghost sanity cost
+  html += '<div class="rd-section">';
+  html += '<h4>👻 鬼魂理智消耗</h4>';
+  if (ghosts.length === 0) {
+    html += '<div class="rd-text">当前无鬼魂存在。</div>';
+  } else {
+    html += '<div class="rd-text">以下 <strong>' + ghosts.length + '</strong> 位鬼魂将扣除 <strong>1 SAN</strong>：</div>';
+    html += '<ul class="rd-list">';
+    ghosts.forEach(c => {
+      html += '<li>' + getCharEmoji(c.id) + ' ' + c.name + '（SAN: ' + c.sanity + ' → ' + Math.max(0, c.sanity - 1) + '）</li>';
+    });
+    html += '</ul>';
+  }
+  html += '</div>';
+
+  // Actions
+  html += '<div class="rd-actions">';
+  html += '<button class="rd-btn confirm" onclick="confirmAdvance()">✅ 确认推进</button>';
+  html += '<button class="rd-btn cancel" onclick="closeRoundDialog()">取消</button>';
+  html += '</div>';
+
+  document.getElementById('roundDialogContent').innerHTML = html;
+  document.getElementById('roundDialogOverlay').classList.add('show');
+
+  // Close on backdrop click
+  document.getElementById('roundDialogOverlay').onclick = function(e) {
+    if (e.target === e.currentTarget) closeRoundDialog();
+  };
+}
+
+function closeRoundDialog() {
+  document.getElementById('roundDialogOverlay').classList.remove('show');
+}
+
+function confirmAdvance() {
+  const day = STATE.currentDay;
+  const nextDay = day + 1;
+  const citizens = STATE.citizens;
+
+  // Apply HP-1 to alive
+  citizens.forEach(c => {
+    if (!isGhost(c)) {
+      c.health = Math.max(0, c.health - 1);
+    }
+  });
+
+  // Apply SAN-1 to ghosts
+  citizens.forEach(c => {
+    if (isGhost(c) && !isDead(c)) {
+      c.sanity = Math.max(0, c.sanity - 1);
+    }
+  });
+
+  // Generate settlement report
+  const s = getSettlement();
+  if (!s.gameStarted) { s.gameStarted = true; }
+
+  const hpAffected = citizens.filter(c => !isGhost(c)).map(c => c.name);
+  const ghostAffected = citizens.filter(c => isGhost(c) && !isDead(c)).map(c => c.name);
+
+  s.rounds[day] = {
+    day: day,
+    timestamp: Date.now(),
+    dawnHpDeduction: 1,
+    hpAffected: hpAffected,
+    survivalRewardEligible: citizens.filter(c => {
+      if (isGhost(c)) return false;
+      const daysAlive = Object.keys(c.days || {}).filter(d => parseInt(d) <= day).length;
+      return daysAlive >= 3;
+    }).map(c => c.name),
+    ghostSanityCost: ghostAffected.length > 0 ? 1 : 0,
+    ghostsAffected: ghostAffected,
+    summary: '第' + day + '天结算：' + hpAffected.length + '人HP-1' + (ghostAffected.length > 0 ? '，' + ghostAffected.length + '鬼SAN-1' : '')
+  };
+
+  // Check game end: all citizens dead/transferred
+  const allDead = citizens.every(c => isDead(c));
+  if (allDead) {
+    s.gameEnded = true;
+    s.endReason = 'all_dead';
+    s.endedAt = Date.now();
+  }
+
+  saveSettlement(s);
+
+  // Advance day
+  STATE.currentDay = nextDay;
+  ensureDayExists();
+  saveState();
+  closeRoundDialog();
+  updateDayDisplay();
+  renderNewspaper();
+}
+
+// ============================================================
+// MANUAL GAME END
+// ============================================================
+function endGameManually() {
+  if (!confirm('确定要结束本局游戏吗？\n\n报社将出版最终号外，所有记录将归档存证。')) return;
+
+  const s = getSettlement();
+  s.gameEnded = true;
+  s.endReason = 'mayor_ended';
+  s.endedAt = Date.now();
+  saveSettlement(s);
+  updateDayDisplay();
+
+  // Show settlement summary on newspaper
+  renderNewspaper();
+}
+
+// ============================================================
+// TIMELINE (Archives)
+// ============================================================
+function showTimeline() {
+  if (!STATE.gameStarted || !STATE.citizens || STATE.citizens.length === 0) {
+    document.getElementById('timelineContent').innerHTML = '<div class="tl-empty">📭 档案馆空无一物 — 尚未创刊</div>';
+  } else {
+    const citizens = STATE.citizens;
+    const settlement = getSettlement();
+    const maxDay = STATE.currentDay;
+    let html = '';
+
+    // Render per-day blocks
+    for (let d = 0; d <= maxDay; d++) {
+      // Check if day has any content
+      let hasContent = false;
+      const records = [];
+      citizens.forEach(c => {
+        const decls = (c.days && c.days[d] && c.days[d].declarations) ? c.days[d].declarations : [];
+        const notes = (c.days && c.days[d] && c.days[d].notes) ? c.days[d].notes.trim() : '';
+        if (decls.length > 0 || notes) {
+          hasContent = true;
+        }
+        decls.forEach(decl => {
+          records.push({ citizen: c.name, emoji: getCharEmoji(c.id), cardName: decl.cardName, cardType: decl.cardType, action: decl.action });
+        });
+        if (notes) {
+          records.push({ citizen: c.name, emoji: getCharEmoji(c.id), cardName: '📝', cardType: '批注', action: notes });
+        }
+      });
+
+      // Settlement block for this day
+      const settleRound = settlement && settlement.rounds && settlement.rounds[d];
+      if (settleRound) {
+        html += '<div class="tl-settlement-block">';
+        html += '<h4>📋 第' + d + '天 结算公报</h4>';
+        html += '<div class="tl-settle-text">' + settleRound.summary + '</div>';
+        if (settleRound.hpAffected && settleRound.hpAffected.length > 0) {
+          html += '<div class="tl-settle-text">黎明扣减HP：' + settleRound.hpAffected.join('、') + '</div>';
+        }
+        if (settleRound.survivalRewardEligible && settleRound.survivalRewardEligible.length > 0) {
+          html += '<div class="tl-settle-text">生存奖励资格：' + settleRound.survivalRewardEligible.join('、') + '</div>';
+        }
+        if (settleRound.ghostsAffected && settleRound.ghostsAffected.length > 0) {
+          html += '<div class="tl-settle-text">鬼魂SAN消耗：' + settleRound.ghostsAffected.join('、') + '</div>';
+        }
+        html += '</div>';
+      }
+
+      if (!hasContent) continue;
+
+      html += '<div class="tl-day-block">';
+      html += '<h4>📅 第' + d + '天</h4>';
+      html += '<ul class="tl-records">';
+      records.forEach(r => {
+        html += '<li><span class="tl-citizen">' + r.emoji + ' ' + r.citizen + '</span> ' + r.cardName + ' <span style="color:var(--news-ink-muted);">' + r.cardType + '</span> — ' + r.action + '</li>';
+      });
+      html += '</ul>';
+      html += '</div>';
+    }
+
+    // End block
+    if (settlement && settlement.gameEnded) {
+      const endLabel = settlement.endReason === 'all_dead' ? '全员销户，自动终刊' : '市长宣布终刊';
+      html += '<div class="tl-end-block">🏁 对局已结束 — ' + endLabel + ' — ' + new Date(settlement.endedAt).toLocaleString('zh-CN') + '</div>';
+    }
+
+    if (!html) {
+      html = '<div class="tl-empty">📭 暂无历史记录</div>';
+    }
+    document.getElementById('timelineContent').innerHTML = html;
+  }
+
+  document.getElementById('timelineOverlay').classList.add('show');
+  document.getElementById('timelineOverlay').onclick = function(e) {
+    if (e.target === e.currentTarget) closeTimeline();
+  };
+}
+
+function closeTimeline() {
+  document.getElementById('timelineOverlay').classList.remove('show');
+}
+
+// ============================================================
+// QUICK SETUP
+// ============================================================
+function quickSetup() {
+  if (!CARD_DB.characters || CARD_DB.characters.length === 0) {
+    alert('角色数据未加载，请刷新页面。');
+    return;
+  }
+  const chars = CARD_DB.characters.slice(0, 6);
+  const citizens = chars.map(ch => ({
+    id: ch.id, name: ch.name, level: ch.level || '',
+    health: ch.health || 6, sanity: ch.sanity || 6,
+    status: 'alive',
+    skill: ch.skill_name || '', skillEffect: ch.skill_effect || '',
+    days: { 0: { declarations: [], notes: '' } }
+  }));
+  STATE = { gameStarted: true, playerCount: 6, citizens, currentDay: 0 };
+  saveState();
+  renderNewspaper();
+}
+
+function resetGame() {
+  if (!confirm('确定要开启新对局吗？所有记录将付之一炬。')) return;
+  STATE = { gameStarted: false, playerCount: 6, citizens: [], currentDay: 0 };
+  editActiveIdx = 0;
+  saveState();
+  // Clear settlement too
+  saveSettlement({ gameStarted: false, rounds: {}, gameEnded: false, endReason: null, endedAt: null });
+  document.getElementById('editPanel').classList.remove('show');
+  renderNewspaper();
+  updateDayDisplay();
+}
+
+console.log('[黎明日报] 印刷机就绪 | 反击卡', CARD_DB.countermeasures?.length || 0, '| 物资卡', CARD_DB.supplies?.length || 0, '| 角色', CARD_DB.characters?.length || 0);
+</script>
+</body>
+</html>

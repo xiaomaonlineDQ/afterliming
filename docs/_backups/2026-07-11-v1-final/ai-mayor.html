@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI市长 — 黎明之后</title>
+<meta name="description" content="体验《黎明之后》的AI市长对话系统。选择场景，观看AI市长如何以末世书记官的身份生成煞鬼故事、判定宣言、记录事件。">
+<link rel="stylesheet" href="css/main.css?v=2026071017">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container page-section">
+  <h1 style="margin-bottom:var(--space-sm);">AI市长模拟对话</h1>
+  <p style="color:var(--text-secondary);margin-bottom:var(--space-lg);">
+    AI市长是《黎明之后》的核心创新——它不是DM，是<strong style="color:var(--color-whisper-glow);">冷静的末世书记官</strong>。
+    不闲聊，不做法官，只记录与讲述。选择下方场景，体验市长的职能。
+  </p>
+
+  <!-- Scene Selector -->
+  <div class="scene-selector" id="sceneSelector">
+    <div class="scene-card active" data-scene="day0">
+      <div class="scene-icon">🌅</div>
+      <div class="scene-name">场景A：第0天</div>
+      <div class="scene-desc">身份确认 · 煞鬼生成 · 初始故事</div>
+    </div>
+    <div class="scene-card" data-scene="day5">
+      <div class="scene-icon">⚔️</div>
+      <div class="scene-name">场景B：第5天</div>
+      <div class="scene-desc">宣言质询 · 规则变更 · 生死判定</div>
+    </div>
+    <div class="scene-card" data-scene="finale">
+      <div class="scene-icon">📖</div>
+      <div class="scene-name">场景C：终局</div>
+      <div class="scene-desc">全玩家生存日记 · 复盘</div>
+    </div>
+  </div>
+
+  <!-- Chat Container -->
+  <div class="chat-container" id="chatContainer">
+    <div class="chat-header-bar">
+      <div class="chat-avatar">📋</div>
+      <div>
+        <div class="chat-title">AI市长 · 末世书记官</div>
+        <div class="chat-subtitle" id="sceneLabel">场景A：第0天初始化</div>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <!-- Messages rendered by JS -->
+    </div>
+
+    <div class="chat-input-area" id="chatInput">
+      <!-- Choices rendered by JS -->
+    </div>
+  </div>
+
+  <!-- API Placeholder Notice -->
+  <div style="text-align:center;margin-top:var(--space-xl);padding:var(--space-md);background:var(--bg-surface);border-radius:var(--radius-lg);border:1px solid var(--border-subtle);">
+    <p style="color:var(--text-muted);font-size:0.8rem;">
+      💡 当前为<strong style="color:var(--text-accent);">模拟对话模式</strong>（预设分支）。
+      代码已预留 <code style="color:var(--color-counter);">sendToMayor()</code> 接口，接入LLM API后即可替换为实时AI对话。
+    </p>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+<script>
+// ==========================================
+// AI Mayor Chat Engine — 模拟对话版
+// ==========================================
+
+// --- Scene Data ---
+const SCENES = {
+  day0: {
+    label: '场景A：第0天初始化',
+    intro: '8人局。8号为煞鬼，初始地点：大厂写字楼。煞鬼抽到9条隐藏规则（8+1）。',
+    steps: [
+      // Step 1: Identity confirmation
+      {
+        type: 'mayor',
+        text: '编号确认。玩家1-热情的咖啡师，玩家2-寡言的图书管理员，玩家3-好奇的快递员，玩家4-沉稳的退休教师，玩家5-胆小的程序员，玩家6-叛逆的乐队主唱，玩家7-沉默的保安，玩家8——<strong style="color:#e74c3c;">煞鬼</strong>。\n\n本局配置：8人局，1煞鬼+7人类。煞鬼初始规则数：8+1=9条。',
+        choices: [{ label: '继续', next: 1 }]
+      },
+      // Step 2: Random determination
+      {
+        type: 'mayor',
+        text: '随机判定中……\n\n闹鬼地点：<strong style="color:#f1c40f;">大厂写字楼</strong>\n该地点绑定的2张特殊规则卡已检索，第0天即生效。\n特殊规则A：写字楼内每层电梯只允许同方向运行\n特殊规则B：午休时段（12:00-13:00）禁止使用打印机',
+        choices: [{ label: '继续 → 生成故事', next: 2 }]
+      },
+      // Step 3: Story segment 1
+      {
+        type: 'story',
+        text: '<strong>【第1段】</strong> 大厂写字楼的电梯最近总是在午夜自动停在23楼。保安老周调了三次监控，每次都在23:59分准时黑屏。他私下跟我说，23楼那家去年倒闭的广告公司，门口的地垫上每天早晨都会出现一串湿脚印——从电梯口一直延伸到前台的电话机旁。那台电话早被拆了，但他说，有时候路过能听见拨号音。',
+        choices: [{ label: '下一段故事', next: 3 }]
+      },
+      // Step 4: Story segment 2
+      {
+        type: 'story',
+        text: '<strong>【第2段】</strong> 实习生小陈入职第一天就被HR叮嘱：签合同的时候，千万别说"我想去死"——哪怕开玩笑也不行。她以为是职场黑话，直到亲眼看见一个离职的同事在工位上说了这句话，然后……他的嘴就再也没有合上过。不是比喻。',
+        choices: [{ label: '下一段故事', next: 4 }]
+      },
+      // Step 5: Story segment 3
+      {
+        type: 'story',
+        text: '<strong>【第3段】</strong> 写字楼大堂有一面落地镜，很多人都说在镜子里看见过自己身后站着一个穿灰色西装的男人。但回头的时候什么都没有。奇怪的是，每个人描述的那件灰西装，口袋上都别着一模一样的银色胸针——上面的图案是一只闭着的眼睛。',
+        choices: [{ label: '下一段故事', next: 5 }]
+      },
+      // Step 6: Story segment 4 & wrap
+      {
+        type: 'story',
+        text: '<strong>【第4段】</strong> 食堂阿姨王姐有一个规矩：任何人打完饭必须先端给旁边的人看一下，才能自己吃。她说这是"老规矩了"，但说不清是谁定的。唯一一次有人没照做，他的餐盘里所有食物在三秒内变成了灰。那个人现在还在精神科。',
+        choices: [{ label: '故事结束 · 返回场景选择', next: 'reset' }]
+      }
+    ]
+  },
+
+  day5: {
+    label: '场景B：第5天 宣言质询',
+    intro: '本局已进行至第5天。3号（好奇的快递员）为回合玩家，理智值2/7危险中。6号（叛逆的乐队主唱）即将发起质询。',
+    steps: [
+      // Step 1: Morning
+      {
+        type: 'system-msg',
+        text: '===== 第5天 黎明 =====',
+        choices: [{ label: '开始判定', next: 1 }]
+      },
+      // Step 2: Resource roll
+      {
+        type: 'mayor',
+        text: '第5天黎明物资随机判定完成。面包×2出现于菜市场，可乐×1出现于商业步行街。\n\n当前回合玩家：3号（好奇的快递员，理智2/7 ⚠️）',
+        choices: [{ label: '继续', next: 2 }]
+      },
+      // Step 3: Story
+      {
+        type: 'story',
+        text: '<strong>【第5段故事】</strong> 菜市场的鱼贩老吴最近很困惑。每到下午四点半，他摊位上所有的鱼都会同时翻白肚——不是死了，是整齐划一地翻过来看着他。最诡异的是，只有他的摊位这样。隔壁卖豆腐的大姐说，老吴上个月收了一张假钞之后骂了一句脏话，从那以后就这样了。老吴说他记不清那天骂的是什么了。',
+        choices: [{ label: '3号宣言反击卡', next: 3 }]
+      },
+      // Step 4: 3号 plays countermeasure
+      {
+        type: 'player',
+        text: '我宣言激活反击卡「绝境逆转」（觉醒级）。效果：理智值≤3时可激活，本回合宣言猜错不扣理智。',
+        choices: [{ label: '确认激活 · 继续宣言', next: 4 }]
+      },
+      // Step 5: Mayor records
+      {
+        type: 'mayor',
+        text: '已记录：3号激活反击卡「绝境逆转」。本回合同一玩家可宣言多条规则。',
+        choices: [{ label: '3号宣言猜测规则', next: 5 }]
+      },
+      // Step 6: Player declares
+      {
+        type: 'player',
+        text: '我猜测煞鬼有一条隐藏规则是："不可在封闭空间内停留超过5分钟"',
+        choices: [{ label: '市长判定', next: 6 }]
+      },
+      // Step 7: Mayor judges
+      {
+        type: 'mayor',
+        text: '判定：<strong style="color:#2ecc71;">宣言成立 ✅</strong>\n\n规则"不可在封闭空间内停留超过5分钟"已从隐藏规则区抹除，移入公开规则区·宣言抹除区。\n\n3号宣言成功次数+1。',
+        choices: [{ label: '6号发起质询', next: 7 }]
+      },
+      // Step 8: 6号 challenges
+      {
+        type: 'player',
+        text: '我（6号）向煞鬼8号发起质询！我质疑煞鬼在第3天未经宣言就激活了怪谈卡「镜中倒影」。',
+        choices: [{ label: '市长调取记录判定', next: 8 }]
+      },
+      // Step 9: Mayor judges challenge
+      {
+        type: 'mayor',
+        text: '已调取第3天记录。\n\n确认：煞鬼8号在第3天黎明阶段已公开宣言激活「镜中倒影」（流言级），宣告文本已存档。\n\n判定：<strong style="color:#e74c3c;">质询不成立 ❌</strong>\n6号理智值-2（当前2/7 → <strong style="color:#e74c3c;">0/7</strong> ⚠️）',
+        choices: [{ label: '进入抢救判定', next: 9 }]
+      },
+      // Step 10: Rescue window
+      {
+        type: 'mayor',
+        text: '6号（叛逆的乐队主唱）理智值降至0，进入<strong style="color:#f39c12;">抢救窗口</strong>。\n\n其他玩家可在当前回合结算前通过以下方式恢复其理智值：\n· 交易赠送理智恢复物资（可乐、珍珠奶茶等）\n· 使用反击卡恢复队友理智\n\n若回合结算时仍有玩家理智≤0：该玩家<strong style="color:#e74c3c;">化为恶鬼</strong>。',
+        choices: [{ label: '场景结束 · 返回选择', next: 'reset' }]
+      }
+    ]
+  },
+
+  finale: {
+    label: '场景C：终局 · 全玩家生存日记',
+    intro: '12回合结束。存活的5名人类找到3条隐藏规则并抹除。AI市长生成全玩家生存日记。',
+    steps: [
+      {
+        type: 'system-msg',
+        text: '===== 第12天 审判时刻 =====\n所有存活玩家依次讲述自己这12天的经历。\nAI市长整合记录，生成全玩家生存日记。',
+        choices: [{ label: '开始生成日记', next: 1 }]
+      },
+      {
+        type: 'mayor',
+        text: '<strong style="color:#f1c40f;">【全玩家生存日记 · 大厂写字楼档案】</strong>\n\n以下记录基于12回合完整日志，由AI市长·末世书记官整理。',
+        choices: [{ label: '继续阅读', next: 2 }]
+      },
+      {
+        type: 'story',
+        text: '<strong>1号 · 热情的咖啡师（存活）</strong>\n第一天我就不该在休息室泡那杯拿铁。奶泡浮起来的形状是一张脸——不是我的。从那以后我每天都泡一杯，每天看它浮起不同的脸。最后一天我认出来了，那是我妈妈的脸。她在我五岁那年死在这栋楼的24层。那时候这里还不是写字楼，是医院。',
+        choices: [{ label: '继续阅读', next: 3 }]
+      },
+      {
+        type: 'story',
+        text: '<strong>4号 · 沉稳的退休教师（存活 · 抹除2条规则）</strong>\n教了三十年语文，我以为自己什么字都认识。直到第三天在走廊尽头看见墙上贴着一张手写告示，上面的字我居然一个都不认识。我想把它拍下来发给以前教研组的同事，手机闪光灯亮起的瞬间，告示上的字全部变成了我的名字。满满一页。',
+        choices: [{ label: '继续阅读', next: 4 }]
+      },
+      {
+        type: 'story',
+        text: '<strong>6号 · 叛逆的乐队主唱（恶鬼）</strong>\n我本来能活的。但我在第五天质询了鬼。差一点就成功了——只差一点。化鬼之后我第一个看见的画面，是那个穿灰西装的镜中人朝我伸出了手。他胸口的口袋上，那只闭着的眼睛睁开了。',
+        choices: [{ label: '继续阅读', next: 5 }]
+      },
+      {
+        type: 'story',
+        text: '<strong>3号 · 好奇的快递员（存活 · 抹除1条规则）</strong>\n我送快递三年，从来没进过这栋楼的23层。不是不想去，是每次按23楼，电梯都会在22楼和24楼之间停一下——门开的时候，走廊灯是灭的。但我听见有人说话。一个女声，在念一串数字。我把那串数字记下来去查了，是一个死亡日期。1987年3月15日。',
+        choices: [{ label: '继续阅读', next: 6 }]
+      },
+      {
+        type: 'story',
+        text: '<strong>8号 · 煞鬼（消亡）</strong>\n我是被选中的人。不是我想当鬼，是这栋楼选中了我。它的规则不是我的规则，我只是它的嘴。最后一条规则被抹除的时候，我听见了它的叹息——不是愤怒，是如释重负。它在这里困了太久了。现在它走了。我也该走了。',
+        choices: [{ label: '继续阅读', next: 7 }]
+      },
+      {
+        type: 'mayor',
+        text: '<strong>【终局统计】</strong>\n\n存活人类：3人（1号、3号、4号）\n化鬼人类：2人（6号、一不知名玩家）\n死亡人类：2人（2号、7号）\n煞鬼状态：消亡\n抹除规则：3/9条\n\n<strong style="color:var(--text-accent);">人类胜利。</strong>',
+        choices: [{ label: '返回场景选择', next: 'reset' }]
+      }
+    ]
+  }
+};
+
+// --- State ---
+let currentScene = 'day0';
+let currentStep = 0;
+
+// --- Render functions ---
+function renderSceneSelector() {
+  document.querySelectorAll('.scene-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.scene === currentScene);
+  });
+}
+
+function renderMessages() {
+  const container = document.getElementById('chatMessages');
+  const scene = SCENES[currentScene];
+  const stepsToShow = scene.steps.slice(0, currentStep + 1);
+
+  container.innerHTML = stepsToShow.map((step, i) => `
+    <div class="chat-bubble ${step.type}" style="animation-delay:${i * 0.05}s">
+      ${step.text}
+    </div>
+  `).join('');
+
+  // Scroll to bottom
+  setTimeout(() => {
+    container.scrollTop = container.scrollHeight;
+  }, 50);
+}
+
+function renderChoices() {
+  const container = document.getElementById('chatInput');
+  const scene = SCENES[currentScene];
+
+  if (currentStep >= scene.steps.length - 1 && currentStep > 0) {
+    // Last step already shown
+    const lastChoices = scene.steps[scene.steps.length - 1].choices;
+    container.innerHTML = lastChoices.map(c => `
+      <button class="choice-btn primary-choice" onclick="handleChoice('${c.next}')">${c.label}</button>
+    `).join('');
+    return;
+  }
+
+  if (currentStep >= scene.steps.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;">— 场景结束 —</span>';
+    return;
+  }
+
+  const step = scene.steps[currentStep];
+  if (!step.choices) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = step.choices.map(c => `
+    <button class="choice-btn ${c.next === 'reset' ? '' : 'primary-choice'}" onclick="handleChoice('${c.next}')">${c.label}</button>
+  `).join('');
+}
+
+function handleChoice(next) {
+  if (next === 'reset') {
+    currentStep = 0;
+    renderAll();
+    return;
+  }
+
+  const nextIndex = parseInt(next);
+  if (!isNaN(nextIndex)) {
+    currentStep = nextIndex;
+    renderAll();
+  }
+}
+
+function switchScene(scene) {
+  currentScene = scene;
+  currentStep = 0;
+  document.getElementById('sceneLabel').textContent = SCENES[scene].label;
+  renderAll();
+}
+
+function renderAll() {
+  renderSceneSelector();
+  renderMessages();
+  renderChoices();
+}
+
+// --- Reserved API interface (for future LLM integration) ---
+/*
+ * sendToMayor(userMessage, sceneContext)
+ * 将来接入LLM API时，只需替换此函数实现：
+ *
+ * async function sendToMayor(userMessage, sceneContext) {
+ *   const systemPrompt = await fetch('ai-mayor-prompt.txt').then(r => r.text());
+ *   const response = await fetch('YOUR_LLM_API_ENDPOINT', {
+ *     method: 'POST',
+ *     headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json' },
+ *     body: JSON.stringify({
+ *       model: 'YOUR_MODEL',
+ *       messages: [
+ *         { role: 'system', content: systemPrompt },
+ *         { role: 'user', content: `场景: ${sceneContext}\n玩家: ${userMessage}` }
+ *       ]
+ *     })
+ *   });
+ *   const data = await response.json();
+ *   return data.choices[0].message.content;
+ * }
+ */
+
+// --- Init ---
+document.getElementById('sceneSelector').addEventListener('click', (e) => {
+  const card = e.target.closest('.scene-card');
+  if (!card) return;
+  switchScene(card.dataset.scene);
+});
+
+renderAll();
+</script>
+</body>
+</html>

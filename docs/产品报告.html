@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黎明之后 · 产品报告</title>
+<style>
+/* ═══════════ CSS Reset & Variables ═══════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #0a0a12;
+  --bg-card: #141428;
+  --bg-card-hover: #1a1a35;
+  --purple: #8B7FAD;
+  --purple-glow: rgba(139,127,173,0.3);
+  --coral: #D4756B;
+  --coral-glow: rgba(212,117,107,0.3);
+  --teal: #4A90A4;
+  --teal-glow: rgba(74,144,164,0.3);
+  --amber: #C8923E;
+  --amber-glow: rgba(200,146,62,0.3);
+  --blue: #5B7CB0;
+  --blue-glow: rgba(91,124,176,0.3);
+  --text-primary: #e8e6f0;
+  --text-secondary: #9a98b4;
+  --text-muted: #6a6884;
+  --border: rgba(138,127,173,0.15);
+  --font-display: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-body: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --transition: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ═══════════ Layout ═══════════ */
+#presentation {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 0.6s var(--transition), transform 0.6s var(--transition);
+  pointer-events: none;
+  padding: 4rem 6rem;
+  background: radial-gradient(ellipse at 50% 50%, #14142a 0%, #0a0a12 70%);
+}
+
+.slide.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.slide-inner {
+  max-width: 1200px;
+  width: 100%;
+  position: relative;
+}
+
+/* ═══════════ Slide 1: Cover ═══════════ */
+.cover-slide {
+  text-align: left;
+  align-items: flex-start;
+  padding-left: 8rem;
+}
+.cover-title {
+  font-family: var(--font-display);
+  font-size: 5.5rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+  background: linear-gradient(135deg, #e8e6f0 0%, #b8b4d4 60%, #8B7FAD 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.cover-subtitle {
+  font-size: 1.5rem;
+  color: var(--coral);
+  font-weight: 400;
+  margin-bottom: 2rem;
+  letter-spacing: 0.05em;
+}
+.cover-divider {
+  width: 120px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--purple), transparent);
+  margin-bottom: 2rem;
+}
+.cover-desc {
+  font-size: 1.05rem;
+  line-height: 2;
+  color: var(--text-secondary);
+  max-width: 620px;
+}
+.cover-desc strong { color: var(--coral); font-weight: 600; }
+.cover-meta {
+  position: absolute;
+  bottom: 2rem;
+  left: 8rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+/* ═══════════ Section Header ═══════════ */
+.section-header {
+  margin-bottom: 2.5rem;
+  width: 100%;
+}
+.section-tag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--purple);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+.section-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.header-line {
+  width: 60px;
+  height: 2px;
+  background: var(--purple);
+  margin-top: 1rem;
+}
+
+/* ═══════════ Cards ═══════════ */
+.card-grid { display: grid; gap: 1.2rem; width: 100%; }
+.card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.card-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.card-grid.cols-5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border-color: rgba(138,127,173,0.3);
+}
+
+.card-purple::before { background: var(--purple); }
+.card-coral::before { background: var(--coral); }
+.card-teal::before { background: var(--teal); }
+.card-amber::before { background: var(--amber); }
+.card-blue::before { background: var(--blue); }
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  margin-top: 0.3rem;
+}
+.card-title.purple { color: var(--purple); }
+.card-title.coral { color: var(--coral); }
+.card-title.teal { color: var(--teal); }
+.card-title.amber { color: var(--amber); }
+.card-title.blue { color: var(--blue); }
+
+.card-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+.card-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+.card-stat {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0.3rem 0;
+}
+.card-detail { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5; }
+
+/* ═══════════ Info Table ═══════════ */
+.info-table { width: 100%; }
+.info-row {
+  display: flex;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(138,127,173,0.08);
+  font-size: 0.9rem;
+}
+.info-label {
+  width: 160px;
+  color: var(--purple);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.info-value { color: var(--text-secondary); }
+
+/* ═══════════ Step Flow ═══════════ */
+.step-flow { display: flex; flex-direction: column; gap: 0.7rem; }
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0;
+}
+.step-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.step-dot.purple { background: var(--purple); box-shadow: 0 0 12px var(--purple-glow); }
+.step-dot.teal { background: var(--teal); box-shadow: 0 0 12px var(--teal-glow); }
+.step-dot.coral { background: var(--coral); box-shadow: 0 0 12px var(--coral-glow); }
+.step-dot.amber { background: var(--amber); box-shadow: 0 0 12px var(--amber-glow); }
+.step-dot.blue { background: var(--blue); box-shadow: 0 0 12px var(--blue-glow); }
+.step-label { font-weight: 700; font-size: 1rem; min-width: 70px; }
+.step-label.purple { color: var(--purple); }
+.step-label.teal { color: var(--teal); }
+.step-label.coral { color: var(--coral); }
+.step-label.amber { color: var(--amber); }
+.step-label.blue { color: var(--blue); }
+.step-desc { font-size: 0.88rem; color: var(--text-secondary); }
+
+/* ═══════════ Progress Flow Bar ═══════════ */
+.flow-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.flow-step {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+.flow-arrow { color: var(--text-muted); margin: 0 0.2rem; font-size: 0.7rem; }
+
+/* ═══════════ Comparison Table ═══════════ */
+.comp-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+.comp-table th {
+  text-align: left;
+  padding: 0.7rem 1rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+.comp-table td {
+  padding: 0.55rem 1rem;
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(138,127,173,0.06);
+}
+.comp-table .highlight { color: var(--coral); font-weight: 600; }
+
+/* ═══════════ Quote Box ═══════════ */
+.quote-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.8rem 2rem;
+  position: relative;
+  margin-top: 1rem;
+}
+.quote-box::before {
+  content: '"';
+  position: absolute;
+  top: -10px; left: 20px;
+  font-size: 4rem;
+  color: var(--purple);
+  opacity: 0.3;
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+.quote-text { font-size: 1rem; color: var(--text-primary); line-height: 1.8; }
+.quote-text strong { color: var(--coral); }
+
+/* ═══════════ Dual Columns ═══════════ */
+.dual-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; width: 100%; }
+
+/* ═══════════ Tag Pill ═══════════ */
+.tag {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-right: 0.3rem;
+}
+.tag-purple { background: rgba(139,127,173,0.15); color: var(--purple); }
+.tag-teal { background: rgba(74,144,164,0.15); color: var(--teal); }
+.tag-coral { background: rgba(212,117,107,0.15); color: var(--coral); }
+.tag-amber { background: rgba(200,146,62,0.15); color: var(--amber); }
+
+/* ═══════════ Navigation ═══════════ */
+#nav {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 100;
+  background: rgba(20,20,40,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.6rem 1.2rem;
+  border-radius: 40px;
+  border: 1px solid var(--border);
+}
+.nav-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+.nav-btn:hover { background: var(--bg-card); color: var(--text-primary); border-color: var(--purple); }
+.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+#page-indicator {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  min-width: 80px;
+  text-align: center;
+  font-weight: 600;
+}
+#progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--purple), var(--coral), var(--teal));
+  z-index: 200;
+  transition: width 0.4s var(--transition);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ═══════════ Key Hint ═══════════ */
+#key-hint {
+  position: fixed;
+  top: 1.2rem;
+  right: 1.5rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  z-index: 100;
+  opacity: 0.6;
+}
+
+/* ═══════════ Animated BG Particles ═══════════ */
+.bg-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+.particle {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: var(--purple);
+  border-radius: 50%;
+  animation: float 8s infinite ease-in-out;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 0; }
+  50% { transform: translateY(-60px) translateX(30px); }
+}
+
+/* ═══════════ Highlight box ═══════════ */
+.highlight-box {
+  background: linear-gradient(135deg, rgba(139,127,173,0.1), rgba(212,117,107,0.08));
+  border: 1px solid rgba(212,117,107,0.2);
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--coral);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ═══════════ Pulse glow ═══════════ */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(139,127,173,0.1); }
+  50% { box-shadow: 0 0 40px rgba(139,127,173,0.2); }
+}
+
+/* Cover slide special effects */
+.cover-bg-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+.cover-bg-glow.top-right { background: var(--purple); top: -200px; right: -150px; }
+.cover-bg-glow.bottom-left { background: var(--coral); bottom: -200px; left: -150px; }
+
+.ending-glow-1 {
+  position: absolute;
+  width: 400px; height: 400px;
+  background: var(--purple);
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.12;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .slide { padding: 2rem 1.5rem; }
+  .card-grid.cols-2, .card-grid.cols-3, .card-grid.cols-4, .card-grid.cols-5 { grid-template-columns: 1fr; }
+  .dual-col { grid-template-columns: 1fr; }
+  .section-title { font-size: 1.4rem; }
+  .cover-title { font-size: 2.8rem; }
+  .cover-slide { padding-left: 1.5rem; }
+  .cover-meta { left: 1.5rem; }
+  .flow-bar { gap: 0.3rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Background particles -->
+<div class="bg-particles" id="particles"></div>
+
+<!-- Progress bar -->
+<div id="progress-bar" style="width: 8.33%"></div>
+
+<!-- Key hint -->
+<div id="key-hint">← → 键翻页  |  F 全屏</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- Slides Container -->
+<!-- ════════════════════════════════════════════ -->
+<div id="presentation">
+
+<!-- Slide 1: Cover -->
+<div class="slide cover-slide active" data-index="0">
+  <div class="cover-bg-glow top-right"></div>
+  <div class="cover-bg-glow bottom-left"></div>
+  <div class="slide-inner">
+    <h1 class="cover-title">黎明之后</h1>
+    <p class="cover-subtitle">（规则怪谈—推理反击）社交派对游戏</p>
+    <div class="cover-divider"></div>
+    <p class="cover-desc">
+      你不知道什么能做、什么不能说<br>
+      但每次违规，理智都会崩溃。<br><br>
+      你必须在<strong>12天内推理出鬼的规则</strong>，一条条抹除它们<br>
+      同时保持自己不饿死、不疯掉、不被身边的人背叛<br><br>
+      因为<strong>鬼就在你们之中</strong>。
+    </p>
+    <div class="cover-meta">
+      产品报告 V1.0 &nbsp;|&nbsp; 2026年7月 &nbsp;|&nbsp; 设计者：小马
+    </div>
+  </div>
+</div>
+
+<!-- Slide 2: Game Overview -->
+<div class="slide" data-index="1">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Game Overview</div>
+      <h2 class="section-title">游戏概览</h2>
+      <p class="section-subtitle">社交推理 + 规则解谜 + 生存策略</p>
+      <div class="header-line"></div>
+    </div>
+    <div class="dual-col" style="align-items:start;">
+      <div class="info-table">
+        <div class="info-row"><span class="info-label">游戏名称</span><span class="info-value">《黎明之后》</span></div>
+        <div class="info-row"><span class="info-label">游戏类型</span><span class="info-value">社交推理 + 规则解谜 + 生存策略</span></div>
+        <div class="info-row"><span class="info-label">玩家数量</span><span class="info-value">6-12人（推荐8人）</span></div>
+        <div class="info-row"><span class="info-label">游戏时长</span><span class="info-value">90-150分钟</span></div>
+        <div class="info-row"><span class="info-label">年龄建议</span><span class="info-value">14+</span></div>
+        <div class="info-row"><span class="info-label">核心体验</span><span class="info-value">解谜 · 生存 · 社交博弈</span></div>
+        <div class="info-row"><span class="info-label">主持人</span><span class="info-value">AI市长（豆包等国产大模型）或真人</span></div>
+        <div class="info-row"><span class="info-label">物理组件</span><span class="info-value">188张卡牌 + 地图 + 角色面板 + 公开规则栏</span></div>
+      </div>
+      <div class="quote-box">
+        <p class="quote-text">
+          <strong style="font-size:1.3rem;">"狼人杀的推理深度</strong><br>
+          <strong style="font-size:1.3rem;">+ 密室逃脱的解谜快感</strong><br>
+          <strong style="font-size:1.3rem;">+ 生存游戏的资源博弈"</strong><br><br>
+          <span style="color:var(--coral);">规则不是附属品——</span><br>
+          <span style="color:var(--coral);font-size:1.2rem;font-weight:700;">规则本身就是游戏。</span><br><br>
+          <span style="color:var(--text-secondary);font-size:0.8rem;">
+          AI市长替代真人主持，零门槛开桌<br>
+          每局生成独一无二的恐怖叙事。
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 3: Design Philosophy -->
+<div class="slide" data-index="2">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Design Philosophy</div>
+      <h2 class="section-title">设计哲学</h2>
+      <p class="section-subtitle">规则为骨 —— 让"不知道规则"成为玩法</p>
+      <div class="header-line"></div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:1.2rem;">
+      <div class="card card-purple">
+        <div style="display:flex; align-items:flex-start; gap:1.5rem;">
+          <div style="font-size:3rem; font-weight:900; color:var(--purple); opacity:0.4; line-height:1; flex-shrink:0;">01</div>
+          <div>
+            <div class="card-title purple">不知道规则 → 推理规则</div>
+            <p class="card-body">传统桌游的规则是玩家阅读后遵守的。本游戏的规则是玩家观察后<strong style="color:var(--coral);">推理</strong>的。你不知道边界在哪，但你知道自己越界了——因为理智值在下降。这种"不确定中的确定惩罚"正是灵异怪谈类作品的核心心理机制。我们把它做成了一款桌游。</p>
+          </div>
+        </div>
+      </div>
+      <div class="card card-teal">
+        <div style="display:flex; align-items:flex-start; gap:1.5rem;">
+          <div style="font-size:3rem; font-weight:900; color:var(--teal); opacity:0.4; line-height:1; flex-shrink:0;">02</div>
+          <div>
+            <div class="card-title teal">规则约束所有人，包括鬼</div>
+            <p class="card-body">鬼制定了隐藏规则，但这些规则同样约束鬼自己。信息不对称是游戏的核心乐趣，但规则面前人人平等——这是博弈空间的保证。鬼也可能被其他鬼利用规则攻击。</p>
+          </div>
+        </div>
+      </div>
+      <div class="card card-coral">
+        <div style="display:flex; align-items:flex-start; gap:1.5rem;">
+          <div style="font-size:3rem; font-weight:900; color:var(--coral); opacity:0.4; line-height:1; flex-shrink:0;">03</div>
+          <div>
+            <div class="card-title coral">物理实体承载情感</div>
+            <p class="card-body">堆叠式角色面板让玩家"看到"自己的生存历程；公开规则栏让所有人随时感知规则的压迫；硬币掷出的正反面不只是判定，是命运。每一个物理组件都是为了制造某种情感反馈而设计的。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 4: 4D Rule Skeleton -->
+<div class="slide" data-index="3">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Core Innovation</div>
+      <h2 class="section-title">核心创新：四维规则骨架</h2>
+      <p class="section-subtitle">规则不是附属品，规则本身就是游戏</p>
+      <div class="header-line"></div>
+    </div>
+    <div class="card-grid cols-4">
+      <div class="card card-purple">
+        <div class="card-title purple">等级维度</div>
+        <div class="card-subtitle">违规惩罚的严重程度</div>
+        <p class="card-body" style="line-height:2;">
+          <span class="tag tag-coral">T1 重</span> 8张<br>
+          <span class="tag tag-amber">T2 中</span> 24张<br>
+          <span class="tag tag-teal">T3 轻</span> 20张
+        </p>
+      </div>
+      <div class="card card-teal">
+        <div class="card-title teal">可见性维度</div>
+        <div class="card-subtitle">信息不对称的物理载体</div>
+        <p class="card-body" style="line-height:2;">
+          隐藏规则<br>
+          → 公开规则<br>
+          → 被抹除规则
+        </p>
+      </div>
+      <div class="card card-blue">
+        <div class="card-title blue">状态维度</div>
+        <div class="card-subtitle">规则的活性与消亡</div>
+        <p class="card-body" style="line-height:2;">
+          生效中 ↔ 已抹除<br>
+          <span style="color:var(--text-muted);font-size:0.8rem;">宣言推理的终极目标</span>
+        </p>
+      </div>
+      <div class="card card-amber">
+        <div class="card-title amber">来源维度</div>
+        <div class="card-subtitle">规则的生成与绑定</div>
+        <p class="card-body" style="line-height:2;">
+          普通规则 28张<br>
+          <span style="color:var(--text-muted);">鬼自选</span><br>
+          特殊规则 24张<br>
+          <span style="color:var(--text-muted);">12地点 × 2</span>
+        </p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:1.5rem;">
+      宣言推理 · 双维生存 · 事件卡攻防 · 角色技能 · AI市长叙事 —— 全部生长在"规则系统"这副骨架上
+    </div>
+  </div>
+</div>
+
+<!-- Slide 5: Declaration Reasoning -->
+<div class="slide" data-index="4">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Core Gameplay</div>
+      <h2 class="section-title">核心玩法：宣言推理</h2>
+      <p class="section-subtitle">让"不知道规则"成为玩法</p>
+      <div class="header-line"></div>
+    </div>
+    <div class="dual-col">
+      <div class="step-flow">
+        <div class="step-item">
+          <div class="step-dot purple"></div>
+          <span class="step-label purple">① 观察</span>
+          <span class="step-desc">违反规则的玩家理智下降，所有人观察到"有人受罚了"</span>
+        </div>
+        <div class="step-item">
+          <div class="step-dot teal"></div>
+          <span class="step-label teal">② 猜测</span>
+          <span class="step-desc">人类阵营结合AI市长的海龟汤式故事和游戏中的异常现象，推理规则</span>
+        </div>
+        <div class="step-item">
+          <div class="step-dot coral"></div>
+          <span class="step-label coral">③ 宣言</span>
+          <span class="step-desc">大声宣言："我推理第X条规则——[规则内容]"</span>
+        </div>
+        <div class="step-item">
+          <div class="step-dot amber"></div>
+          <span class="step-label amber">④ 质询</span>
+          <span class="step-desc">鬼可以发起质询，质疑推理过程或证据链</span>
+        </div>
+        <div class="step-item">
+          <div class="step-dot blue"></div>
+          <span class="step-label blue">⑤ 判定</span>
+          <span class="step-desc">鬼拿出对应规则卡验证。正确→规则抹除；错误→宣言者扣1理智</span>
+        </div>
+      </div>
+      <div class="card card-purple" style="height:fit-content;">
+        <div class="card-title purple">设计亮点</div>
+        <div class="card-body" style="line-height:2.2;">
+          <span style="color:var(--teal);">▸</span> 每人每回合限1次宣言<br>
+          <span style="color:var(--teal);">▸</span> 宣言次数达2/4/6次抽事件卡<br>
+          <span style="color:var(--coral);font-weight:700;">▸ 宣言成功 → 规则永久抹除</span><br>
+          <span style="color:var(--coral);font-weight:700;">▸ 宣言失败 → 扣1理智</span><br>
+          <span style="color:var(--amber);">▸</span> 鬼可发起质询打断<br>
+          <span style="color:var(--text-secondary);">▸ 宣言即合法：玩家互相监督</span><br>
+          <span style="color:var(--text-muted);font-size:0.8rem;">&nbsp;&nbsp;&nbsp;市长不做法官</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 6: Dual Dimension -->
+<div class="slide" data-index="5">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Survival System</div>
+      <h2 class="section-title">双维属性：两条独立的死亡路径</h2>
+      <p class="section-subtitle">饿死 vs 疯掉 —— 资源管理与心理博弈的交叉压力</p>
+      <div class="header-line"></div>
+    </div>
+    <div class="dual-col" style="gap:2rem;">
+      <div class="card card-teal" style="padding:2rem;">
+        <h3 class="card-title teal" style="font-size:1.3rem; margin-bottom:1rem;">健康值（体力）</h3>
+        <p style="font-size:1rem; color:#fff; font-weight:700; margin-bottom:1rem;">起始：6点</p>
+        <div style="margin-bottom:1rem;">
+          <p style="color:var(--coral); font-weight:600; margin-bottom:0.4rem;">消耗途径</p>
+          <p style="color:var(--text-secondary); font-size:0.85rem; line-height:2;">
+            · 每日黎明自动扣除（递增：1→2→3...）<br>
+            · 移动消耗（越远扣越多）<br>
+            · 事件卡效果
+          </p>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <p style="color:var(--teal); font-weight:600; margin-bottom:0.4rem;">恢复途径</p>
+          <p style="color:var(--text-secondary); font-size:0.85rem; line-height:2;">
+            · 物资卡（食物类）<br>
+            · 反击卡效果<br>
+            · 交易获取物资
+          </p>
+        </div>
+        <p style="color:var(--coral); font-weight:700; font-size:0.95rem; margin-top:0.5rem;">⚠ 健康值降至0 → 饿死</p>
+      </div>
+      <div class="card card-purple" style="padding:2rem;">
+        <h3 class="card-title purple" style="font-size:1.3rem; margin-bottom:1rem;">理智值（精神）</h3>
+        <p style="font-size:1rem; color:#fff; font-weight:700; margin-bottom:1rem;">起始：6点</p>
+        <div style="margin-bottom:1rem;">
+          <p style="color:var(--coral); font-weight:600; margin-bottom:0.4rem;">消耗途径</p>
+          <p style="color:var(--text-secondary); font-size:0.85rem; line-height:2;">
+            · 违反鬼的隐藏规则 → 扣理智<br>
+            · T1规则扣3点 / T2扣2点 / T3扣1点<br>
+            · 怪谈卡效果
+          </p>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <p style="color:var(--purple); font-weight:600; margin-bottom:0.4rem;">恢复途径</p>
+          <p style="color:var(--text-secondary); font-size:0.85rem; line-height:2;">
+            · 反击卡效果（极少）<br>
+            · 特殊角色技能
+          </p>
+        </div>
+        <p style="color:var(--coral); font-weight:700; font-size:0.95rem; margin-top:0.5rem;">⚠ 理智值降至0 → 化鬼</p>
+        <p style="color:var(--text-muted); font-size:0.8rem; margin-top:0.3rem;">化鬼后加入鬼阵营，人类全员抽反击卡</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 7: AI Mayor -->
+<div class="slide" data-index="6">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Paradigm Shift</div>
+      <h2 class="section-title">AI市长：桌游主持的范式转移</h2>
+      <p class="section-subtitle">零门槛开桌 + 海龟汤式恐怖叙事</p>
+      <div class="header-line"></div>
+    </div>
+    <div class="dual-col" style="margin-bottom:1.5rem;">
+      <div class="card card-coral" style="padding:1.5rem;">
+        <h3 class="card-title coral" style="font-size:1.1rem;">传统桌游的痛点</h3>
+        <p class="card-body" style="line-height:2.2;">
+          <span style="color:var(--coral);">✕</span> 需要DM/主持人：缺人就开不了桌<br>
+          <span style="color:var(--coral);">✕</span> DM水平参差：新手DM严重影响体验<br>
+          <span style="color:var(--coral);">✕</span> 规则复杂：学习成本高，劝退新玩家<br>
+          <span style="color:var(--coral);">✕</span> 叙事重复：老玩家反复玩缺乏新鲜感
+        </p>
+      </div>
+      <div class="card card-teal" style="padding:1.5rem;">
+        <h3 class="card-title teal" style="font-size:1.1rem;">AI市长的解决方案</h3>
+        <p class="card-body" style="line-height:2.2;">
+          <span style="color:var(--teal);">✓</span> 零门槛：打开手机/电脑即可开桌<br>
+          <span style="color:var(--teal);">✓</span> 一致性：严格按照预设指令执行，不偏袒<br>
+          <span style="color:var(--coral);font-weight:700;">✓ 海龟汤叙事：每局生成独一无二的恐怖故事</span><br>
+          <span style="color:var(--teal);">✓</span> 自动化：记录宣言、结算数值、生成终局日记
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-purple" style="padding:1.5rem;">
+      <h3 class="card-title purple" style="font-size:1.1rem;">AI市长 6步工作流程</h3>
+      <div class="flow-bar" style="margin:1rem 0;">
+        <span class="flow-step" style="background:var(--purple);">0. 确认玩家</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step" style="background:var(--teal);">1. 开局判定</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step" style="background:var(--coral);">2. 生成故事</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step" style="background:var(--amber);">3. 每日黎明</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step" style="background:var(--blue);">4. 记录回合</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step" style="background:var(--purple);">5. 结算数值</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step" style="background:var(--teal);">6. 终局日记</span>
+      </div>
+      <p style="color:var(--text-muted); font-size:0.8rem; margin-top:0.5rem;">
+        海龟汤难度叙事 → "不讲因果链，只讲日常碎片" —— 故事让玩家知道"规则长什么样"，但不告诉"规则在哪里"
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 8: Card Ecosystem -->
+<div class="slide" data-index="7">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Card Ecosystem</div>
+      <h2 class="section-title">卡牌生态体系</h2>
+      <p class="section-subtitle">188张物理卡 × 5大图鉴</p>
+      <div class="header-line"></div>
+    </div>
+    <div class="card-grid cols-5">
+      <div class="card card-purple">
+        <div class="card-title purple">规则卡</div>
+        <div class="card-stat purple">52<span style="font-size:1rem;">张</span></div>
+        <div class="card-detail">
+          <span class="tag tag-coral">T1·8</span>
+          <span class="tag tag-amber">T2·24</span>
+          <span class="tag tag-teal">T3·20</span>
+        </div>
+        <p class="card-body" style="margin-top:0.5rem;">游戏的骨架<br>一切机制的起点</p>
+      </div>
+      <div class="card card-teal">
+        <div class="card-title teal">反击卡</div>
+        <div class="card-stat teal">62<span style="font-size:1rem;">张</span></div>
+        <div class="card-detail">
+          <span class="tag tag-teal">基础36</span>
+          <span class="tag tag-purple">觉醒16</span><br>
+          <span class="tag tag-coral">极致8</span>
+          <span class="tag tag-amber">真理2</span>
+        </div>
+        <p class="card-body" style="margin-top:0.5rem;">人类阵营的<br>破局手段</p>
+      </div>
+      <div class="card card-coral">
+        <div class="card-title coral">怪谈卡</div>
+        <div class="card-stat coral">36<span style="font-size:1rem;">张</span></div>
+        <div class="card-detail">
+          <span class="tag tag-teal">流言16</span>
+          <span class="tag tag-amber">异常10</span><br>
+          <span class="tag tag-coral">怪诞6</span>
+          <span class="tag tag-purple">灾厄4</span>
+        </div>
+        <p class="card-body" style="margin-top:0.5rem;">鬼阵营的<br>攻击武器</p>
+      </div>
+      <div class="card card-amber">
+        <div class="card-title amber">角色卡</div>
+        <div class="card-stat amber">12<span style="font-size:1rem;">张</span></div>
+        <div class="card-detail">12个独特角色+技能</div>
+        <p class="card-body" style="margin-top:0.5rem;">不对称能力<br>+ 叙事身份</p>
+      </div>
+      <div class="card card-blue">
+        <div class="card-title blue">个人目的卡</div>
+        <div class="card-stat blue">26<span style="font-size:1rem;">张</span></div>
+        <div class="card-detail">公开+隐藏双目标</div>
+        <p class="card-body" style="margin-top:0.5rem;">个人胜利条件<br>增加博弈层次</p>
+      </div>
+    </div>
+    <div class="card card-purple" style="margin-top:1.2rem; padding:1rem 1.5rem;">
+      <h3 class="card-title purple" style="font-size:1rem;">卡牌物理区域设计</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem 2rem; margin-top:0.6rem;">
+        <div><span style="color:var(--teal); font-weight:600;">反击卡区域</span><span style="color:var(--text-secondary);font-size:0.82rem;">：未激活(盖放) → 已激活(公开) → 持续适用 → 弃牌</span></div>
+        <div><span style="color:var(--coral); font-weight:600;">怪谈卡区域</span><span style="color:var(--text-secondary);font-size:0.82rem;">：未激活池(鬼共享) → 已激活池 → 目标/弃牌</span></div>
+        <div><span style="color:var(--amber); font-weight:600;">物资卡区域</span><span style="color:var(--text-secondary);font-size:0.82rem;">：手牌(隐藏) → 使用 → 弃牌堆</span></div>
+        <div><span style="color:var(--purple); font-weight:600;">公开规则栏</span><span style="color:var(--text-secondary);font-size:0.82rem;">：四分区物理板——公开/抹除/怪谈/回合指示</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 9: Character Design -->
+<div class="slide" data-index="8">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Character Design</div>
+      <h2 class="section-title">角色设计哲学</h2>
+      <p class="section-subtitle">12个即插即用的叙事身份</p>
+      <div class="header-line"></div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+      <div class="card card-coral" style="padding:1.2rem;">
+        <div style="display:flex; align-items:baseline; gap:0.8rem;">
+          <h3 class="card-title coral" style="font-size:1rem; min-width:100px;">乐天派</h3>
+          <div>
+            <p style="color:var(--text-primary); font-size:0.85rem; font-weight:600;">开局健康7（高1点）、理智5（低1点）</p>
+            <p style="color:var(--text-muted); font-size:0.78rem;">乐观的生存主义者，体力充沛但神经大条</p>
+          </div>
+        </div>
+      </div>
+      <div class="card card-teal" style="padding:1.2rem;">
+        <div style="display:flex; align-items:baseline; gap:0.8rem;">
+          <h3 class="card-title teal" style="font-size:1rem; min-width:100px;">法医侦探</h3>
+          <div>
+            <p style="color:var(--text-primary); font-size:0.85rem; font-weight:600;">宣言时额外获取1条线索信息</p>
+            <p style="color:var(--text-muted); font-size:0.78rem;">专业训练带来推理优势，但身体条件普通</p>
+          </div>
+        </div>
+      </div>
+      <div class="card card-purple" style="padding:1.2rem;">
+        <div style="display:flex; align-items:baseline; gap:0.8rem;">
+          <h3 class="card-title purple" style="font-size:1rem; min-width:100px;">社恐大学生</h3>
+          <div>
+            <p style="color:var(--text-primary); font-size:0.85rem; font-weight:600;">被质询时可选择沉默（免于回答）</p>
+            <p style="color:var(--text-muted); font-size:0.78rem;">内向但敏锐，社交回避反而成为保护</p>
+          </div>
+        </div>
+      </div>
+      <div class="card card-amber" style="padding:1.2rem;">
+        <div style="display:flex; align-items:baseline; gap:0.8rem;">
+          <h3 class="card-title amber" style="font-size:1rem; min-width:100px;">街道主任</h3>
+          <div>
+            <p style="color:var(--text-primary); font-size:0.85rem; font-weight:600;">每回合可保护1人免受1次怪谈攻击</p>
+            <p style="color:var(--text-muted); font-size:0.78rem;">街道工作经验赋予的庇护能力</p>
+          </div>
+        </div>
+      </div>
+      <div class="card card-blue" style="padding:1.2rem;">
+        <div style="display:flex; align-items:baseline; gap:0.8rem;">
+          <h3 class="card-title blue" style="font-size:1rem; min-width:100px;">整顿末世零零后</h3>
+          <div>
+            <p style="color:var(--text-primary); font-size:0.85rem; font-weight:600;">无视1条低级规则的约束</p>
+            <p style="color:var(--text-muted); font-size:0.78rem;">Z世代的叛逆在末世成了生存优势</p>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:1.2rem; display:flex; align-items:center; justify-content:center; border-style:dashed;">
+        <p style="color:var(--text-muted); font-size:0.9rem; text-align:center;">
+          共 <strong style="color:var(--coral);">12个角色</strong><br>
+          每局6-12人自由组合<br>
+          每个角色有独特叙事背景 + 主动/被动技能
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 10: Competitive Differentiation -->
+<div class="slide" data-index="9">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Competitive Differentiation</div>
+      <h2 class="section-title">竞争差异化</h2>
+      <p class="section-subtitle">为什么《黎明之后》不可替代</p>
+      <div class="header-line"></div>
+    </div>
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>维度</th><th>狼人杀</th><th>阿瓦隆</th><th>密室逃脱</th><th style="color:var(--coral);">《黎明之后》✦</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>推理类型</td><td>身份推理</td><td>阵营推理</td><td>谜题推理</td><td class="highlight">规则推理 ✦</td>
+        </tr>
+        <tr>
+          <td>信息机制</td><td>夜晚信息</td><td>任务结果</td><td>线索收集</td><td class="highlight">海龟汤式叙事 ✦</td>
+        </tr>
+        <tr>
+          <td>死亡机制</td><td>投票淘汰</td><td>无</td><td>无</td><td class="highlight">双维属性自然死亡 ✦</td>
+        </tr>
+        <tr>
+          <td>主持人</td><td>必需</td><td>必需</td><td>必需</td><td class="highlight">AI市长/可选 ✦</td>
+        </tr>
+        <tr>
+          <td>重玩性</td><td>中</td><td>中</td><td>低</td><td class="highlight">极高（规则组合爆炸）✦</td>
+        </tr>
+        <tr>
+          <td>叙事</td><td>无</td><td>无</td><td>固定</td><td class="highlight">每局独有 ✦</td>
+        </tr>
+        <tr>
+          <td>策略深度</td><td>中低</td><td>中</td><td>中低</td><td class="highlight">高（多维度博弈）✦</td>
+        </tr>
+        <tr>
+          <td>入门门槛</td><td>低</td><td>低</td><td>低</td><td class="highlight">中（AI辅助降低）✦</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      ✦ 核心差异化标签：规则推理 × AI市长 × 双维生存 × 海龟汤叙事 × 规则组合爆炸重玩性
+    </div>
+  </div>
+</div>
+
+<!-- Slide 11: Market & Roadmap -->
+<div class="slide" data-index="10">
+  <div class="slide-inner">
+    <div class="section-header">
+      <div class="section-tag">Market & Roadmap</div>
+      <h2 class="section-title">市场机会与开发路线图</h2>
+      <p class="section-subtitle">从设计桌到众筹</p>
+      <div class="header-line"></div>
+    </div>
+    <div class="dual-col" style="margin-bottom:1.5rem;">
+      <div class="card card-teal" style="padding:1.5rem;">
+        <h3 class="card-title teal" style="font-size:1.1rem;">市场机会</h3>
+        <p class="card-body" style="line-height:2;">
+          <span style="color:var(--teal);">▸</span> 中国桌游市场年增长30%+，社交推理品类高速扩张<br>
+          <span style="color:var(--teal);">▸</span> 狼人杀/阿瓦隆/血染钟楼验证了品类需求<br>
+          <span style="color:var(--coral); font-weight:700;">▸ "规则推理"品类几乎空白——无直接竞品</span><br>
+          <span style="color:var(--teal);">▸</span> AI辅助降低门槛，扩大潜在用户群<br>
+          <span style="color:var(--teal);">▸</span> 目标：社交聚会 + 桌游吧 + 线上剧本杀平台
+        </p>
+      </div>
+      <div class="card card-amber" style="padding:1.5rem;">
+        <h3 class="card-title amber" style="font-size:1.1rem;">目标用户画像</h3>
+        <p class="card-body" style="line-height:2;">
+          <span style="color:var(--amber);">▸</span> 核心玩家：18-35岁社交推理爱好者<br>
+          <span style="color:var(--amber);">▸</span> 扩展用户：派对/团建场景的轻度玩家<br>
+          <span style="color:var(--amber);">▸</span> 潜在用户：线上剧本杀/密室逃脱爱好者<br>
+          <span style="color:var(--amber);">▸</span> 渠道：桌游吧、摩点众筹、电商<br>
+          <span style="color:#fff;font-weight:700;">▸ 定价区间：¥198-298（标准版）</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-purple" style="padding:1.5rem;">
+      <h3 class="card-title purple" style="font-size:1.1rem;">开发路线图</h3>
+      <div class="card-grid cols-4" style="margin-top:1rem;">
+        <div class="card card-purple">
+          <div class="card-subtitle" style="color:var(--purple); font-weight:700; font-size:0.9rem;">V1.x 核心机制</div>
+          <div class="tag tag-teal" style="margin-bottom:0.5rem;">已完成</div>
+          <p class="card-body" style="line-height:1.8; font-size:0.8rem;">
+            12角色<br>62反击卡<br>36怪谈卡<br>52规则卡<br>双维属性<br>宣言推理
+          </p>
+        </div>
+        <div class="card card-teal">
+          <div class="card-subtitle" style="color:var(--teal); font-weight:700; font-size:0.9rem;">V2.0 系统完善</div>
+          <div class="tag tag-teal" style="margin-bottom:0.5rem;">已完成</div>
+          <p class="card-body" style="line-height:1.8; font-size:0.8rem;">
+            AI市长指令<br>网站第一期<br>卡牌数据库<br>9张流程图<br>设计书+PPT
+          </p>
+        </div>
+        <div class="card card-coral">
+          <div class="card-subtitle" style="color:var(--coral); font-weight:700; font-size:0.9rem;">V3.0 成品打磨</div>
+          <div class="tag tag-amber" style="margin-bottom:0.5rem;">计划中</div>
+          <p class="card-body" style="line-height:1.8; font-size:0.8rem;">
+            美术设计<br>网站第二期<br>AI对话功能<br>盲测迭代<br>工业化文件
+          </p>
+        </div>
+        <div class="card card-amber">
+          <div class="card-subtitle" style="color:var(--amber); font-weight:700; font-size:0.9rem;">V4.0 商业发布</div>
+          <div class="tag tag-coral" style="margin-bottom:0.5rem;">未来</div>
+          <p class="card-body" style="line-height:1.8; font-size:0.8rem;">
+            众筹上线<br>生产供应链<br>渠道合作<br>线上版本<br>社区运营
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 12: Thank You -->
+<div class="slide" data-index="11" style="text-align:center;">
+  <div class="ending-glow-1"></div>
+  <div class="slide-inner" style="text-align:center;">
+    <h1 style="font-family:var(--font-display); font-size:5rem; font-weight:900; letter-spacing:0.12em;
+      background:linear-gradient(135deg, #e8e6f0 0%, #b8b4d4 60%, #8B7FAD 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
+      谢谢
+    </h1>
+    <div style="width:80px; height:3px; background:linear-gradient(90deg, var(--purple), var(--coral)); margin:1.5rem auto;"></div>
+    <p style="font-size:1.5rem; color:var(--text-primary); font-weight:700; margin-bottom:0.5rem;">《黎明之后》</p>
+    <p style="font-size:1.1rem; color:var(--coral); margin-bottom:2rem;">（规则怪谈—推理反击）社交派对游戏</p>
+    <p style="font-size:0.95rem; color:var(--text-secondary); margin-bottom:0.5rem; font-style:italic;">
+      "规则不是附属品，规则本身就是游戏。"
+    </p>
+    <div style="margin-top:2rem; font-size:0.8rem; color:var(--text-muted); line-height:2;">
+      版本：V2.0 &nbsp;|&nbsp; 文档：设计书 + 产品报告 + 完整设计稿<br>
+      网站：GitHub Pages（搭建中）&nbsp;|&nbsp; 知识库：腾讯乐享
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Navigation -->
+<div id="nav">
+  <button class="nav-btn" id="prevBtn" title="上一页 (←)">◀</button>
+  <span id="page-indicator">1 / 12</span>
+  <button class="nav-btn" id="nextBtn" title="下一页 (→)">▶</button>
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const indicator = document.getElementById('page-indicator');
+  const progressBar = document.getElementById('progress-bar');
+
+  function updateSlide() {
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === currentSlide);
+    });
+    indicator.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === totalSlides - 1;
+  }
+
+  function goTo(index) {
+    if (index < 0 || index >= totalSlides) return;
+    currentSlide = index;
+    updateSlide();
+  }
+
+  function next() { goTo(currentSlide + 1); }
+  function prev() { goTo(currentSlide - 1); }
+
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      next();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      prev();
+    } else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen();
+      }
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goTo(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goTo(totalSlides - 1);
+    }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0;
+  let touchStartY = 0;
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  });
+  document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (dx > 0) prev();
+      else next();
+    }
+  });
+
+  // Generate floating particles
+  const particlesContainer = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = Math.random() * 100 + '%';
+    p.style.animationDelay = Math.random() * 8 + 's';
+    p.style.animationDuration = (6 + Math.random() * 10) + 's';
+    particlesContainer.appendChild(p);
+  }
+
+  updateSlide();
+})();
+</script>
+
+</body>
+</html>

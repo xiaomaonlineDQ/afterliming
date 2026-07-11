@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>工具箱 · 黎明之后</title>
+<link rel="stylesheet" href="../css/main.css?v=2026070818">
+<style>
+/* ========== Dashboard Layout ========== */
+:root {
+  --db-header-h: 44px;
+  --db-tabs-h: 40px;
+  --db-status-h: 32px;
+}
+.db-page {
+  height: 100vh; height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-base);
+  display: flex; flex-direction: column;
+}
+
+/* ── Header ── */
+.db-header {
+  background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);
+  padding: 0 var(--space-md); height: var(--db-header-h); min-height: var(--db-header-h);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; z-index: 100;
+}
+.db-header h1 { font-size: 0.95rem; margin: 0; display: flex; align-items: center; gap: 6px; }
+.db-header h1 span { font-weight: 300; color: var(--text-muted); }
+
+.db-mode-area { display: flex; align-items: center; gap: 8px; }
+.db-mode-badge {
+  font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 10px;
+  white-space: nowrap;
+}
+.db-mode-badge.player { background: rgba(46,134,193,0.15); color: var(--color-counter-glow); border: 1px solid rgba(46,134,193,0.3); }
+.db-mode-badge.mayor { background: rgba(192,57,43,0.15); color: var(--color-whisper-glow); border: 1px solid rgba(192,57,43,0.3); }
+.db-mode-btn {
+  font-size: 0.68rem; padding: 3px 10px; border-radius: 8px;
+  border: 1px solid var(--border-medium); background: var(--bg-base);
+  color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+}
+.db-mode-btn:hover { border-color: var(--color-whisper); color: var(--color-whisper-glow); }
+
+/* ── Tabs ── */
+.db-tabs {
+  background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);
+  display: flex; height: var(--db-tabs-h); min-height: var(--db-tabs-h);
+  flex-shrink: 0; overflow-x: auto; padding: 0 4px;
+}
+.db-tab {
+  padding: 0 14px; font-size: 0.78rem; font-weight: 600; border: none;
+  background: transparent; color: var(--text-muted); cursor: pointer;
+  white-space: nowrap; border-bottom: 2px solid transparent;
+  transition: all 0.15s; display: flex; align-items: center; gap: 4px;
+}
+.db-tab:hover { color: var(--text-secondary); }
+.db-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.db-tab.mayor-tab { color: var(--color-whisper); }
+.db-tab.mayor-tab.active { border-bottom-color: var(--color-whisper); }
+.db-tab.hidden { display: none !important; }
+
+/* ── Content ── */
+.db-content {
+  flex: 1; height: 0; min-height: 0; overflow: hidden; position: relative;
+}
+.db-module {
+  display: none; position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+}
+.db-module.active { display: flex; flex-direction: column; }
+
+/* ── Status Bar ── */
+.db-statusbar {
+  background: var(--bg-surface); border-top: 1px solid var(--border-subtle);
+  height: var(--db-status-h); min-height: var(--db-status-h);
+  display: flex; align-items: center; padding: 0 var(--space-md);
+  gap: var(--space-lg); flex-shrink: 0; z-index: 100;
+}
+.db-statusbar .stat-item {
+  font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px;
+}
+.stat-item .stat-val { color: var(--color-primary); }
+.stat-item .stat-label { color: var(--text-muted); }
+
+/* ── Map Module ── */
+.map-mod-inner { padding: var(--space-md); flex: 1; }
+.map-mod-inner h2 { font-size: 1rem; margin-bottom: var(--space-sm); }
+.map-loc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; margin-top: var(--space-sm); }
+
+.map-loc-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md); cursor: default; transition: all 0.15s;
+}
+.map-loc-card:hover { border-color: var(--border-medium); }
+.map-loc-card .mlc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.map-loc-card .mlc-num {
+  width: 24px; height: 24px; border-radius: 50%; background: var(--bg-hover); border: 1px solid var(--border-medium);
+  display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700;
+  color: var(--text-secondary); flex-shrink: 0;
+}
+.map-loc-card .mlc-name { font-size: 0.9rem; font-weight: 700; }
+.map-loc-card .mlc-district {
+  font-size: 0.62rem; font-weight: 600; padding: 1px 6px; border-radius: 8px; margin-left: auto;
+}
+.mlc-district.east { background: rgba(46,134,193,0.15); color: var(--color-counter-glow); }
+.mlc-district.west { background: rgba(142,68,173,0.15); color: var(--color-character-glow); }
+.map-loc-card .mlc-info {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;
+}
+.mlc-tag {
+  font-size: 0.62rem; font-weight: 700; padding: 1px 6px; border-radius: 6px; white-space: nowrap;
+}
+.mlc-tag.supply { background: rgba(200,146,62,0.12); color: var(--color-rule-glow); }
+.mlc-tag.masked { background: rgba(46,134,193,0.08); color: var(--text-muted); border: 1px dashed var(--border-subtle); font-style: italic; }
+
+.map-sim-section {
+  background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+  padding: var(--space-md); margin-top: var(--space-md);
+}
+.map-sim-section h3 { font-size: 0.85rem; margin-bottom: 4px; }
+.map-sim-section .sim-desc { font-size: 0.72rem; color: var(--text-muted); margin-bottom: var(--space-sm); }
+.sim-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sim-select {
+  background: var(--bg-surface); border: 1px solid var(--border-medium);
+  color: var(--text-primary); padding: 5px 10px; border-radius: var(--radius-sm);
+  font-size: 0.78rem; cursor: pointer;
+}
+.btn-sm {
+  font-size: 0.72rem; padding: 5px 12px; border-radius: var(--radius-sm); border: none;
+  cursor: pointer; font-weight: 700;
+}
+.btn-sm.primary { background: var(--color-primary); color: #fff; }
+.btn-sm.ghost-btn { background: var(--bg-base); color: var(--text-secondary); border: 1px solid var(--border-medium); }
+.sim-result-box {
+  background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  padding: var(--space-md); margin-top: var(--space-sm); min-height: 60px;
+  font-size: 0.8rem; color: var(--text-muted);
+}
+.sim-result-box.done { color: var(--text-primary); }
+
+/* ── Rule Board Module ── */
+.rb-mod-inner { display: flex; flex: 1; height: 0; min-height: 0; overflow: hidden; }
+
+.rb-pool-panel {
+  width: 280px; min-width: 220px; max-width: 320px;
+  background: var(--bg-elevated); border-right: 1px solid var(--border-subtle);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.rb-pool-header {
+  padding: 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;
+}
+.rb-pool-header h3 { font-size: 0.82rem; margin: 0 0 4px; }
+.rb-pool-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.rb-pool-tab {
+  padding: 2px 6px; font-size: 0.62rem; border: 1px solid var(--border-medium);
+  border-radius: 3px; background: var(--bg-base); color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+}
+.rb-pool-tab.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.rb-pool-cards {
+  flex: 1; height: 0; min-height: 0; overflow-y: auto; padding: 4px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+
+.rb-card-item {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 4px;
+  padding: 2px; cursor: pointer; transition: all 0.15s; user-select: none;
+}
+.rb-card-item:hover { border-color: var(--border-medium); }
+.rb-card-item.selected { border-color: var(--color-primary) !important; }
+.rb-card-item.rb-draggable { cursor: grab; }
+.rb-card-item.rb-draggable:active { cursor: grabbing; }
+.rb-card-item .rbci-img { width: 90px; height: 32px; flex-shrink: 0; border-radius: 2px; overflow: hidden; background: var(--bg-base); }
+.rb-card-item .rbci-img img { width: 100%; height: 100%; object-fit: cover; }
+.rb-card-item .rbci-name { font-size: 0.7rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+
+.rb-board-panel {
+  flex: 1; min-width: 0; display: grid;
+  grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+  gap: 6px; padding: 6px; overflow: hidden;
+}
+.rb-zone {
+  background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: var(--radius-md);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.rb-zone.rb-drop-target { border-style: dashed; border-color: var(--color-primary); }
+.rb-zone h4 {
+  font-size: 0.7rem; padding: 4px 8px; margin: 0; flex-shrink: 0;
+  text-align: center; border-bottom: 1px solid var(--border-subtle);
+}
+.rb-zone-all h4 { background: rgba(231,76,60,0.12); color: #e74c3c; }
+.rb-zone-human h4 { background: rgba(52,152,219,0.12); color: #3498db; }
+.rb-zone-ghost h4 { background: rgba(155,89,182,0.12); color: #9b59b6; }
+.rb-zone-erased h4 { background: rgba(127,140,141,0.12); color: #7f8c8d; }
+.rb-zone-cards {
+  flex: 1; height: 0; min-height: 0; overflow-y: auto; padding: 4px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.rb-zone-cards .empty-hint {
+  color: var(--text-muted); font-size: 0.65rem; text-align: center; padding: var(--space-lg);
+}
+.rb-zone-card {
+  cursor: pointer; border: 1px solid var(--border-subtle); border-radius: 4px;
+  overflow: hidden; background: var(--bg-base); position: relative; flex-shrink: 0;
+}
+.rb-zone-card img { width: 100%; height: auto; display: block; aspect-ratio: 2640/930; object-fit: contain; }
+.rb-zone-card .zcard-return {
+  position: absolute; top: 4px; right: 4px; font-size: 0.6rem; color: #fff;
+  background: rgba(231,76,60,0.85); cursor: pointer; padding: 1px 6px; border-radius: 4px;
+  border: none; display: none; z-index: 5;
+}
+.rb-zone-card .zcard-return.show { display: inline-block; }
+
+/* ── Player Panel Module ── */
+.panel-mod-inner { padding: var(--space-md); flex: 1; }
+.panel-mod-inner h2 { font-size: 1rem; margin-bottom: var(--space-md); }
+
+.panel-role-area { margin-bottom: var(--space-lg); }
+.panel-role-area label { font-size: 0.78rem; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+.panel-role-area select {
+  background: var(--bg-surface); border: 1px solid var(--border-medium);
+  color: var(--text-primary); padding: 6px 12px; border-radius: var(--radius-sm);
+  font-size: 0.85rem; width: 100%; max-width: 300px;
+}
+
+.panel-hand-area {
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.panel-hand-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+  padding: var(--space-md); text-align: center; cursor: pointer; transition: all 0.15s;
+}
+.panel-hand-card:hover { border-color: var(--border-medium); box-shadow: var(--shadow-md); }
+.panel-hand-card .phc-icon { font-size: 1.8rem; margin-bottom: 4px; }
+.panel-hand-card .phc-count { font-size: 1.5rem; font-weight: 700; }
+.panel-hand-card .phc-label { font-size: 0.72rem; color: var(--text-muted); }
+.panel-hand-card.counter-card { border-left: 3px solid var(--color-counter-glow); }
+.panel-hand-card.counter-card .phc-count { color: var(--color-counter-glow); }
+.panel-hand-card.supply-card { border-left: 3px solid var(--color-rule-glow); }
+.panel-hand-card.supply-card .phc-count { color: var(--color-rule-glow); }
+
+/* Drawer Overlay */
+.drawer-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.6); align-items: flex-end; justify-content: center;
+}
+.drawer-overlay.show { display: flex; }
+.drawer-panel {
+  background: var(--bg-surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100%; max-width: 600px; max-height: 70vh; overflow-y: auto;
+  padding: var(--space-lg); animation: slideUp 0.25s ease-out;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.drawer-panel h3 { font-size: 0.9rem; margin-bottom: var(--space-md); display: flex; justify-content: space-between; align-items: center; }
+.drawer-close {
+  background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);
+}
+.drawer-cards { display: flex; flex-direction: column; gap: var(--space-sm); }
+.drawer-card-item {
+  display: flex; align-items: center; gap: var(--space-sm);
+  padding: var(--space-sm); background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.drawer-card-item .dci-img {
+  width: 80px; height: auto; aspect-ratio: 4/3; border-radius: var(--radius-sm);
+  overflow: hidden; background: var(--bg-base); flex-shrink: 0;
+}
+.drawer-card-item .dci-img img { width: 100%; height: 100%; object-fit: cover; }
+.drawer-card-item .dci-info { flex: 1; min-width: 0; }
+.drawer-card-item .dci-name { font-size: 0.82rem; font-weight: 700; }
+.drawer-card-item .dci-level { font-size: 0.65rem; color: var(--text-muted); }
+.drawer-card-item .dci-effect { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4; margin-top: 2px; }
+
+.drawer-empty { text-align: center; padding: var(--space-xl); color: var(--text-muted); font-size: 0.85rem; }
+
+/* ── Mayor Console Module ── */
+.console-mod-inner { padding: var(--space-md); flex: 1; }
+.console-mod-inner h2 { font-size: 1rem; margin-bottom: var(--space-md); }
+.console-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg); }
+.console-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+.console-card h4 { font-size: 0.8rem; margin: 0 0 8px; color: var(--text-muted); }
+.console-card .cc-val { font-size: 1.5rem; font-weight: 700; }
+.console-card .cc-desc { font-size: 0.68rem; color: var(--text-muted); margin-top: 4px; }
+
+.console-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: var(--space-md); }
+.console-actions .btn {
+  font-size: 0.78rem; padding: 8px 16px; border-radius: var(--radius-md);
+  border: none; cursor: pointer; font-weight: 700;
+}
+.console-actions .btn-primary { background: var(--color-primary); color: #fff; }
+.console-actions .btn-danger { background: var(--color-whisper); color: #fff; }
+.console-actions .btn-neutral { background: var(--bg-base); color: var(--text-secondary); border: 1px solid var(--border-medium); }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .db-tab { font-size: 0.7rem; padding: 0 10px; }
+  .panel-hand-area { grid-template-columns: 1fr; }
+  .rb-pool-panel { width: 240px; min-width: 180px; }
+  .rb-board-panel { grid-template-columns: 1fr 1fr; }
+  .map-loc-grid { grid-template-columns: 1fr; }
+  .console-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .rb-mod-inner { flex-direction: column; }
+  .rb-pool-panel { width: 100%; max-width: none; height: 40%; min-height: 120px; border-right: none; border-bottom: 1px solid var(--border-subtle); }
+  .rb-board-panel { height: 60%; grid-template-columns: 1fr 1fr; }
+  .db-mode-area { gap: 4px; }
+  .db-mode-btn { font-size: 0.62rem; padding: 2px 6px; }
+}
+</style>
+</head>
+<body class="db-page">
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="db-header">
+  <a href="../index.html" style="color:var(--text-muted);text-decoration:none;font-size:0.82rem;flex-shrink:0;" title="返回首页">← 首页</a>
+  <h1>🏙️ 黎明之后<span>· 工具箱</span></h1>
+  <div class="db-mode-area">
+    <span class="db-mode-badge player" id="modeBadge">🎮 玩家端</span>
+    <button class="db-mode-btn" id="btnSwitchMode" title="切换到市长端">🔓 市长</button>
+  </div>
+</header>
+
+<!-- ═══════════ TABS ═══════════ -->
+<nav class="db-tabs" id="dbTabs">
+  <button class="db-tab active" data-tab="map">🗺️ 地图</button>
+  <button class="db-tab" data-tab="rules">📋 规则板</button>
+  <button class="db-tab player-tab" data-tab="panel">👤 我的面板</button>
+  <button class="db-tab mayor-tab" data-tab="console">⚙️ 市长台</button>
+</nav>
+
+<!-- ═══════════ CONTENT ═══════════ -->
+<main class="db-content">
+
+  <!-- ── 地图模块 ── -->
+  <section class="db-module active" id="mod-map">
+    <div class="map-mod-inner">
+      <h2>📍 A市 · 12地点</h2>
+      <div class="map-loc-grid" id="mapLocGrid"></div>
+
+      <div class="map-sim-section" id="mapDay1Sim">
+        <h3>🌅 第1天黎明地图设置</h3>
+        <p class="sim-desc">市长掷骰子：物资数 / 事件判定 / 鬼判定</p>
+        <div class="sim-row">
+          <label style="font-size:0.72rem;color:var(--text-muted);">👥</label>
+          <select class="sim-select" id="mapPlayerCount">
+            <option value="6">6人</option><option value="7">7人</option><option value="8">8人</option>
+            <option value="9" selected>9人</option><option value="10">10人</option><option value="11">11人</option><option value="12">12人</option>
+          </select>
+          <button class="btn-sm primary" id="btnDay1Setup">🎲 生成设置</button>
+          <button class="btn-sm ghost-btn" id="btnResetSetup" style="display:none;">🔄 重置</button>
+        </div>
+        <div class="sim-result-box" id="day1Result">选择人数 → 点击「生成设置」……</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 规则板模块 ── -->
+  <section class="db-module" id="mod-rules">
+    <div class="rb-mod-inner" id="rbModInner">
+      <!-- Left: Card Pool -->
+      <div class="rb-pool-panel" id="rbPoolPanel">
+        <div class="rb-pool-header">
+          <h3>📦 规则卡池 <span id="poolCount" style="font-size:0.65rem;color:var(--text-muted);">(54)</span></h3>
+          <div class="rb-pool-tabs">
+            <button class="rb-pool-tab active" data-filter="all">全部</button>
+            <button class="rb-pool-tab" data-filter="普通">普通</button>
+            <button class="rb-pool-tab" data-filter="特殊">特殊</button>
+          </div>
+        </div>
+        <div class="rb-pool-cards" id="rbPoolCards"></div>
+      </div>
+      <!-- Right: Zone Board -->
+      <div class="rb-board-panel" id="rbBoard">
+        <div class="rb-zone rb-zone-all" data-zone="all">
+          <h4>🌐 影响全体</h4>
+          <div class="rb-zone-cards" id="zoneAll"><span class="empty-hint">拖入规则卡</span></div>
+        </div>
+        <div class="rb-zone rb-zone-human" data-zone="human">
+          <h4>👤 只影响人</h4>
+          <div class="rb-zone-cards" id="zoneHuman"><span class="empty-hint">拖入规则卡</span></div>
+        </div>
+        <div class="rb-zone rb-zone-ghost" data-zone="ghost">
+          <h4>👻 只影响鬼</h4>
+          <div class="rb-zone-cards" id="zoneGhost"><span class="empty-hint">拖入规则卡</span></div>
+        </div>
+        <div class="rb-zone rb-zone-erased" data-zone="erased">
+          <h4>❌ 已被抹除</h4>
+          <div class="rb-zone-cards" id="zoneErased"><span class="empty-hint">拖入规则卡</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 玩家面板模块 ── -->
+  <section class="db-module" id="mod-panel">
+    <div class="panel-mod-inner">
+      <h2>👤 我的面板</h2>
+      <div class="panel-role-area">
+        <label>选择你的角色</label>
+        <select id="panelRole" onchange="updatePlayerRole()">
+          <option value="">— 选择角色 —</option>
+        </select>
+      </div>
+      <div class="panel-hand-area">
+        <div class="panel-hand-card counter-card" id="handCounter" onclick="openDrawer('counter')">
+          <div class="phc-icon">⚡</div>
+          <div class="phc-count" id="counterCount">0</div>
+          <div class="phc-label">反击卡</div>
+        </div>
+        <div class="panel-hand-card supply-card" id="handSupply" onclick="openDrawer('supply')">
+          <div class="phc-icon">📦</div>
+          <div class="phc-count" id="supplyCount">0</div>
+          <div class="phc-label">物资卡</div>
+        </div>
+      </div>
+      <p style="font-size:0.7rem;color:var(--text-muted);">💡 点击卡片区域可查看具体手牌（仅自己可见）</p>
+    </div>
+  </section>
+
+  <!-- ── 市长控制台模块 ── -->
+  <section class="db-module" id="mod-console">
+    <div class="console-mod-inner">
+      <h2>⚙️ 市长控制台</h2>
+      <div class="console-grid">
+        <div class="console-card">
+          <h4>📅 当前回合</h4>
+          <div class="cc-val" id="consoleRound">第0天</div>
+          <div class="cc-desc">/ 共12回合</div>
+        </div>
+        <div class="console-card">
+          <h4>👥 存活人数</h4>
+          <div class="cc-val" id="consoleAlive">—</div>
+          <div class="cc-desc">人类 / 鬼</div>
+        </div>
+        <div class="console-card">
+          <h4>📋 公开规则</h4>
+          <div class="cc-val" id="consoleRules">0</div>
+          <div class="cc-desc">条已公开</div>
+        </div>
+        <div class="console-card">
+          <h4>🗺️ 地图状态</h4>
+          <div class="cc-val" id="consoleMap">未设置</div>
+          <div class="cc-desc">第1天黎明</div>
+        </div>
+      </div>
+      <div class="console-actions">
+        <button class="btn btn-primary" onclick="mayorAdvanceRound()">▶ 推进到下一回合</button>
+        <button class="btn btn-neutral" onclick="mayorResetRound()">↺ 重置为第0天</button>
+        <button class="btn btn-neutral" onclick="window.open('ai-mayor.html','_blank')">🤖 打开AI市长</button>
+        <a href="rule-board.html" target="_blank" style="font-size:0.72rem;color:var(--text-muted);text-decoration:underline;align-self:center;">旧版规则板（备用）</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════ STATUS BAR ═══════════ -->
+<footer class="db-statusbar">
+  <span class="stat-item">📅 <span class="stat-label">回合</span> <span class="stat-val" id="statRound">第0天</span></span>
+  <span class="stat-item">👥 <span class="stat-label">存活</span> <span class="stat-val" id="statAlive">—人</span></span>
+  <span class="stat-item">👻 <span class="stat-label">鬼</span> <span class="stat-val" id="statGhosts">0只</span></span>
+  <span class="stat-item" style="margin-left:auto;font-size:0.65rem;color:var(--text-muted);" id="statModeHint">玩家端 · 隐藏秘密信息</span>
+</footer>
+
+<!-- ═══════════ DRAWER OVERLAY ═══════════ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer(event)">
+  <div class="drawer-panel" id="drawerPanel" onclick="event.stopPropagation()">
+    <h3>
+      <span id="drawerTitle">手牌详情</span>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </h3>
+    <div class="drawer-cards" id="drawerContent"><div class="drawer-empty">暂无手牌</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script src="../js/data.js?v=2026070800"></script>
+<script>
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+let MODE = 'player'; // 'player' | 'mayor'
+let activeTab = 'map';
+
+// Map state
+let mapSetup = null;
+let supplyDeck = [];
+let counterDeck = [];
+
+// Rule board state
+let rbPoolFilter = 'all';
+let rbZones = { all: [], human: [], ghost: [], erased: [] };
+let rbAllRules = [];
+
+// Player panel state
+let playerRole = null;
+let playerHand = { counter: [], supply: [] };
+
+// Mayor console state
+let currentRound = 0;
+let totalPlayers = 9;
+
+// ============================================================
+// LOCATION DATA (from map.html)
+// ============================================================
+const locations = [
+  { id: 1, name:'医院', district:'east', rules:[{text:'不能和其他人有任何肢体接触',cost:'-2'},{text:'必须一直面露悲伤',cost:'-2',limit:'每回合每人最多3次'}]},
+  { id: 2, name:'大学', district:'east', rules:[{text:'回合玩家只能选择官方供给',cost:'-3',limit:'每回合触发一次'},{text:'不能盯着某个人连续看超过3个数',cost:'-1'}]},
+  { id: 3, name:'酒吧', district:'east', rules:[{text:'每人每回合结算前必须使用饮品物资卡',cost:'-2',limit:'每回合每人最多一次'},{text:'不能全中文发言',cost:'-2',limit:'每回合每人最多三次'}]},
+  { id: 4, name:'市图书馆', district:'east', rules:[{text:'交流必须耳语',cost:'-1',limit:'每回合每人只能触发一次'},{text:'桌面上不能摆放任何液体',cost:'-1',limit:'每回合每人最多5次'}]},
+  { id: 5, name:'大厂写字楼', district:'east', rules:[{text:'坐姿必须保持端正',cost:'-1'},{text:'不能触碰手机',cost:'-1'}]},
+  { id: 6, name:'菜市场', district:'east', rules:[{text:'不能说数字',cost:'-1'},{text:'不能明显地思考或计算',cost:'-3',limit:'每回合每人可触发两次'}]},
+  { id: 7, name:'大排档', district:'west', rules:[{text:'每回合获取物资阶段必须选择探索地图获取物资',cost:'-3'},{text:'每人每回合结算前必须使用食品物资卡',cost:'-2',limit:'每回合每人最多一次'}]},
+  { id: 8, name:'羽毛球馆', district:'west', rules:[{text:'发言结束后必须做出打羽毛球中挥舞拍子的动作',cost:'-1'},{text:'任何一个别人做出挥舞拍子的动作后必须做出挥舞拍子的动作',cost:'-1',limit:'每回合每人最多三次'}]},
+  { id: 9, name:'市博物馆', district:'west', rules:[{text:'不能有任何动作',cost:'-1',limit:'每回合每人最多两次'},{text:'不能抬起胳膊',cost:'-1'}]},
+  { id: 10, name:'商业步行街', district:'west', rules:[{text:'不能在回合结算前不使用任何物资卡',cost:'-2',limit:'每回合每人一次'},{text:'不能拒绝别人的要求',cost:'-2'}]},
+  { id: 11, name:'网吧', district:'west', rules:[{text:'发言时必须做出敲击键盘的样子',cost:'-1'},{text:'坐姿必须保持懒散',cost:'-1'}]},
+  { id: 12, name:'KTV', district:'west', rules:[{text:'说话必须唱出来',cost:'-2',limit:'每回合每人最多两次（公开规则无限制）'},{text:'一个人说话时其他人不能发出差不多分贝的声音·不能抢麦',cost:'-3'}]}
+];
+
+// ============================================================
+// MODE & TAB MANAGEMENT
+// ============================================================
+function init() {
+  // Detect mode from URL
+  const params = new URLSearchParams(window.location.search);
+  MODE = params.get('mode') === 'mayor' ? 'mayor' : 'player';
+  applyMode();
+
+  // Tab clicks
+  document.querySelectorAll('.db-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  // Mode switch button
+  document.getElementById('btnSwitchMode').addEventListener('click', () => {
+    if (MODE === 'player') {
+      MODE = 'mayor';
+    } else {
+      MODE = 'player';
+    }
+    applyMode();
+  });
+
+  // Day 1 setup buttons
+  document.getElementById('btnDay1Setup').addEventListener('click', rollDay1Setup);
+  document.getElementById('btnResetSetup').addEventListener('click', resetDay1Setup);
+
+  // Initialize modules
+  initMap();
+  initRules();
+  initPlayerPanel();
+  initConsole();
+  updateStatusBar();
+}
+
+function applyMode() {
+  // Update badge
+  const badge = document.getElementById('modeBadge');
+  const btn = document.getElementById('btnSwitchMode');
+  if (MODE === 'player') {
+    badge.className = 'db-mode-badge player';
+    badge.textContent = '🎮 玩家端';
+    btn.textContent = '🔓 市长';
+    document.getElementById('statModeHint').textContent = '玩家端 · 隐藏秘密信息';
+  } else {
+    badge.className = 'db-mode-badge mayor';
+    badge.textContent = '👑 市长端';
+    btn.textContent = '🔒 玩家';
+    document.getElementById('statModeHint').textContent = '市长端 · 全部可见';
+  }
+
+  // Show/hide tabs
+  document.querySelectorAll('.player-tab').forEach(el => {
+    el.classList.toggle('hidden', MODE !== 'player');
+  });
+  document.querySelectorAll('.mayor-tab').forEach(el => {
+    el.classList.toggle('hidden', MODE !== 'mayor');
+  });
+
+  // If current tab is hidden in new mode, switch to map
+  const currentTab = document.querySelector('.db-tab.active');
+  if (currentTab && currentTab.classList.contains('hidden')) {
+    switchTab('map');
+  }
+
+  // Refresh all modules
+  renderMapCards();
+  renderRuleBoard();
+  updateStatusBar();
+  updateConsole();
+}
+
+function switchTab(tabName) {
+  activeTab = tabName;
+  document.querySelectorAll('.db-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.db-module').forEach(m => m.classList.remove('active'));
+
+  const tabBtn = document.querySelector(`.db-tab[data-tab="${tabName}"]`);
+  const modEl = document.getElementById(`mod-${tabName}`);
+
+  if (tabBtn) tabBtn.classList.add('active');
+  if (modEl) modEl.classList.add('active');
+
+  // Refresh module on switch
+  if (tabName === 'map') renderMapCards();
+  if (tabName === 'rules') renderRuleBoard();
+  if (tabName === 'console') updateConsole();
+}
+
+// ============================================================
+// MAP MODULE
+// ============================================================
+function initMap() {
+  renderMapCards();
+}
+
+function renderMapCards() {
+  const grid = document.getElementById('mapLocGrid');
+  grid.innerHTML = locations.map(loc => {
+    const setup = mapSetup ? mapSetup[loc.id] : null;
+    let infoHTML = '';
+
+    if (setup && MODE === 'mayor') {
+      infoHTML = `<div class="mlc-info">
+        <span class="mlc-tag supply">📦×${setup.supplies}</span>
+        ${setup.hasEvent ? '<span class="mlc-tag supply">⚡事件</span>' : ''}
+        ${setup.hasGhost ? '<span class="mlc-tag supply" style="background:rgba(192,57,43,0.12);color:var(--color-whisper-glow);">👻有鬼</span>' : ''}
+      </div>`;
+    } else if (setup && MODE === 'player') {
+      infoHTML = `<div class="mlc-info"><span class="mlc-tag masked">🔒 物资·事件·鬼 — 仅市长可见</span></div>`;
+    }
+
+    return `
+      <div class="map-loc-card">
+        <div class="mlc-header">
+          <span class="mlc-num">${loc.id}</span>
+          <span class="mlc-name">${loc.name}</span>
+          <span class="mlc-district ${loc.district}">${loc.district==='east'?'东区':'西区'}</span>
+        </div>
+        ${infoHTML}
+      </div>`;
+  }).join('');
+}
+
+// Dice
+function roll1D6() { return Math.floor(Math.random() * 6) + 1; }
+function getDiceForCount(n) {
+  if (n <= 9) { const v = roll1D6(); return { rolls: [v], total: v, type: '1D6' }; }
+  const r1 = roll1D6(), r2 = roll1D6();
+  return { rolls: [r1, r2], total: r1 + r2, type: '2D6' };
+}
+
+// Deck builders
+function buildDeck(type) {
+  const deck = [];
+  if (typeof CARD_DB === 'undefined') return deck;
+  const key = type === 'supply' ? 'supplies' : 'countermeasures';
+  const arr = CARD_DB[key];
+  if (arr) {
+    arr.forEach(card => {
+      for (let i = 0; i < (card.copies || 1); i++) {
+        deck.push({ ...card, _uid: card.id + '_' + i });
+      }
+    });
+  }
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+function drawFrom(deck, n) {
+  const drawn = [];
+  for (let i = 0; i < n && deck.length > 0; i++) drawn.push(deck.pop());
+  return drawn;
+}
+
+function rollDay1Setup() {
+  const n = parseInt(document.getElementById('mapPlayerCount').value);
+  totalPlayers = n;
+  supplyDeck = buildDeck('supply');
+  counterDeck = buildDeck('counter');
+  mapSetup = {};
+  let eventCount = 0, ghostCount = 0, totalSupplies = 0;
+
+  locations.forEach(loc => {
+    const dice = getDiceForCount(n);
+    const hasEvent = Math.random() < 0.5;
+    const hasGhost = hasEvent && Math.random() < 0.5;
+    mapSetup[loc.id] = { supplies: dice.total, diceResult: dice, hasEvent, hasGhost };
+    if (hasEvent) eventCount++;
+    if (hasGhost) ghostCount++;
+    totalSupplies += dice.total;
+  });
+
+  renderMapCards();
+  document.getElementById('btnResetSetup').style.display = 'inline-flex';
+
+  const diceType = n <= 9 ? '1D6' : '2D6';
+
+  if (MODE === 'mayor') {
+    let html = `<div style="margin-bottom:8px;">👥 ${n}人局 · ${diceType} · 📦总物资${totalSupplies} · ⚡事件点${eventCount} · 👻有鬼${ghostCount}</div>`;
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;">';
+    locations.forEach(loc => {
+      const s = mapSetup[loc.id];
+      html += `<div style="font-size:0.72rem;padding:2px 6px;background:var(--bg-hover);border-radius:4px;">
+        <strong>${loc.id}.${loc.name}</strong> 📦${s.supplies} ${s.hasEvent?'⚡':''} ${s.hasGhost?'👻':''}
+      </div>`;
+    });
+    html += '</div>';
+    document.getElementById('day1Result').innerHTML = html;
+    document.getElementById('day1Result').className = 'sim-result-box done';
+  } else {
+    document.getElementById('day1Result').innerHTML = `<div style="text-align:center;padding:12px;">
+      🔒 第1天黎明地图设置已完成。<br><span style="color:var(--color-counter-glow);">仅市长可查看</span>各地详情。
+    </div>`;
+    document.getElementById('day1Result').className = 'sim-result-box done';
+  }
+
+  updateStatusBar();
+  updateConsole();
+}
+
+function resetDay1Setup() {
+  mapSetup = null; supplyDeck = []; counterDeck = [];
+  renderMapCards();
+  document.getElementById('btnResetSetup').style.display = 'none';
+  document.getElementById('day1Result').innerHTML = '选择人数 → 点击「生成设置」……';
+  document.getElementById('day1Result').className = 'sim-result-box';
+  updateStatusBar();
+  updateConsole();
+}
+
+// ============================================================
+// RULE BOARD MODULE
+// ============================================================
+function getRuleImagePath(card) {
+  const name = card.name;
+  const safeName = name.replace(/[\/\\:*?"<>|]/g, '_');
+  const BASE = '../';
+  if (name.startsWith('规则 ')) {
+    const code = name.replace('规则 ', '');
+    return BASE + 'images/cards/规则卡/规则卡_' + code + '.png';
+  }
+  if (card.id && card.id.startsWith('r_')) {
+    const num = parseInt(card.id.split('_')[1]);
+    if (num >= 31 && num <= 54) {
+      const sNum = num - 30;
+      const locName = locations[sNum - 1]?.name || '';
+      return BASE + `images/cards/规则卡/规则卡_S-${String(sNum).padStart(2,'0')}A.png`;
+    }
+  }
+  return BASE + 'images/cards/规则卡/规则卡_T1-01.png';
+}
+
+function buildAllRules() {
+  const rules = [];
+  if (typeof CARD_DB !== 'undefined' && CARD_DB.rules) {
+    CARD_DB.rules.forEach(card => {
+      rules.push({ ...card, _inPool: true });
+    });
+  }
+  return rules;
+}
+
+function initRules() {
+  rbAllRules = buildAllRules();
+  // Load from localStorage
+  try {
+    const saved = localStorage.getItem('lmzh_rule_board');
+    if (saved) {
+      const data = JSON.parse(saved);
+      rbZones = data.zones || { all: [], human: [], ghost: [], erased: [] };
+      // Remove zoned cards from pool
+      const zonedIds = new Set();
+      Object.values(rbZones).forEach(arr => arr.forEach(c => zonedIds.add(c.id)));
+      rbAllRules.forEach(c => { if (zonedIds.has(c.id)) c._inPool = false; });
+    }
+  } catch(e) {}
+  renderRuleBoard();
+}
+
+function renderRuleBoard() {
+  // Filter tabs
+  document.querySelectorAll('#rbPoolPanel .rb-pool-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.filter === rbPoolFilter);
+  });
+
+  // Pool cards
+  let poolCards = rbAllRules.filter(c => c._inPool !== false);
+  if (rbPoolFilter === '普通') poolCards = poolCards.filter(c => c.level && c.level.includes('T'));
+  if (rbPoolFilter === '特殊') poolCards = poolCards.filter(c => !c.level || !c.level.includes('T'));
+
+  const poolEl = document.getElementById('rbPoolCards');
+  document.getElementById('poolCount').textContent = `(${poolCards.length})`;
+
+  if (poolCards.length === 0) {
+    poolEl.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text-muted);font-size:0.75rem;">卡池已空</div>';
+  } else {
+    poolEl.innerHTML = poolCards.map(c => {
+      const imgPath = getRuleImagePath(c);
+      return `<div class="rb-card-item ${MODE==='mayor'?'rb-draggable':''}" data-id="${c.id}" 
+        ${MODE==='mayor'?'draggable="true"':''} 
+        ondragstart="onDragStart(event)" 
+        onclick="${MODE==='mayor'?'selectPoolCard(this)':'void(0)'}">
+        <div class="rbci-img"><img src="${imgPath}" alt="${c.name}" onerror="this.style.display='none'"></div>
+        <div class="rbci-name">${c.name}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Add drag listeners in mayor mode
+  if (MODE === 'mayor') {
+    document.querySelectorAll('#rbPoolCards .rb-card-item').forEach(el => {
+      el.addEventListener('dragstart', onDragStart);
+    });
+  }
+
+  // Pool tab clicks
+  document.querySelectorAll('#rbPoolPanel .rb-pool-tab').forEach(tab => {
+    tab.onclick = () => {
+      rbPoolFilter = tab.dataset.filter;
+      renderRuleBoard();
+    };
+  });
+
+  // Zone cards
+  ['all','human','ghost','erased'].forEach(zone => {
+    const zoneEl = document.getElementById('zone' + zone.charAt(0).toUpperCase() + zone.slice(1));
+    const cards = rbZones[zone] || [];
+    if (cards.length === 0) {
+      zoneEl.innerHTML = '<span class="empty-hint">拖入规则卡</span>';
+    } else {
+      zoneEl.innerHTML = cards.map(c => {
+        const imgPath = getRuleImagePath(c);
+        return `<div class="rb-zone-card" data-id="${c.id}" data-zone="${zone}">
+          <img src="${imgPath}" alt="${c.name}" onerror="this.style.display='none'">
+          ${MODE==='mayor' ? `<button class="zcard-return show" onclick="returnCardToPool('${c.id}','${zone}')">↩ 返回</button>` : ''}
+        </div>`;
+      }).join('');
+    }
+  });
+
+  // Drop zones
+  if (MODE === 'mayor') {
+    document.querySelectorAll('.rb-zone').forEach(zone => {
+      zone.addEventListener('dragover', onDragOver);
+      zone.addEventListener('drop', onDrop);
+    });
+  }
+
+  // Save
+  saveRuleBoard();
+}
+
+function saveRuleBoard() {
+  try {
+    localStorage.setItem('lmzh_rule_board', JSON.stringify({ zones: rbZones }));
+  } catch(e) {}
+}
+
+// Drag & Drop
+let dragCardId = null;
+function onDragStart(e) {
+  dragCardId = e.target.closest('.rb-card-item')?.dataset.id;
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function onDrop(e) {
+  e.preventDefault();
+  if (!dragCardId) return;
+  const zoneEl = e.target.closest('.rb-zone');
+  if (!zoneEl) return;
+  const zoneName = zoneEl.dataset.zone;
+
+  // Find card in pool
+  const cardIdx = rbAllRules.findIndex(c => c.id === dragCardId && c._inPool !== false);
+  if (cardIdx === -1) return;
+
+  const card = rbAllRules[cardIdx];
+  card._inPool = false;
+  if (!rbZones[zoneName]) rbZones[zoneName] = [];
+  rbZones[zoneName].push({ id: card.id, name: card.name });
+  dragCardId = null;
+  renderRuleBoard();
+}
+
+// Mobile: select pool card
+let selectedPoolCard = null;
+function selectPoolCard(el) {
+  if (MODE !== 'mayor') return;
+  document.querySelectorAll('#rbPoolCards .rb-card-item').forEach(c => c.classList.remove('selected'));
+  if (selectedPoolCard === el.dataset.id) {
+    selectedPoolCard = null;
+  } else {
+    selectedPoolCard = el.dataset.id;
+    el.classList.add('selected');
+    // Show zone picker
+    showZonePicker(el.dataset.id);
+  }
+}
+
+function showZonePicker(cardId) {
+  const zones = ['all','human','ghost','erased'];
+  const names = ['影响全体','只影响人','只影响鬼','已被抹除'];
+  const choice = prompt('选择分区：\n1. 影响全体\n2. 只影响人\n3. 只影响鬼\n4. 已被抹除\n\n输入数字 1-4：');
+  if (!choice) { selectedPoolCard = null; renderRuleBoard(); return; }
+  const idx = parseInt(choice) - 1;
+  if (idx < 0 || idx > 3) { selectedPoolCard = null; renderRuleBoard(); return; }
+
+  const cardIdx = rbAllRules.findIndex(c => c.id === cardId && c._inPool !== false);
+  if (cardIdx === -1) { renderRuleBoard(); return; }
+
+  const card = rbAllRules[cardIdx];
+  card._inPool = false;
+  if (!rbZones[zones[idx]]) rbZones[zones[idx]] = [];
+  rbZones[zones[idx]].push({ id: card.id, name: card.name });
+  selectedPoolCard = null;
+  renderRuleBoard();
+}
+
+function returnCardToPool(cardId, zoneName) {
+  if (MODE !== 'mayor') return;
+  const zoneArr = rbZones[zoneName];
+  if (!zoneArr) return;
+  const idx = zoneArr.findIndex(c => c.id === cardId);
+  if (idx === -1) return;
+  zoneArr.splice(idx, 1);
+
+  const card = rbAllRules.find(c => c.id === cardId);
+  if (card) card._inPool = true;
+  renderRuleBoard();
+}
+
+// ============================================================
+// PLAYER PANEL MODULE
+// ============================================================
+function initPlayerPanel() {
+  // Populate role dropdown
+  const sel = document.getElementById('panelRole');
+  if (typeof CARD_DB !== 'undefined' && CARD_DB.characters) {
+    sel.innerHTML = '<option value="">— 选择角色 —</option>' +
+      CARD_DB.characters.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  updateHandCounts();
+}
+
+function updatePlayerRole() {
+  const sel = document.getElementById('panelRole');
+  playerRole = sel.value;
+  // Reset hand when role changes
+  playerHand = { counter: [], supply: [] };
+  updateHandCounts();
+}
+
+function addToHand(type, cards) {
+  if (!Array.isArray(cards)) cards = [cards];
+  playerHand[type].push(...cards);
+  updateHandCounts();
+}
+
+function updateHandCounts() {
+  document.getElementById('counterCount').textContent = playerHand.counter.length;
+  document.getElementById('supplyCount').textContent = playerHand.supply.length;
+}
+
+// Card image path helper for player drawer
+function getPlayerCardImage(card) {
+  const name = card.name, level = card.level || '', safeName = name.replace(/[\/\\:*?"<>|]/g, '_');
+  const type = card._type || card.type;
+  const BASE = '../';
+  const levelMap = { '流言':'流言','异常':'异常','怪诞':'怪诞','灾厄':'灾厄',
+    '基础':'基础','觉醒':'觉醒','极致':'极致','真理':'真理',
+    '官方':'官方','普通':'普通','中级':'中级','高级':'高级','绝顶':'绝顶' };
+  const levelCN = levelMap[level] || level;
+
+  if (type === 'countermeasures') return BASE + `images/cards/反击卡/反击卡_${levelCN}_${safeName}.png`;
+  if (type === 'supplies') return BASE + `images/cards/物资卡/物资卡_${levelCN}_${safeName}.png`;
+  return '';
+}
+
+function openDrawer(type) {
+  const drawer = document.getElementById('drawerOverlay');
+  const title = document.getElementById('drawerTitle');
+  const content = document.getElementById('drawerContent');
+
+  const cards = playerHand[type] || [];
+  title.textContent = type === 'counter' ? `⚡ 反击卡（${cards.length}张）` : `📦 物资卡（${cards.length}张）`;
+
+  if (cards.length === 0) {
+    content.innerHTML = '<div class="drawer-empty">暂无手牌<br><span style="font-size:0.7rem;color:var(--text-muted);">通过游戏中的获取机制获得卡牌</span></div>';
+  } else {
+    content.innerHTML = cards.map(c => {
+      const imgPath = getPlayerCardImage(c);
+      return `<div class="drawer-card-item">
+        <div class="dci-img"><img src="${imgPath}" alt="${c.name}" onerror="this.style.display='none'"></div>
+        <div class="dci-info">
+          <div class="dci-name">${c.name}</div>
+          <div class="dci-level">${c.level || ''}</div>
+          <div class="dci-effect">${c.effect || ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  drawer.classList.add('show');
+}
+
+function closeDrawer(e) {
+  if (e && e.target !== document.getElementById('drawerOverlay')) return;
+  document.getElementById('drawerOverlay').classList.remove('show');
+}
+
+// ============================================================
+// MAYOR CONSOLE MODULE
+// ============================================================
+function initConsole() {
+  updateConsole();
+}
+
+function updateConsole() {
+  document.getElementById('consoleRound').textContent = currentRound === 0 ? '第0天' : `第${currentRound}回合`;
+  document.getElementById('consoleAlive').textContent = mapSetup ? `${totalPlayers}人 / 1鬼` : '—';
+  const zoneCount = Object.values(rbZones).reduce((sum, arr) => sum + arr.length, 0);
+  document.getElementById('consoleRules').textContent = zoneCount;
+  document.getElementById('consoleMap').textContent = mapSetup ? '✅ 已设置' : '⏳ 未设置';
+}
+
+function mayorAdvanceRound() {
+  if (currentRound < 12) currentRound++;
+  updateStatusBar();
+}
+
+function mayorResetRound() {
+  currentRound = 0;
+  updateStatusBar();
+}
+
+// ============================================================
+// STATUS BAR
+// ============================================================
+function updateStatusBar() {
+  document.getElementById('statRound').textContent = currentRound === 0 ? '第0天' : `第${currentRound}回合`;
+  document.getElementById('statAlive').textContent = mapSetup ? `${totalPlayers}人` : '—人';
+  document.getElementById('statGhosts').textContent = mapSetup ? '1只' : '—';
+  updateConsole();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

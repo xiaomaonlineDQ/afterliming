@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <marker id="arrowRight" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4a90a4"/>
+    </marker>
+    <marker id="arrowLeft" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" fill="#4a90a4"/>
+    </marker>
+    <marker id="arrowDown" markerWidth="7" markerHeight="10" refX="3.5" refY="10" orient="auto">
+      <polygon points="0 0, 7 0, 3.5 10" fill="#d4756b"/>
+    </marker>
+    <marker id="arrowUp" markerWidth="7" markerHeight="10" refX="3.5" refY="0" orient="auto">
+      <polygon points="0 10, 7 10, 3.5 0" fill="#d4756b"/>
+    </marker>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="800" height="600" fill="#fafaf8" rx="8"/>
+
+  <!-- 标题 -->
+  <text x="400" y="32" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="700" fill="#2c2c2c">《黎明之后》四维规则骨架</text>
+  <text x="400" y="52" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="#999">Rule System Architecture · 4 Dimensions × 52 Cards</text>
+
+  <!-- ========== 四象限分隔线(虚线) ========== -->
+  <line x1="400" y1="80" x2="400" y2="540" stroke="#e0e0dd" stroke-width="1" stroke-dasharray="4,6"/>
+  <line x1="80" y1="310" x2="720" y2="310" stroke="#e0e0dd" stroke-width="1" stroke-dasharray="4,6"/>
+
+  <!-- ========== 中心节点：规则系统 ========== -->
+  <rect x="310" y="260" width="180" height="100" rx="12" fill="#7b6f9e" filter="url(#shadow)"/>
+  <text x="400" y="300" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="15" font-weight="700" fill="#fff">规则系统</text>
+  <text x="400" y="325" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="12" fill="rgba(255,255,255,0.85)">52张 · 游戏骨架</text>
+  <text x="400" y="347" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="rgba(255,255,255,0.6)">规则不是附属品</text>
+
+  <!-- ========== 上方：等级维度 (Coral) ========== -->
+  <rect x="290" y="85" width="220" height="65" rx="10" fill="#d4756b" filter="url(#shadow)"/>
+  <text x="400" y="112" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="13" font-weight="700" fill="#fff">等级维度</text>
+  <text x="400" y="137" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="rgba(255,255,255,0.9)">违规惩罚的严重程度</text>
+
+  <!-- T3 子节点 -->
+  <rect x="140" y="95" width="120" height="45" rx="6" fill="#e8a09a"/>
+  <text x="200" y="116" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="12" font-weight="700" fill="#fff">T3 · 轻</text>
+  <text x="200" y="133" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="rgba(255,255,255,0.85)">扣1理智 · 20张</text>
+
+  <!-- T2 子节点 -->
+  <rect x="540" y="95" width="120" height="45" rx="6" fill="#e8a09a"/>
+  <text x="600" y="116" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="12" font-weight="700" fill="#fff">T2 · 中</text>
+  <text x="600" y="133" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="rgba(255,255,255,0.85)">扣2理智 · 24张</text>
+
+  <!-- T1 子节点(最重) -->
+  <rect x="340" y="160" width="120" height="45" rx="6" fill="#e8a09a"/>
+  <text x="400" y="181" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="12" font-weight="700" fill="#fff">T1 · 重</text>
+  <text x="400" y="198" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="10" fill="rgba(255,255,255,0.85)">扣3理智 · 8张</text>
+
+  <!-- 连线: 等级→中心 -->
+  <line x1="400" y1="150" x2="400" y2="258" stroke="#d4756b" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+
+  <!-- ========== 右方：可见性维度 (Teal) ========== -->
+  <rect x="530" y="225" width="200" height="65" rx="10" fill="#4a90a4" filter="url(#shadow)"/>
+  <text x="630" y="252" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="13" font-weight="700" fill="#fff">可见性维度</text>
+  <text x="630" y="277" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="rgba(255,255,255,0.9)">信息不对称的物理载体</text>
+
+  <!-- 三个状态流程节点 -->
+  <rect x="555" y="310" width="72" height="36" rx="6" fill="#7bb8c9"/>
+  <text x="591" y="332" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="10" font-weight="700" fill="#fff">隐藏规则</text>
+
+  <rect x="635" y="310" width="72" height="36" rx="6" fill="#7bb8c9"/>
+  <text x="671" y="332" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="10" font-weight="700" fill="#fff">公开规则</text>
+
+  <rect x="555" y="360" width="152" height="36" rx="6" fill="#a0d2df"/>
+  <text x="631" y="382" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="10" font-weight="700" fill="#2c5f6e">被抹除规则</text>
+
+  <!-- 流程箭头 -->
+  <line x1="627" y1="328" x2="633" y2="328" stroke="#fff" stroke-width="1.5" marker-end="url(#arrowRight)"/>
+  <line x1="671" y1="346" x2="671" y2="358" stroke="#fff" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <line x1="631" y1="378" x2="591" y2="378" stroke="#2c5f6e" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="611" y="393" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="8" fill="#2c5f6e">猜测失败</text>
+
+  <!-- 连线: 可见性→中心 -->
+  <line x1="530" y1="260" x2="492" y2="310" stroke="#4a90a4" stroke-width="1.5"/>
+
+  <!-- ========== 下方：状态维度 (Blue) ========== -->
+  <rect x="290" y="420" width="220" height="65" rx="10" fill="#5b7cb0" filter="url(#shadow)"/>
+  <text x="400" y="447" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="13" font-weight="700" fill="#fff">状态维度</text>
+  <text x="400" y="472" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="rgba(255,255,255,0.9)">规则的活性与消亡</text>
+
+  <!-- 两个状态节点 -->
+  <rect x="240" y="500" width="140" height="36" rx="6" fill="#8aacd6"/>
+  <text x="310" y="522" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" font-weight="700" fill="#fff">生效中</text>
+
+  <rect x="420" y="500" width="140" height="36" rx="6" fill="#b0c8e8"/>
+  <text x="490" y="522" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" font-weight="700" fill="#3a5890">已抹除</text>
+
+  <!-- 双向箭头 -->
+  <line x1="380" y1="518" x2="418" y2="518" stroke="#fff" stroke-width="1.5" marker-end="url(#arrowRight)"/>
+  <line x1="418" y1="510" x2="380" y2="510" stroke="#3a5890" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrowLeft)"/>
+  <text x="399" y="540" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="8" fill="#3a5890">宣言成功</text>
+
+  <!-- 连线: 状态→中心 -->
+  <line x1="400" y1="420" x2="400" y2="362" stroke="#5b7cb0" stroke-width="1.5"/>
+
+  <!-- ========== 左方：来源维度 (Amber) ========== -->
+  <rect x="70" y="225" width="200" height="65" rx="10" fill="#c8923e" filter="url(#shadow)"/>
+  <text x="170" y="252" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="13" font-weight="700" fill="#fff">来源维度</text>
+  <text x="170" y="277" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" fill="rgba(255,255,255,0.9)">规则的生成与绑定</text>
+
+  <!-- 两个来源节点 -->
+  <rect x="82" y="310" width="176" height="40" rx="6" fill="#e0b87a"/>
+  <text x="170" y="329" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" font-weight="700" fill="#6b3a10">普通规则卡 28张</text>
+  <text x="170" y="343" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="9" fill="rgba(107,58,16,0.75)">鬼自主选择 · 全局通用</text>
+
+  <rect x="82" y="365" width="176" height="40" rx="6" fill="#e0b87a"/>
+  <text x="170" y="384" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="11" font-weight="700" fill="#6b3a10">特殊规则卡 24张</text>
+  <text x="170" y="398" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="9" fill="rgba(107,58,16,0.75)">12个地点 × 2张 · 地点绑定</text>
+
+  <!-- 连线: 来源→中心 -->
+  <line x1="270" y1="260" x2="308" y2="310" stroke="#c8923e" stroke-width="1.5"/>
+
+  <!-- ========== 底部图例 ========== -->
+  <rect x="180" y="560" width="440" height="28" rx="4" fill="none" stroke="#e0e0dd" stroke-width="1"/>
+  <rect x="195" y="568" width="12" height="12" rx="2" fill="#d4756b"/>
+  <text x="212" y="578" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="9" fill="#888">等级</text>
+  <rect x="255" y="568" width="12" height="12" rx="2" fill="#4a90a4"/>
+  <text x="272" y="578" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="9" fill="#888">可见性</text>
+  <rect x="325" y="568" width="12" height="12" rx="2" fill="#5b7cb0"/>
+  <text x="342" y="578" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="9" fill="#888">状态</text>
+  <rect x="390" y="568" width="12" height="12" rx="2" fill="#c8923e"/>
+  <text x="407" y="578" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="9" fill="#888">来源</text>
+  <rect x="445" y="568" width="12" height="12" rx="2" fill="#7b6f9e"/>
+  <text x="462" y="578" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="9" fill="#888">规则系统</text>
+  <text x="545" y="578" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="8" fill="#bbb">V2.0 · 黎明之后设计书</text>
+</svg>

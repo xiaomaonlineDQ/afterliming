@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>卡牌详情 — 黎明之后</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/main.css?v=2026071017">
 </head>
 <body>
 
@@ -15,10 +15,9 @@
     <ul class="nav-links">
       <li><a href="index.html">首页</a></li>
       <li><a href="cards.html">卡牌图鉴</a></li>
-      <li><a href="characters.html">角色</a></li>
       <li><a href="rules.html">规则</a></li>
-      <li><a href="flowcharts.html">流程图</a></li>
-      <li><a href="randomizer.html">工具箱</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
     </ul>
   </div>
 </nav>
@@ -33,8 +32,8 @@
   </div>
 </footer>
 
-<script src="js/data.js"></script>
-<script src="js/app.js"></script>
+<script src="js/data.js?v=2026071017"></script>
+<script src="js/app.js?v=2026071017"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const id = getParam('id');
@@ -127,9 +126,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   navHtml += '</div>';
 
+  // Horizontal cards: rules & personal goals (2640×930)
+  const isHorizontal = type === 'rules' || type === 'personal_goals';
+  const imgBlock = isHorizontal
+    ? `<div class="card-img-wrap horizontal" style="max-width:600px;margin:0 auto var(--space-lg) auto;">
+        <img src="${getCardImagePath({...card, _type: type})}" 
+             alt="${card.name}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="img-placeholder" style="display:none;">
+          <span class="ph-icon">🃏</span>
+          <span class="ph-label">${typeName} · ${levelInfo.cn}</span>
+          <span class="ph-size">2640×930</span>
+        </div>
+      </div>`
+    : `<div style="float:right;width:220px;margin-left:var(--space-xl);margin-bottom:var(--space-md);">
+        <div class="card-img-wrap">
+          <img src="${getCardImagePath({...card, _type: type})}" 
+               alt="${card.name}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="img-placeholder" style="display:none;">
+            <span class="ph-icon">🃏</span>
+            <span class="ph-label">${typeName} · ${levelInfo.cn}</span>
+            <span class="ph-size">630×880</span>
+          </div>
+        </div>
+      </div>`;
+
   document.getElementById('detailContent').innerHTML = `
     <a href="cards.html" class="detail-back">← 返回卡牌图鉴</a>
+    ${isHorizontal ? imgBlock : ''}
     <div class="detail-header">
+      ${isHorizontal ? '' : imgBlock}
       <div style="display:flex;align-items:center;gap:var(--space-md);margin-bottom:var(--space-sm);flex-wrap:wrap;">
         <h1>${card.name}</h1>
         <span class="card-badge ${typeClass}">${typeName}</span>

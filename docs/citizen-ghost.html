@@ -1,0 +1,3259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>鬼的面板 — 黎明之后</title>
+<link rel="stylesheet" href="css/main.css?v=2026071110">
+<script src="js/data.js?v=2026071107"></script>
+<script src="js/app.js?v=2026071107"></script>
+<script src="js/rule-board.js?v=2026071107"></script>
+<style>
+.citizen-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部状态栏 */
+.citizen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.citizen-header .home-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.82rem;
+  padding: 4px 0;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.citizen-header .home-link:hover { color: var(--text-primary); }
+
+.citizen-header .user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.citizen-header .avatar-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.citizen-header .avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.citizen-header .name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.citizen-header .status-badge {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(192,57,43,0.15);
+  color: var(--color-whisper-glow);
+}
+.citizen-header .status-badge.egui {
+  background: rgba(192,57,43,0.2);
+  color: #ff4444;
+}
+.citizen-header .status-badge.citizen-badge {
+  background: rgba(46,134,193,0.15);
+  color: var(--color-counter-glow);
+}
+.citizen-header .logout-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.citizen-header .logout-btn:hover {
+  border-color: var(--color-whisper);
+  color: var(--color-whisper-glow);
+}
+
+/* ====== 公开规则板 (Tab 4) ====== */
+:root {
+  --rb-zone-all: #e74c3c;
+  --rb-zone-human: #3498db;
+  --rb-zone-ghost: #9b59b6;
+  --rb-zone-erased: #7f8c8d;
+}
+#panel-ruleboard {
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.rb-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex-shrink: 0;
+  min-height: 44px;
+}
+.rb-header h2 {
+  font-size: 1rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rb-header .rb-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.rb-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* 主体布局 */
+.rb-main {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 左侧卡池面板 */
+.rb-pool {
+  width: 300px;
+  min-width: 260px;
+  max-width: 340px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.rb-pool-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.rb-pool-header h3 {
+  font-size: 0.85rem;
+  margin: 0 0 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rb-pool-count {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+.rb-pool-tabs {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.rb-pool-tab {
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  border: 1px solid var(--border-medium);
+  border-radius: 3px;
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.rb-pool-tab:hover { background: var(--bg-hover); }
+.rb-pool-tab.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.rb-pool-cards {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 卡池中规则卡缩略图 */
+.rb-card {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-elevated);
+  border: 2px solid var(--border-medium);
+  border-radius: 5px;
+  padding: 3px;
+  cursor: grab;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+}
+.rb-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.rb-card:active { cursor: grabbing; }
+.rb-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+.rb-card.selected {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(52,152,219,0.3);
+  background: rgba(52,152,219,0.08);
+}
+
+.rb-card-img {
+  width: 110px;
+  height: 39px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.rb-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rb-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.rb-card-name {
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.rb-card-text {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rb-card-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-top: 2px;
+  font-weight: 500;
+}
+.rb-badge-t1 { background: #27ae60; color: #fff; }
+.rb-badge-t2 { background: #f39c12; color: #fff; }
+.rb-badge-t3 { background: #e74c3c; color: #fff; }
+.rb-badge-s  { background: #8e44ad; color: #fff; }
+
+/* 分区内的规则卡：横版全宽 */
+.rb-card.in-zone {
+  display: block;
+  padding: 2px;
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  border-radius: 5px;
+  cursor: grab;
+  position: relative;
+}
+.rb-card.in-zone .rb-card-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2640 / 930;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.rb-card.in-zone .rb-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.rb-card.in-zone .rb-card-info { display: none; }
+
+.rb-card-return {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.62rem;
+  color: #fff;
+  background: rgba(231,76,60,0.85);
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: none;
+  z-index: 5;
+}
+.rb-card.in-zone .rb-card-return { display: inline-block; }
+.rb-card-return:hover { background: rgba(192,57,43,0.95); }
+
+/* 右侧四分区 */
+.rb-board {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.rb-zone {
+  background: var(--bg-surface);
+  border: 2px dashed var(--border-medium);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+.rb-zone.drag-over {
+  border-color: var(--color-primary);
+  background: rgba(52,152,219,0.05);
+  border-style: solid;
+}
+.rb-zone-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.rb-zone-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rb-zone-dot.all    { background: var(--rb-zone-all); }
+.rb-zone-dot.human  { background: var(--rb-zone-human); }
+.rb-zone-dot.ghost  { background: var(--rb-zone-ghost); }
+.rb-zone-dot.erased { background: var(--rb-zone-erased); }
+
+.rb-zone h4 {
+  font-size: 0.78rem;
+  margin: 0;
+  flex: 1;
+}
+.rb-zone-count {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.rb-zone-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rb-zone-empty {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  text-align: center;
+  padding: var(--space-md);
+  font-style: italic;
+}
+
+/* ====== 鬼的私有隐藏规则板 (Tab 5) - 单区全屏 ====== */
+#panel-ghost-rules {
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+/* 主体：左侧卡池 + 右侧单区（全高） */
+.gr-main {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.gr-board {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.gr-zone {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 2px dashed var(--border-medium);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gr-zone.drag-over {
+  border-color: var(--color-whisper-glow);
+  background: rgba(192,57,43,0.05);
+  border-style: solid;
+}
+.gr-zone-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.gr-zone-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--rb-zone-ghost);
+}
+.gr-zone h4 {
+  font-size: 0.78rem;
+  margin: 0;
+  flex: 1;
+  color: var(--color-whisper-glow);
+}
+.gr-zone-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 移动端 */
+@media (max-width: 820px) {
+  .rb-main, .gr-main { flex-direction: column; }
+  .rb-pool {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    max-height: 35vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .rb-pool-header { padding: 6px 8px; }
+  .rb-pool-header h3 { font-size: 0.8rem; margin-bottom: 3px; }
+  .rb-pool-cards { padding: 3px; gap: 3px; }
+  .rb-board, .gr-board { gap: 5px; padding: 5px; }
+  .rb-zone, .gr-zone { padding: 5px 7px; border-radius: 6px; }
+  .rb-zone h4, .gr-zone h4 { font-size: 0.7rem; }
+  .rb-zone-header, .gr-zone-header { margin-bottom: 3px; padding-bottom: 3px; }
+  .rb-card { padding: 2px; gap: 4px; }
+  .rb-card-img { width: 64px; height: 23px; }
+  .rb-card-name { font-size: 0.66rem; }
+  .rb-card-text { font-size: 0.58rem; }
+  .rb-zone-empty { font-size: 0.68rem; padding: 5px; }
+  .rb-pool-tab { font-size: 0.63rem; padding: 2px 6px; }
+  .rb-card.in-zone .rb-card-img { width: 100%; }
+  .rb-card-return { font-size: 0.55rem; padding: 2px 5px; top: 3px; right: 3px; }
+}
+@media (max-width: 420px) {
+  .rb-board, .gr-board { gap: 3px; padding: 3px; }
+  .rb-zone, .gr-zone { padding: 3px 5px; }
+  .rb-zone h4, .gr-zone h4 { font-size: 0.63rem; }
+  .rb-zone-dot, .gr-zone-dot { width: 7px; height: 7px; }
+  .rb-card-img { width: 54px; height: 19px; }
+  .rb-card-name { font-size: 0.6rem; }
+  .rb-card-badge { font-size: 0.55rem; padding: 0 4px; }
+  .rb-header h2 { font-size: 0.85rem; }
+  .rb-header { padding: 4px 8px; min-height: 40px; }
+}
+
+/* ====== 测试区通用 ====== */
+.test-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.test-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.test-tab {
+  flex: 1;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-sans);
+}
+.test-tab.active {
+  color: var(--color-whisper-glow);
+  border-bottom-color: var(--color-whisper-glow);
+  background: rgba(192,57,43,0.06);
+}
+.test-panel { display: none; flex-direction: column; padding: 16px; gap: 16px; flex: 1; align-items: center; }
+.test-panel.active { display: flex; }
+.test-hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 8px 0;
+}
+.test-status {
+  margin-top: auto;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-align: center;
+  border: 1px solid var(--border-subtle);
+}
+
+/* ====== 怪诞系统操作台 (Tab 1) ====== */
+/* 搜索栏 */
+.cz-search-bar {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.cz-search-input {
+  width: 100%;
+  padding: 10px 40px 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.cz-search-input:focus {
+  border-color: var(--color-whisper-glow);
+  box-shadow: 0 0 0 2px rgba(192,57,43,0.15);
+}
+.cz-search-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+.cz-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  display: none;
+  padding: 2px 6px;
+  line-height: 1;
+}
+.cz-search-clear:hover { color: var(--text-primary); }
+.cz-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0; right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 50;
+  display: none;
+  margin-top: -1px;
+}
+.cz-search-results.show { display: block; }
+.cz-sr-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.cz-sr-item:last-child { border-bottom: none; }
+.cz-sr-item:hover, .cz-sr-item.focused { background: rgba(192,57,43,0.1); }
+.cz-sr-name { color: var(--text-primary); font-size: 0.82rem; flex: 1; }
+.cz-sr-level { color: var(--color-whisper-glow); font-size: 0.7rem; }
+
+/* 三行区域 */
+.cz-zone-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cz-zone-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 4px 4px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.cz-zone-icon { font-size: 0.9rem; }
+.cz-zone-count {
+  background: var(--bg-elevated);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.cz-zone-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 4px 8px 4px;
+  min-height: 118px;
+  align-items: center;
+  scroll-behavior: smooth;
+  background: var(--bg-deep);
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(255,255,255,0.06);
+}
+.cz-zone-strip::-webkit-scrollbar { height: 4px; }
+.cz-zone-strip::-webkit-scrollbar-track { background: transparent; }
+.cz-zone-strip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.cz-zone-empty {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  opacity: 0.5;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+/* ====== 操作台左右分栏 ====== */
+.op-workspace {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 860px;
+  align-items: flex-start;
+}
+/* 左侧：物资卡手牌（竖条） */
+.op-hand-col {
+  flex: 0 0 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.op-hand-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding: 6px;
+  max-height: calc(100vh - 280px);
+  min-height: 200px;
+  background: var(--bg-deep);
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(255,255,255,0.06);
+}
+.op-hand-strip::-webkit-scrollbar { width: 4px; }
+.op-hand-strip::-webkit-scrollbar-track { background: transparent; }
+.op-hand-strip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.op-hand-strip .supply-hand-card {
+  width: 100%;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+.op-hand-strip .cz-zone-empty {
+  white-space: normal;
+  text-align: center;
+}
+/* 右侧：四向牌池 */
+.op-pools-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+  .op-workspace { flex-direction: column; }
+  .op-hand-col { flex: 0 0 auto; width: 100%; }
+  .op-hand-strip {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: 140px;
+    min-height: 100px;
+  }
+  .op-hand-strip .supply-hand-card { width: 72px; height: 101px; flex-shrink: 0; }
+}
+
+.cz-card-item {
+  flex-shrink: 0;
+  width: 85px;
+  height: 119px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.cz-card-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.cz-card-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cz-card-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: var(--color-whisper-glow);
+  font-size: 0.65rem;
+}
+
+/* 弹窗 */
+.cz-popup-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.cz-popup-overlay.show { display: flex; }
+.cz-popup {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 440px;
+  width: 92%;
+  box-shadow: var(--shadow-lg);
+  animation: czFadeIn 0.2s ease;
+}
+@keyframes czFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.cz-popup-card {
+  width: 100%;
+  aspect-ratio: 630 / 880;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.cz-popup-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cz-popup-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 16px;
+  text-align: center;
+}
+.cz-popup-fb-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+.cz-popup-fb-level { font-size: 0.75rem; color: var(--color-whisper-glow); }
+.cz-popup-fb-effect { font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; }
+.cz-popup-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.cz-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+.cz-btn:hover { background: var(--bg-card); border-color: var(--color-whisper-glow); }
+.cz-btn:active { transform: scale(0.96); }
+.cz-btn-activate { background: rgba(192,57,43,0.15); border-color: var(--color-whisper-glow); color: var(--color-whisper-glow); font-weight: 600; }
+.cz-btn-activate:hover { background: rgba(192,57,43,0.25); }
+.cz-btn-persist { background: rgba(46,204,113,0.12); border-color: #2ecc71; color: #2ecc71; font-weight: 600; }
+.cz-btn-persist:hover { background: rgba(46,204,113,0.2); }
+.cz-btn-stack { background: rgba(155,89,182,0.12); border-color: #9b59b6; color: #9b59b6; font-weight: 600; }
+.cz-btn-stack:hover { background: rgba(155,89,182,0.2); }
+.cz-btn-confirm { background: rgba(241,196,15,0.1); border-color: rgba(241,196,15,0.4); color: #f1c40f; }
+.cz-btn-confirm:hover { background: rgba(241,196,15,0.18); }
+
+/* ====== 可视化场景 ====== */
+.comp-scene-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+.comp-scene {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 120px);
+  min-height: 500px;
+  margin: 0 auto;
+  background: radial-gradient(ellipse at center, rgba(192,57,43,0.04) 0%, transparent 70%);
+  border: 1px dashed rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+/* 角色卡（锚点） */
+.comp-char {
+  position: absolute;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(192,57,43,0.3), var(--shadow-lg);
+  border: 2px solid var(--color-character-glow, #c0392b);
+  z-index: 100;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: box-shadow 0.3s;
+}
+.comp-char:hover { box-shadow: 0 0 24px rgba(192,57,43,0.4), var(--shadow-lg); }
+.comp-char canvas { width: 100%; height: 100%; display: block; pointer-events: none; }
+
+/* 方向标签（场景内小标注） */
+.comp-dir-label {
+  position: absolute;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 5;
+  letter-spacing: 0.05em;
+}
+
+/* 基础堆叠卡片样式（四个方向共用） */
+.comp-card {
+  position: absolute;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  background: var(--bg-card);
+  transition: left 0.35s ease, right 0.35s ease, top 0.35s ease, bottom 0.35s ease, opacity 0.25s;
+  cursor: pointer;
+}
+.comp-card img { width: 100%; height: 100%; object-fit: cover; }
+.comp-card .comp-card-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 2px 4px;
+  background: rgba(0,0,0,0.75);
+  color: var(--text-muted);
+  font-size: 0.52rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.comp-card:hover .comp-card-label { opacity: 1; }
+.comp-card.removing { transform: scale(0.9); opacity: 0.5; }
+
+/* 各方向颜色提示 */
+.comp-right { box-shadow: 0 2px 8px rgba(46,134,193,0.25); }
+.comp-left  { box-shadow: 0 2px 8px rgba(192,57,43,0.25); }
+.comp-top    { box-shadow: 0 2px 8px rgba(231,76,60,0.25); }
+.comp-bottom { box-shadow: 0 2px 8px rgba(39,174,96,0.25); }
+.comp-right  .comp-card-label  { color: var(--color-counter-glow); }
+.comp-left   .comp-card-label  { color: var(--color-whisper-glow); }
+.comp-top    .comp-card-label  { color: #e74c3c; }
+.comp-bottom .comp-card-label  { color: var(--color-supply-glow); }
+
+/* 四个卡片池（场景下方） */
+.comp-pools {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comp-pool-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.comp-pool-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+.comp-pool-label.l-right  { color: var(--color-counter-glow); }
+.comp-pool-label.l-left   { color: var(--color-whisper-glow); }
+.comp-pool-label.l-top    { color: #e74c3c; }
+.comp-pool-label.l-bottom { color: var(--color-supply-glow); }
+.comp-pool-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.comp-pool-card {
+  width: 72px;
+  height: 101px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.2s;
+  border: 2px solid transparent;
+  background: var(--bg-card);
+  position: relative;
+}
+.comp-pool-card:active { transform: scale(0.95); }
+.comp-pool-card.stacked {
+  border-color: var(--color-counter);
+  filter: brightness(0.7);
+}
+.comp-pool-card img { width: 100%; height: 100%; object-fit: cover; }
+
+.comp-legend-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 4px;
+}
+.comp-legend-bar span { display: flex; align-items: center; gap: 3px; }
+.comp-legend-bar .cldot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+
+/* 复合场景移动端 */
+@media (max-width: 600px) {
+  .comp-scene {
+    height: calc(100vh - 140px);
+    min-height: 400px;
+  }
+  .comp-pool-card {
+    width: 56px; height: 78px;
+  }
+  .comp-pool-label {
+    font-size: 0.65rem;
+    min-width: 56px;
+  }
+}
+
+/* -- 回合计数器 + 按钮 -- */
+.round-counter-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+.round-counter-num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-whisper-glow);
+  line-height: 1;
+  min-width: 40px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+.round-counter-num.pulse { animation: badgePulse 0.35s ease-out; }
+.round-counter-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.round-btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-xl);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.round-btn.dawn-btn {
+  background: rgba(212,160,23,0.12);
+  color: var(--color-rule-glow);
+  border-color: rgba(212,160,23,0.25);
+}
+.round-btn.dawn-btn:hover { background: rgba(212,160,23,0.2); }
+.round-btn.end-btn {
+  background: rgba(192,57,43,0.1);
+  color: var(--color-whisper-glow);
+  border-color: rgba(192,57,43,0.2);
+}
+.round-btn.end-btn:hover { background: rgba(192,57,43,0.18); }
+
+/* -- 三组搜索栏（横向排列） -- */
+.search-bars-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 660px;
+  flex-wrap: wrap;
+}
+.search-bar-col {
+  flex: 1;
+  min-width: 170px;
+  position: relative;
+}
+.search-bar-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+.search-bar-label.l-whisper { color: var(--color-whisper-glow); }
+.search-bar-label.l-counter { color: var(--color-counter-glow); }
+.search-bar-label.l-supply { color: var(--color-supply-glow); }
+.search-bar-input-wrap {
+  position: relative;
+}
+.search-bar-input {
+  width: 100%;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 32px 8px 12px;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.search-bar-input:focus {
+  border-color: var(--color-whisper);
+}
+.search-bar-input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+.search-bar-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: none;
+  padding: 2px 4px;
+}
+.search-bar-clear.visible { display: block; }
+.search-bar-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.search-bar-results.show { display: block; }
+.search-bar-result-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.search-bar-result-item:last-child { border-bottom: none; }
+.search-bar-result-item:hover,
+.search-bar-result-item.focused {
+  background: rgba(192,57,43,0.12);
+}
+.search-bar-result-item .sbr-name { flex: 1; }
+.search-bar-result-item .sbr-level {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* -- 抽屉（弃牌堆 + 赠与他人，内联可折叠） -- */
+.drawer-inline {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+.drawer-inline + .drawer-inline { margin-top: 6px; }
+.drawer-inline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--bg-card);
+  transition: background 0.15s;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.drawer-inline-header:hover { background: rgba(255,255,255,0.03); }
+.drawer-inline-count {
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  min-width: 18px;
+  text-align: center;
+}
+.drawer-inline-count.has-cards {
+  color: var(--color-whisper-glow);
+}
+.drawer-inline-arrow {
+  margin-left: auto;
+  font-size: 0.65rem;
+  transition: transform 0.2s;
+  color: var(--text-muted);
+}
+.drawer-inline.open .drawer-inline-arrow {
+  transform: rotate(90deg);
+}
+.drawer-inline-body {
+  display: none;
+  padding: 8px;
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(0,0,0,0.08);
+  max-height: 180px;
+  overflow-y: auto;
+}
+.drawer-inline.open .drawer-inline-body { display: block; }
+.drawer-inline-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-start;
+}
+.drawer-inline-empty {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  padding: 12px;
+  text-align: center;
+  width: 100%;
+  opacity: 0.45;
+}
+
+/* -- 卡牌详情弹窗 -- */
+.card-detail-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 600;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+.card-detail-overlay.open { display: flex; }
+.card-detail-dialog {
+  background: var(--bg-surface);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 480px;
+  width: 92%;
+  border: 1px solid var(--border-subtle);
+  text-align: center;
+  animation: menuPopIn 0.2s ease-out;
+}
+.card-detail-dialog img {
+  max-width: 100%;
+  max-height: 55vh;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.card-detail-dialog img:hover { transform: scale(1.02); }
+.card-detail-enlarge-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: -8px;
+  margin-bottom: 10px;
+}
+.card-detail-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.card-detail-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.card-detail-effect {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--bg-deep);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  text-align: left;
+  line-height: 1.5;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.card-detail-close {
+  padding: 8px 28px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: background 0.15s;
+}
+.card-detail-close:hover { background: var(--bg-surface); }
+
+/* -- 全屏大图查看器 -- */
+.full-image-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.94);
+  z-index: 3000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.full-image-overlay.open { display: flex; }
+.full-image-overlay .fi-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.full-image-overlay img {
+  max-width: 95vw;
+  max-height: 88vh;
+  border-radius: 10px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  object-fit: contain;
+}
+.full-image-overlay .fi-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3001;
+  transition: background 0.2s;
+}
+.full-image-overlay .fi-close:hover { background: rgba(255,255,255,0.25); }
+.full-image-overlay .fi-hint {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+/* CZ弹窗中的卡面放大提示 */
+.cz-popup-card {
+  position: relative;
+  cursor: pointer;
+}
+.cz-popup-card::after {
+  content: '🔍 点击放大';
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.65);
+  color: rgba(255,255,255,0.75);
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* -- 回合结束确认 -- */
+.confirm-mini-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 400;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+.confirm-mini-overlay.open { display: flex; }
+.confirm-mini-dialog {
+  background: var(--bg-surface);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid var(--border-subtle);
+  min-width: 260px;
+  animation: menuPopIn 0.2s ease-out;
+}
+.confirm-mini-dialog .cmd-title { font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+.confirm-mini-dialog .cmd-body { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; }
+.confirm-mini-actions { display: flex; gap: 10px; justify-content: center; }
+.confirm-mini-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  border: 1px solid var(--border-subtle);
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+.confirm-mini-btn.cancel { background: transparent; color: var(--text-muted); }
+.confirm-mini-btn.ok { background: var(--color-whisper); color: #fff; border-color: var(--color-whisper); }
+
+/* -- 响应式 -- */
+@media (max-width: 600px) {
+  .search-bars-row { flex-direction: column; gap: 6px; }
+  .search-bar-col { min-width: 0; }
+  .supply-hand-card { width: 66px; height: 92px; }
+  .round-counter-num { font-size: 1.6rem; min-width: 32px; }
+  .round-btn { padding: 6px 12px; font-size: 0.75rem; }
+}
+
+</style>
+</head>
+<body class="citizen-page">
+
+<!-- 顶部 -->
+<div class="citizen-header">
+  <a href="index.html" class="home-link" title="返回首页">← 首页</a>
+  <div class="user-info">
+    <div class="avatar-small" id="headerAvatar">
+      <span style="font-size:1.2rem;">👻</span>
+    </div>
+    <span class="name" id="headerName">鬼</span>
+  </div>
+  <span class="status-badge" id="statusBadge" onclick="toggleGhostType()" title="点击切换煞鬼/恶鬼">煞鬼</span>
+  <button class="logout-btn" onclick="switchToCitizen()" title="返回市民面板">返回市民</button>
+</div>
+
+<!-- ====== 怪诞系统 (Tab 1) + 操作台 + 可视化 + 规则板 ====== -->
+<div class="test-container">
+
+  <!-- Tab 切换 -->
+  <div class="test-tabs">
+    <button class="test-tab active" data-tab="whisper-cz" onclick="switchTab('whisper-cz')">👻 怪诞系统</button>
+    <button class="test-tab" data-tab="supply" onclick="switchTab('supply')">🎛️ 操作台</button>
+    <button class="test-tab" data-tab="composite" onclick="switchTab('composite')">🔀 可视化</button>
+    <button class="test-tab" data-tab="ruleboard" onclick="switchTab('ruleboard')">📋 公开规则板</button>
+    <button class="test-tab" data-tab="ghost-rules" onclick="switchTab('ghost-rules')">👁️ 私有隐藏规则</button>
+  </div>
+
+  <!-- ========== Tab 1: 怪诞系统（怪谈卡操作台）========== -->
+  <div class="test-panel active" id="panel-whisper-cz">
+    <!-- 搜索栏 -->
+    <div class="cz-search-bar">
+      <input type="text" class="cz-search-input" id="wzSearch" placeholder="搜索怪谈卡（名称+效果）..." oninput="wzOnSearch(this.value)" autocomplete="off">
+      <button class="cz-search-clear" id="wzClear" onclick="wzClearSearch()">✕</button>
+      <div class="cz-search-results" id="wzResults"></div>
+    </div>
+
+    <!-- 持续适用区 -->
+    <div class="cz-zone-row">
+      <div class="cz-zone-label">
+        <span class="cz-zone-icon">🔄</span>
+        <span>持续适用区</span>
+        <span class="cz-zone-count" id="wzCntPersistent">0</span>
+      </div>
+      <div class="cz-zone-strip" id="wzStripPersistent"></div>
+    </div>
+
+    <!-- 未激活区 -->
+    <div class="cz-zone-row">
+      <div class="cz-zone-label">
+        <span class="cz-zone-icon">👻</span>
+        <span>未激活区</span>
+        <span class="cz-zone-count" id="wzCntInactive">0</span>
+      </div>
+      <div class="cz-zone-strip" id="wzStripInactive"></div>
+    </div>
+
+    <!-- 已激活区 -->
+    <div class="cz-zone-row">
+      <div class="cz-zone-label">
+        <span class="cz-zone-icon">✨</span>
+        <span>已激活区</span>
+        <span class="cz-zone-count" id="wzCntActive">0</span>
+      </div>
+      <div class="cz-zone-strip" id="wzStripActive"></div>
+    </div>
+
+    <!-- 未激活弹窗（2按钮：激活/放回原样） -->
+    <div class="cz-popup-overlay" id="wzPopupInactive" onclick="wzClosePopup('inactive')">
+      <div class="cz-popup" onclick="event.stopPropagation()">
+        <div class="cz-popup-card" id="wzPopupCardInactive"></div>
+        <div class="cz-popup-btns">
+          <button class="cz-btn cz-btn-activate" onclick="wzActivate()">⚡ 激活</button>
+          <button class="cz-btn cz-btn-return" onclick="wzReturn()">↩ 放回原样</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 已激活弹窗（4按钮：持续适用/使用/弃牌堆/赠与） -->
+    <div class="cz-popup-overlay" id="wzPopupActive" onclick="wzClosePopup('active')">
+      <div class="cz-popup" onclick="event.stopPropagation()">
+        <div class="cz-popup-card" id="wzPopupCardActive"></div>
+        <div class="cz-popup-btns">
+          <button class="cz-btn cz-btn-persist" onclick="wzPersist()">🔄 持续适用</button>
+          <button class="cz-btn cz-btn-stack" onclick="wzUse()">✅ 使用</button>
+          <button class="cz-btn cz-btn-discard" onclick="wzDiscard()">🗑 弃牌堆</button>
+          <button class="cz-btn cz-btn-gift" onclick="wzGift()">🎁 赠与</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 持续适用弹窗（1按钮：取消适用） -->
+    <div class="cz-popup-overlay" id="wzPopupPersistent" onclick="wzClosePopup('persistent')">
+      <div class="cz-popup" onclick="event.stopPropagation()">
+        <div class="cz-popup-card" id="wzPopupCardPersistent"></div>
+        <div class="cz-popup-btns">
+          <button class="cz-btn cz-btn-unpersist" onclick="wzUnpersist()">↩ 取消适用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Tab 2: 可视化 ========== -->
+  <div class="test-panel" id="panel-composite">
+    <div class="test-hint">💡 四向可视化：左(怪谈) 右(反击) 上(伤害) 下(物资) · 各自独立牌池 · 点击卡片添加/移除</div>
+
+    <div class="comp-scene-wrap">
+      <div class="comp-scene" id="compScene">
+        <div class="comp-dir-label" style="top:4px;left:50%;transform:translateX(-50%);">⬆ 伤害指示卡 (露出顶部38%)</div>
+        <div class="comp-dir-label" style="top:50%;left:4px;transform:translateY(-50%);">怪谈卡 ⬅</div>
+        <div class="comp-dir-label" style="top:50%;right:4px;transform:translateY(-50%);">➡ 反击卡</div>
+        <div class="comp-dir-label" style="bottom:4px;left:50%;transform:translateX(-50%);">⬇ 物资卡 (露出底部25%)</div>
+
+        <div class="comp-char" id="compChar" onclick="showCharDetail()" title="点击查看角色详情">
+          <canvas id="compCharImg" width="400" height="560" style="width:100%;height:100%"></canvas>
+          <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#2d1b3d,#1a1a2e);color:#c0392b;font-size:0.85rem;font-weight:600;" id="compCharFallback">鬼角色卡</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 隐藏卡牌详情弹窗（全局） -->
+  <div class="card-detail-overlay" id="cardDetailOverlay" onclick="closeCardDetail()">
+    <div class="card-detail-dialog" id="cardDetailDialog" onclick="event.stopPropagation()">
+      <img id="cardDetailImg" src="" alt="" onclick="showFullImage()" title="点击放大查看大图">
+      <div class="card-detail-enlarge-hint">🖱 点击卡面查看大图</div>
+      <div class="card-detail-name" id="cardDetailName"></div>
+      <div class="card-detail-meta" id="cardDetailMeta"></div>
+      <div class="card-detail-effect" id="cardDetailEffect"></div>
+      <button class="card-detail-close" onclick="closeCardDetail()">关闭</button>
+    </div>
+  </div>
+
+  <!-- 全屏大图查看器（全局） -->
+  <div class="full-image-overlay" id="fullImageOverlay" onclick="closeFullImage()">
+    <button class="fi-close" onclick="closeFullImage()">✕</button>
+    <div class="fi-container" onclick="event.stopPropagation()">
+      <img id="fullImageZoom" src="" alt="">
+      <div class="fi-hint">点击任意位置关闭</div>
+    </div>
+  </div>
+
+  <!-- ========== Tab 3: 操作台 ========== -->
+  <div class="test-panel" id="panel-supply">
+
+    <!-- 回合计数器 -->
+    <div class="round-counter-wrap" id="roundCounter">
+      <button class="round-btn dawn-btn" onclick="playDawnAction()" title="推进至下一回合黎明">🌅 迎接黎明</button>
+      <div class="round-counter-num" id="roundNum">0</div>
+      <div class="round-counter-label" id="roundLabel">白天 / 12</div>
+      <button class="round-btn end-btn" onclick="playEndRound()" title="结束当前回合">🌙 回合结束</button>
+    </div>
+
+    <div class="test-hint">🎛️ 操作台 · 回合管理 · 卡牌调度 · 可视化</div>
+
+    <!-- 双栏搜索 -->
+    <div class="search-bars-row">
+      <!-- 怪谈卡搜索（鬼模式：名称+效果匹配） -->
+      <div class="search-bar-col" id="searchColWhisper">
+        <div class="search-bar-label l-whisper">👻 怪谈卡</div>
+        <div class="search-bar-input-wrap">
+          <input class="search-bar-input" id="searchWhisper" type="text"
+                 placeholder="搜索怪谈卡名称或效果…" autocomplete="off"
+                 oninput="onSearchBar('whisper',this.value)"
+                 onfocus="onSearchBar('whisper',this.value)">
+          <button class="search-bar-clear" id="clearWhisper" onclick="clearSearchBar('whisper')">✕</button>
+        </div>
+        <div class="search-bar-results" id="resultsWhisper"></div>
+      </div>
+      <!-- 物资卡搜索 -->
+      <div class="search-bar-col" id="searchColSupply">
+        <div class="search-bar-label l-supply">🎒 物资卡</div>
+        <div class="search-bar-input-wrap">
+          <input class="search-bar-input" id="searchSupply" type="text"
+                 placeholder="搜索物资卡名称…" autocomplete="off"
+                 oninput="onSearchBar('supply',this.value)"
+                 onfocus="onSearchBar('supply',this.value)">
+          <button class="search-bar-clear" id="clearSupply" onclick="clearSearchBar('supply')">✕</button>
+        </div>
+        <div class="search-bar-results" id="resultsSupply"></div>
+      </div>
+    </div>
+
+    <!-- 左右工作区 -->
+    <div class="op-workspace" style="margin-top:12px;">
+      <!-- 左：物资卡手牌（竖条） -->
+      <div class="op-hand-col">
+        <div class="cz-zone-label">
+          <span class="cz-zone-icon">🎒</span>
+          <span>物资卡手牌</span>
+          <span class="cz-zone-count" id="supplyHandCountNew">0</span>
+        </div>
+        <div class="op-hand-strip" id="supplyHandStripNew">
+          <div class="cz-zone-empty">搜索物资卡加入手牌</div>
+        </div>
+      </div>
+
+      <!-- 右：四向牌池 + 图例 + 状态 -->
+      <div class="op-pools-col">
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-right">➡ 反击卡</span>
+          <div class="comp-pool-grid" id="compPoolRight"></div>
+        </div>
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-left">⬅ 怪谈卡</span>
+          <div class="comp-pool-grid" id="compPoolLeft"></div>
+        </div>
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-top">⬆ 伤害卡</span>
+          <div class="comp-pool-grid" id="compPoolTop"></div>
+        </div>
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-bottom">⬇ 物资卡</span>
+          <div class="comp-pool-grid" id="compPoolBottom"></div>
+        </div>
+
+        <div class="comp-legend-bar" style="margin-top:8px;">
+          <span><span class="cldot" style="background:var(--color-counter-glow)"></span> 反击</span>
+          <span><span class="cldot" style="background:var(--color-whisper-glow)"></span> 怪谈</span>
+          <span><span class="cldot" style="background:#e74c3c"></span> 伤害</span>
+          <span><span class="cldot" style="background:var(--color-supply-glow)"></span> 物资</span>
+        </div>
+
+        <div class="test-status" id="compStatus" style="margin-top:0;">
+          可视化：右<b style="color:var(--color-counter-glow)" id="compCntR">0</b> · 左<b style="color:var(--color-whisper-glow)" id="compCntL">0</b> · 上<b style="color:#e74c3c" id="compCntT">0</b> · 下<b style="color:var(--color-supply-glow)" id="compCntB">0</b>
+        </div>
+
+        <!-- 弃牌堆 内联抽屉 -->
+        <div class="drawer-inline" id="drawerInlineDiscard">
+          <div class="drawer-inline-header" onclick="toggleInlineDrawer('discard')">
+            <span>🗑️ 弃牌堆</span>
+            <span class="drawer-inline-count" id="drawerInlineDiscardCnt">0</span>
+            <span class="drawer-inline-arrow">▶</span>
+          </div>
+          <div class="drawer-inline-body">
+            <div class="drawer-inline-cards" id="drawerInlineDiscardCards">
+              <div class="drawer-inline-empty">弃牌堆为空</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 赠与 内联抽屉 -->
+        <div class="drawer-inline" id="drawerInlineGift">
+          <div class="drawer-inline-header" onclick="toggleInlineDrawer('gift')">
+            <span>🎁 赠与</span>
+            <span class="drawer-inline-count" id="drawerInlineGiftCnt">0</span>
+            <span class="drawer-inline-arrow">▶</span>
+          </div>
+          <div class="drawer-inline-body">
+            <div class="drawer-inline-cards" id="drawerInlineGiftCards">
+              <div class="drawer-inline-empty">暂无待赠与的卡牌</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 确认/使用弹窗 -->
+    <div class="cz-popup-overlay" id="supplyPopup" onclick="supplyClosePopup()">
+      <div class="cz-popup" onclick="event.stopPropagation()">
+        <div class="cz-popup-card" id="supplyPopupCard"></div>
+        <div class="cz-popup-btns">
+          <button class="cz-btn cz-btn-activate" onclick="supplyConfirm()">✅ 确认</button>
+          <button class="cz-btn cz-btn-stack" onclick="supplyUse()">🔀 使用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Tab 4: 公开规则板 ========== -->
+  <div class="test-panel" id="panel-ruleboard">
+    <div class="rb-header">
+      <h2>📋 公开规则板 <span class="rb-status" id="rbSaveStatus"></span></h2>
+      <div class="rb-actions">
+        <button class="btn btn-sm" onclick="rbResetBoard()" title="清空所有分区，全部规则返回卡池">🔄 重置</button>
+      </div>
+    </div>
+    <div class="rb-main">
+      <aside class="rb-pool" id="rbPoolPanel">
+        <div class="rb-pool-header">
+          <h3>📦 规则卡池 <span class="rb-pool-count" id="rbPoolCount"></span></h3>
+          <div class="rb-pool-tabs" id="rbPoolTabs"></div>
+        </div>
+        <div class="rb-pool-cards" id="rbPoolCards"></div>
+      </aside>
+      <main class="rb-board" id="rbRuleBoard">
+        <div class="rb-zone" data-zone="1" id="rbZone1">
+          <div class="rb-zone-header">
+            <span class="rb-zone-dot all"></span>
+            <h4>影响全体的公开规则</h4>
+            <span class="rb-zone-count" id="rbZone1Count">0</span>
+          </div>
+          <div class="rb-zone-body" id="rbZone1Body">
+            <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+          </div>
+        </div>
+        <div class="rb-zone" data-zone="2" id="rbZone2">
+          <div class="rb-zone-header">
+            <span class="rb-zone-dot human"></span>
+            <h4>只影响人的公开规则</h4>
+            <span class="rb-zone-count" id="rbZone2Count">0</span>
+          </div>
+          <div class="rb-zone-body" id="rbZone2Body">
+            <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+          </div>
+        </div>
+        <div class="rb-zone" data-zone="3" id="rbZone3">
+          <div class="rb-zone-header">
+            <span class="rb-zone-dot ghost"></span>
+            <h4>只影响鬼的公开规则</h4>
+            <span class="rb-zone-count" id="rbZone3Count">0</span>
+          </div>
+          <div class="rb-zone-body" id="rbZone3Body">
+            <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+          </div>
+        </div>
+        <div class="rb-zone" data-zone="4" id="rbZone4">
+          <div class="rb-zone-header">
+            <span class="rb-zone-dot erased"></span>
+            <h4>被抹除规则</h4>
+            <span class="rb-zone-count" id="rbZone4Count">0</span>
+          </div>
+          <div class="rb-zone-body" id="rbZone4Body">
+            <div class="rb-zone-empty">宣言成功抹除的规则置于此处</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========== Tab 5: 鬼的私有隐藏规则 ========== -->
+  <div class="test-panel" id="panel-ghost-rules">
+    <!-- 顶部栏 -->
+    <div class="rb-header">
+      <h2>👁️ 鬼的私有隐藏规则 <span class="rb-status" id="grSaveStatus"></span></h2>
+      <div class="rb-actions">
+        <button class="btn btn-sm" onclick="grResetBoard()" title="清空私有规则区，全部规则返回卡池">🔄 重置</button>
+      </div>
+    </div>
+    <!-- 主体：左侧卡池 + 右侧单区 -->
+    <div class="gr-main">
+      <!-- 左侧：规则卡池 -->
+      <aside class="rb-pool" id="grPoolPanel">
+        <div class="rb-pool-header">
+          <h3>📦 规则卡池 <span class="rb-pool-count" id="grPoolCount"></span></h3>
+          <div class="rb-pool-tabs" id="grPoolTabs"></div>
+        </div>
+        <div class="rb-pool-cards" id="grPoolCards"></div>
+      </aside>
+      <!-- 右侧：单区私有隐藏规则板 -->
+      <div class="gr-board" id="grGhostBoard">
+        <div class="gr-zone" data-zone="ghost" id="grGhostZone">
+          <div class="gr-zone-header" id="grGhostZoneHeader">
+            <span class="gr-zone-dot"></span>
+            <h4>鬼的私有隐藏规则</h4>
+            <span class="rb-zone-count" id="grGhostZoneCount">0</span>
+          </div>
+          <div class="gr-zone-body" id="grGhostZoneBody">
+            <div class="rb-zone-empty">从卡池拖拽规则卡到此处（不限制数量）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== 鬼的身份数据 =====
+var GHOST_TYPE = 'shagui'; // 'shagui' | 'egui'
+
+// 从 URL 参数或 session 读取鬼类型
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var typeParam = params.get('type');
+  if (typeParam === 'egui') {
+    GHOST_TYPE = 'egui';
+  } else if (typeParam === 'shagui') {
+    GHOST_TYPE = 'shagui';
+  } else {
+    // 从 session 读取
+    try {
+      var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+      if (session.ghostType) GHOST_TYPE = session.ghostType;
+    } catch(e) {}
+  }
+})();
+
+// 鬼角色卡路径
+var GHOST_CHAR_IMG = GHOST_TYPE === 'egui'
+  ? 'images/cards/鬼角色卡/鬼角色卡_恶鬼.png'
+  : 'images/cards/鬼角色卡/鬼角色卡_煞鬼.png';
+var GHOST_DISPLAY_NAME = GHOST_TYPE === 'egui' ? '恶鬼' : '煞鬼';
+
+// ===== 加载会话 =====
+(function() {
+  var session = localStorage.getItem('dawn_session');
+  if (!session) {
+    // 无会话，创建测试会话（鬼角色）
+    var testSession = { role:'citizen', status:'ghost', ghostType: GHOST_TYPE, username:'测试鬼', avatar:'', loginTime:Date.now() };
+    localStorage.setItem('dawn_session', JSON.stringify(testSession));
+    session = JSON.stringify(testSession);
+  }
+  try {
+    var data = JSON.parse(session);
+    document.getElementById('headerName').textContent = (data.username || '鬼') + ' · ' + GHOST_DISPLAY_NAME;
+    if (data.avatar) {
+      var img = document.createElement('img');
+      img.src = data.avatar;
+      document.getElementById('headerAvatar').innerHTML = '';
+      document.getElementById('headerAvatar').appendChild(img);
+    }
+  } catch(e) { window.location.href = 'login.html'; }
+
+  // 持久化 ghostType
+  try {
+    var s = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+    s.ghostType = GHOST_TYPE;
+    s.status = GHOST_TYPE === 'egui' ? 'evil' : 'ghost';
+    localStorage.setItem('dawn_session', JSON.stringify(s));
+  } catch(e) {}
+})();
+
+// ===== 状态UI更新 =====
+function updateStatusUI() {
+  var badge = document.getElementById('statusBadge');
+  var map = {
+    shagui: { label: '煞鬼', cls: '', color: 'var(--color-whisper-glow)', bg: 'rgba(192,57,43,0.15)' },
+    egui:   { label: '恶鬼', cls: 'egui', color: '#ff4444', bg: 'rgba(192,57,43,0.2)' }
+  };
+  var s = map[GHOST_TYPE];
+  badge.textContent = s.label;
+  badge.className = 'status-badge ' + s.cls;
+  badge.style.color = s.color;
+  badge.style.background = s.bg;
+  document.getElementById('headerName').textContent =
+    (JSON.parse(localStorage.getItem('dawn_session') || '{}').username || '鬼') + ' · ' + s.label;
+}
+
+// ===== 煞鬼 ↔ 恶鬼 切换（同页面，不跳转） =====
+function toggleGhostType() {
+  GHOST_TYPE = GHOST_TYPE === 'shagui' ? 'egui' : 'shagui';
+  GHOST_CHAR_IMG = GHOST_TYPE === 'egui'
+    ? 'images/cards/鬼角色卡/鬼角色卡_恶鬼.png'
+    : 'images/cards/鬼角色卡/鬼角色卡_煞鬼.png';
+  GHOST_DISPLAY_NAME = GHOST_TYPE === 'egui' ? '恶鬼' : '煞鬼';
+
+  updateStatusUI();
+
+  // 持久化
+  try {
+    var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+    session.ghostType = GHOST_TYPE;
+    session.status = GHOST_TYPE === 'egui' ? 'evil' : 'ghost';
+    localStorage.setItem('dawn_session', JSON.stringify(session));
+  } catch(e) {}
+
+  // 刷新可视化中的角色卡
+  initCharacterDisplay();
+  if (document.getElementById('panel-composite').classList.contains('active')) {
+    initComposite();
+  }
+}
+
+// ===== 返回市民面板 =====
+function switchToCitizen() {
+  try {
+    var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+    session.status = 'citizen';
+    localStorage.setItem('dawn_session', JSON.stringify(session));
+  } catch(e) {}
+  window.location.href = 'citizen.html';
+}
+
+updateStatusUI();
+
+// ====== Tab 1: 怪诞系统（WHISPER CZ 数据模型）======
+var WHISPER_CARD_BACK = 'images/card-back.png';
+
+let WHISPER_CZ = {
+  inactive: [],      // 未激活区
+  active: [],        // 已激活区
+  persistent: [],    // 持续适用区
+  currentCard: null, // 当前弹窗选中的卡片
+  currentZone: null, // 'inactive' | 'active'
+  searchResults: [], // 当前搜索结果缓存
+};
+
+// ─── 搜索（鬼模式：名称+效果双字段匹配）───
+function wzOnSearch(value) {
+  var q = value.trim().toLowerCase();
+  var resultsEl = document.getElementById('wzResults');
+  var clearEl = document.getElementById('wzClear');
+  var pool = SEARCH_IDX.whisper || [];
+
+  if (q.length === 0) {
+    resultsEl.classList.remove('show');
+    resultsEl.innerHTML = '';
+    clearEl.style.display = 'none';
+    WHISPER_CZ.searchResults = [];
+    return;
+  }
+
+  clearEl.style.display = 'block';
+
+  // 鬼模式：名称+效果双字段匹配
+  var results = pool.filter(function(c) {
+    return c.name.toLowerCase().indexOf(q) !== -1 ||
+      (c.effect && c.effect.toLowerCase().indexOf(q) !== -1);
+  }).slice(0, 12);
+
+  WHISPER_CZ.searchResults = results;
+
+  resultsEl.innerHTML = results.length === 0
+    ? '<div class="cz-sr-item" style="color:var(--text-muted);cursor:default;">没有找到匹配的怪谈卡</div>'
+    : results.map(function(c, i) {
+        return '<div class="cz-sr-item" onclick="wzSelect(' + i + ')" onmouseenter="wzFocusResult(' + i + ')">' +
+          '<span class="cz-sr-name">' + c.name + '</span>' +
+          (c.level ? '<span class="cz-sr-level">' + c.level + '</span>' : '') +
+        '</div>';
+      }).join('');
+  resultsEl.classList.add('show');
+}
+
+function wzFocusResult(idx) {
+  var items = document.getElementById('wzResults').querySelectorAll('.cz-sr-item');
+  for (var i = 0; i < items.length; i++) { items[i].classList.remove('focused'); }
+  if (items[idx]) items[idx].classList.add('focused');
+}
+
+function wzSelect(idx) {
+  var card = WHISPER_CZ.searchResults[idx];
+  if (!card) return;
+
+  // 查物理数量上限
+  var maxCopies = 1;
+  if (typeof CARD_DB !== 'undefined' && CARD_DB.whispers) {
+    var db = CARD_DB.whispers;
+    for (var j = 0; j < db.length; j++) {
+      if (db[j].id === card.id) { maxCopies = db[j].copies || 1; break; }
+    }
+  }
+
+  // 统计已加入的数量
+  var allCards = WHISPER_CZ.inactive.concat(WHISPER_CZ.active).concat(WHISPER_CZ.persistent);
+  var already = 0;
+  for (var k = 0; k < allCards.length; k++) {
+    if (allCards[k].id === card.id) already++;
+  }
+
+  if (already >= maxCopies) {
+    alert(card.name + ' 牌库仅有 ' + maxCopies + ' 张，已全部加入');
+    return;
+  }
+
+  var newCard = { name: card.name, level: card.level, img: card.img, effect: card.effect, id: card.id };
+  WHISPER_CZ.inactive.push(newCard);
+  PLAY.scene.whisper.push(newCard);
+
+  wzClearSearch();
+  wzRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+}
+
+function wzClearSearch() {
+  document.getElementById('wzSearch').value = '';
+  document.getElementById('wzClear').style.display = 'none';
+  var resultsEl = document.getElementById('wzResults');
+  resultsEl.classList.remove('show');
+  resultsEl.innerHTML = '';
+  WHISPER_CZ.searchResults = [];
+}
+
+// ─── 渲染 ───
+function wzRefreshAll() {
+  wzRenderZone('persistent', 'wzStripPersistent', 'wzCntPersistent');
+  wzRenderZone('inactive', 'wzStripInactive', 'wzCntInactive');
+  wzRenderZone('active', 'wzStripActive', 'wzCntActive');
+}
+
+function wzRenderZone(zone, stripId, cntId) {
+  var strip = document.getElementById(stripId);
+  var cards = WHISPER_CZ[zone];
+
+  document.getElementById(cntId).textContent = cards.length;
+
+  if (cards.length === 0) {
+    strip.innerHTML = '<div class="cz-zone-empty">暂无卡片</div>';
+    return;
+  }
+
+  strip.innerHTML = cards.map(function(c, i) {
+    if (zone === 'inactive') {
+      // 卡背
+      return '<div class="cz-card-item" onclick="wzOpenPopup(\'inactive\',' + i + ')" title="点击翻开">' +
+        '<img src="' + WHISPER_CARD_BACK + '" alt="卡背" ' +
+        'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+        '<div class="cz-card-fallback" style="display:none;"><span>👻</span><span>怪谈卡</span></div>' +
+      '</div>';
+    } else {
+      // 正面
+      return '<div class="cz-card-item" onclick="wzOpenPopup(\'' + zone + '\',' + i + ')" title="' + c.name + '">' +
+        '<img src="' + c.img + '" alt="' + c.name + '" ' +
+        'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+        '<div class="cz-card-fallback" style="display:none;"><span>' + c.name.charAt(0) + '</span><span>' + (c.level || '') + '</span></div>' +
+      '</div>';
+    }
+  }).join('');
+}
+
+// ─── 弹窗 ───
+function wzOpenPopup(zone, idx) {
+  WHISPER_CZ.currentCard = WHISPER_CZ[zone][idx];
+  WHISPER_CZ.currentZone = zone;
+
+  var overlayId, cardContainerId;
+  if (zone === 'inactive') {
+    overlayId = 'wzPopupInactive';
+    cardContainerId = 'wzPopupCardInactive';
+  } else if (zone === 'persistent') {
+    overlayId = 'wzPopupPersistent';
+    cardContainerId = 'wzPopupCardPersistent';
+  } else {
+    overlayId = 'wzPopupActive';
+    cardContainerId = 'wzPopupCardActive';
+  }
+
+  var cardContainer = document.getElementById(cardContainerId);
+
+  cardContainer.innerHTML = '<img src="' + WHISPER_CZ.currentCard.img + '" alt="' + WHISPER_CZ.currentCard.name + '" ' +
+    'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+    '<div class="cz-popup-fallback" style="display:none;">' +
+      '<div class="cz-popup-fb-name">' + WHISPER_CZ.currentCard.name + '</div>' +
+      '<div class="cz-popup-fb-level">' + (WHISPER_CZ.currentCard.level || '') + ' · 怪谈卡</div>' +
+      '<div class="cz-popup-fb-effect">' + (WHISPER_CZ.currentCard.effect || '') + '</div>' +
+    '</div>';
+  cardContainer.onclick = function(e) { e.stopPropagation(); showFullImage(WHISPER_CZ.currentCard); };
+
+  document.getElementById(overlayId).classList.add('show');
+}
+
+function wzClosePopup(zone) {
+  document.getElementById('wzPopupInactive').classList.remove('show');
+  document.getElementById('wzPopupActive').classList.remove('show');
+  document.getElementById('wzPopupPersistent').classList.remove('show');
+}
+
+// ─── 操作 ───
+function wzActivate() {
+  WHISPER_CZ.inactive = WHISPER_CZ.inactive.filter(function(c) { return c !== WHISPER_CZ.currentCard; });
+  PLAY.scene.whisper = PLAY.scene.whisper.filter(function(c) { return c !== WHISPER_CZ.currentCard; });
+  WHISPER_CZ.active.push(WHISPER_CZ.currentCard);
+  wzRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  wzClosePopup('inactive');
+}
+
+function wzReturn() {
+  wzClosePopup('inactive');
+}
+
+function wzPersist() {
+  WHISPER_CZ.active = WHISPER_CZ.active.filter(function(c) { return c !== WHISPER_CZ.currentCard; });
+  WHISPER_CZ.persistent.push(WHISPER_CZ.currentCard);
+  wzRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  wzClosePopup('active');
+}
+
+function wzUnpersist() {
+  WHISPER_CZ.persistent = WHISPER_CZ.persistent.filter(function(c) { return c !== WHISPER_CZ.currentCard; });
+  WHISPER_CZ.active.push(WHISPER_CZ.currentCard);
+  wzRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  wzClosePopup('persistent');
+}
+
+function wzUse() {
+  // 使用：怪谈卡 → 可视化左侧怪谈卡栏目
+  var card = { name: WHISPER_CZ.currentCard.name, level: WHISPER_CZ.currentCard.level, img: WHISPER_CZ.currentCard.img, effect: WHISPER_CZ.currentCard.effect };
+
+  // 加入可视化左侧怪谈卡池
+  var poolExists = COMP_POOLS.left.find(function(c) { return c.name === card.name; });
+  if (!poolExists) {
+    COMP_POOLS.left.push(card);
+  }
+
+  // 加入左侧堆叠
+  var stackExists = COMP_STACKS.left.find(function(s) { return s.name === card.name; });
+  if (!stackExists) {
+    COMP_STACKS.left.push(card);
+  }
+
+  // 从已激活区移除
+  WHISPER_CZ.active = WHISPER_CZ.active.filter(function(c) { return c !== WHISPER_CZ.currentCard; });
+
+  wzRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+
+  if (typeof buildCompPool === 'function') buildCompPool('left');
+  if (typeof buildCompStack === 'function') buildCompStack('left');
+  if (typeof updateCompStatus === 'function') updateCompStatus();
+
+  wzClosePopup('active');
+}
+
+function wzDiscard() {
+  PLAY.discard.push({ name: WHISPER_CZ.currentCard.name, level: WHISPER_CZ.currentCard.level, img: WHISPER_CZ.currentCard.img, effect: WHISPER_CZ.currentCard.effect });
+  WHISPER_CZ.active = WHISPER_CZ.active.filter(function(c) { return c !== WHISPER_CZ.currentCard; });
+  wzRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  refreshAllInlineDrawers();
+  wzClosePopup('active');
+}
+
+function wzGift() {
+  PLAY.useOthers.push({ name: WHISPER_CZ.currentCard.name, level: WHISPER_CZ.currentCard.level, img: WHISPER_CZ.currentCard.img, effect: WHISPER_CZ.currentCard.effect });
+  WHISPER_CZ.active = WHISPER_CZ.active.filter(function(c) { return c !== WHISPER_CZ.currentCard; });
+  wzRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  refreshAllInlineDrawers();
+  wzClosePopup('active');
+}
+
+// ─── 初始化 ───
+function initWhisperZone() {
+  if (SEARCH_IDX.whisper.length === 0 && typeof CARD_DB !== 'undefined') {
+    if (typeof buildSearchIndex === 'function') buildSearchIndex();
+  }
+  wzRefreshAll();
+}
+
+// ====== Tab切换 ======
+function switchTab(tabId) {
+  document.querySelectorAll('.test-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.test-panel').forEach(function(p) { p.classList.remove('active'); });
+  var tabBtn = document.querySelector('.test-tab[data-tab="' + tabId + '"]');
+  if (tabBtn) tabBtn.classList.add('active');
+  document.getElementById('panel-' + tabId).classList.add('active');
+
+  if (tabId === 'composite') {
+    initComposite();
+  }
+  if (tabId === 'supply') {
+    initSupplyPanel();
+    initCompositePools();
+    refreshAllInlineDrawers();
+  }
+  if (tabId === 'ruleboard') {
+    rbInit();
+  }
+  if (tabId === 'ghost-rules') {
+    grInit();
+  }
+}
+
+// ====== 可视化 ======
+const COMP_CHAR_W = 200;
+const COMP_CHAR_H = 280;
+const COMP_DAMAGE_H = 140;
+const COMP_STEP_R = 50;
+const COMP_STEP_L = 50;
+const COMP_STEP_T = 50;
+const COMP_STEP_B = 70;
+
+let _compLayout = { scale: 1, charLeft: 170, charTop: 170, charW: 200, charH: 280 };
+
+const COMP_POOLS = {
+  right: [],
+  left: [],
+  top: [
+    { name:'健康值-1', img:'images/damage/伤害指示卡_健康值-1.png', h:COMP_DAMAGE_H },
+    { name:'理智值-1', img:'images/damage/伤害指示卡_理智值-1.png', h:COMP_DAMAGE_H },
+    { name:'健康值-2', img:'images/damage/伤害指示卡_健康值-2.png', h:COMP_DAMAGE_H },
+    { name:'理智值-2', img:'images/damage/伤害指示卡_理智值-2.png', h:COMP_DAMAGE_H },
+    { name:'回合变动', img:'images/damage/伤害指示卡_回合变动.png', h:COMP_DAMAGE_H }
+  ],
+  bottom: []
+};
+
+let COMP_STACKS = { right:[], left:[], top:[], bottom:[] };
+
+function initComposite() {
+  var scene = document.getElementById('compScene');
+  if (!scene) return;
+
+  var sceneW = scene.clientWidth;
+  var sceneH = scene.clientHeight;
+
+  var scaleW = sceneW / 800;
+  var scaleH = sceneH / 700;
+  var scale = Math.min(scaleW, scaleH, 2.0);
+
+  _compLayout.scale = scale;
+  _compLayout.charW = COMP_CHAR_W * scale;
+  _compLayout.charH = COMP_CHAR_H * scale;
+  _compLayout.charLeft = (sceneW - _compLayout.charW) / 2;
+  _compLayout.charTop = (sceneH - _compLayout.charH) / 2;
+
+  var charEl = document.getElementById('compChar');
+  charEl.style.left = _compLayout.charLeft + 'px';
+  charEl.style.top = _compLayout.charTop + 'px';
+  charEl.style.width = _compLayout.charW + 'px';
+  charEl.style.height = _compLayout.charH + 'px';
+
+  buildAllCompStacks();
+}
+
+function initCompositePools() {
+  buildAllCompPools();
+  buildAllCompStacks();
+  updateCompStatus();
+}
+
+function buildAllCompPools() {
+  ['right','left','top','bottom'].forEach(function(dir) {
+    buildCompPool(dir);
+  });
+}
+
+function buildCompPool(dir) {
+  var grid = document.getElementById('compPool' + dir.charAt(0).toUpperCase() + dir.slice(1));
+  var pool = COMP_POOLS[dir];
+  grid.innerHTML = pool.map(function(c, i) {
+    return '<div class="comp-pool-card" id="compPool_' + dir + '_' + i + '"' +
+      ' onclick="toggleCompCard(\'' + dir + '\',' + i + ')" title="点击添加「' + c.name + '」">' +
+      '<img src="' + c.img + '" alt="' + c.name + '" onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + c.name + '\';">' +
+      '</div>';
+  }).join('');
+}
+
+function toggleCompCard(dir, idx) {
+  var card = COMP_POOLS[dir][idx];
+  COMP_STACKS[dir].push(card);
+  buildCompPool(dir);
+  buildCompStack(dir);
+  updateCompStatus();
+}
+
+function buildAllCompStacks() {
+  ['right','left','top','bottom'].forEach(function(dir) { buildCompStack(dir); });
+}
+
+function buildCompStack(dir) {
+  var scene = document.getElementById('compScene');
+  if (!scene) return;
+  var s = _compLayout.scale;
+  var charW = _compLayout.charW;
+  var charH = _compLayout.charH;
+  var charLeft = _compLayout.charLeft;
+  var charTop = _compLayout.charTop;
+  var stack = COMP_STACKS[dir];
+  var N = stack.length;
+
+  scene.querySelectorAll('.comp-card-' + dir).forEach(function(el) { el.remove(); });
+
+  if (N === 0) return;
+
+  var step, cardH;
+  var cardW = charW;
+
+  if (dir === 'right') {
+    step = COMP_STEP_R * s;
+    cardH = charH;
+    for (var i = 0; i < N; i++) {
+      var card = stack[i];
+      var left = charLeft + step * (i + 1);
+      var z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: left + 'px',
+        top: charTop + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'left') {
+    step = COMP_STEP_L * s;
+    cardH = charH;
+    for (var i2 = 0; i2 < N; i2++) {
+      var card2 = stack[i2];
+      var left2 = charLeft - step * (i2 + 1);
+      var z2 = N - i2;
+      createCompCard(scene, dir, card2, i2, N, {
+        left: left2 + 'px',
+        top: charTop + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z2
+      });
+    }
+  } else if (dir === 'top') {
+    step = COMP_STEP_T * s;
+    cardH = COMP_DAMAGE_H * s;
+    for (var i3 = 0; i3 < N; i3++) {
+      var card3 = stack[i3];
+      var top = charTop - step * (i3 + 1);
+      var z3 = N - i3;
+      createCompCard(scene, dir, card3, i3, N, {
+        left: charLeft + 'px',
+        top: top + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z3
+      });
+    }
+  } else if (dir === 'bottom') {
+    step = COMP_STEP_B * s;
+    cardH = charH;
+    for (var i4 = 0; i4 < N; i4++) {
+      var card4 = stack[i4];
+      var top4 = charTop + step * (i4 + 1);
+      var z4 = N - i4;
+      createCompCard(scene, dir, card4, i4, N, {
+        left: charLeft + 'px',
+        top: top4 + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z4
+      });
+    }
+  }
+}
+
+function createCompCard(scene, dir, card, idx, N, style) {
+  var div = document.createElement('div');
+  div.className = 'comp-card comp-' + dir + ' comp-card-' + dir;
+  Object.assign(div.style, style);
+  div.title = '点击移除「' + card.name + '」（' + dir + ' 图层-' + (N-idx) + '）';
+  div.onclick = function(e) {
+    e.stopPropagation();
+    removeCompCard(dir, card.name);
+  };
+  div.innerHTML = '<img src="' + card.img + '" alt="' + card.name + '"' +
+    ' onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + card.name + '\';">' +
+    '<div class="comp-card-label">' + card.name + ' · L-' + (N-idx) + '</div>';
+  var charEl = document.getElementById('compChar');
+  scene.insertBefore(div, charEl);
+}
+
+function removeCompCard(dir, name) {
+  var idx = COMP_STACKS[dir].map(function(s,i) { return s.name === name ? i : -1; }).filter(function(i) { return i >= 0; }).pop();
+  if (idx !== undefined) {
+    COMP_STACKS[dir].splice(idx, 1);
+    buildCompPool(dir);
+    buildCompStack(dir);
+    updateCompStatus();
+  }
+}
+
+function updateCompStatus() {
+  var cntR = COMP_STACKS.right.length;
+  var cntL = COMP_STACKS.left.length;
+  var cntT = COMP_STACKS.top.length;
+  var cntB = COMP_STACKS.bottom.length;
+  var el;
+
+  el = document.getElementById('compCntR'); if (el) el.textContent = cntR;
+  el = document.getElementById('compCntL'); if (el) el.textContent = cntL;
+  el = document.getElementById('compCntT'); if (el) el.textContent = cntT;
+  el = document.getElementById('compCntB'); if (el) el.textContent = cntB;
+
+  el = document.getElementById('compStatus');
+  if (el) {
+    el.innerHTML =
+      '可视化：右<b style="color:var(--color-counter-glow)">' + cntR + '</b> · ' +
+      '左<b style="color:var(--color-whisper-glow)">' + cntL + '</b> · ' +
+      '上<b style="color:#e74c3c">' + cntT + '</b> · ' +
+      '下<b style="color:var(--color-supply-glow)">' + cntB + '</b>' +
+      (cntR+cntL+cntT+cntB > 0 ? ' · <span style="color:var(--text-muted)">点击场景内卡片可移除</span>' : '');
+  }
+}
+
+window.addEventListener('resize', function() {
+  if (document.getElementById('panel-composite').classList.contains('active')) {
+    initComposite();
+  }
+});
+
+// ====== 操作台 ======
+let SUPPLY_HAND = [];
+let SUPPLY_POPUP_CARD = null;
+
+function refreshSupplyHand() {
+  var strip = document.getElementById('supplyHandStripNew');
+  var count = document.getElementById('supplyHandCountNew');
+  if (!strip || !count) return;
+  count.textContent = SUPPLY_HAND.length + ' 张';
+
+  if (SUPPLY_HAND.length === 0) {
+    strip.innerHTML = '<div class="cz-zone-empty">搜索物资卡加入手牌 · 点击卡牌确认或使用</div>';
+    return;
+  }
+
+  strip.innerHTML = SUPPLY_HAND.map(function(c, i) {
+    return '<div class="supply-hand-card" onclick="supplyOpenPopup(' + i + ')" title="' + c.name + '">' +
+      '<img src="' + c.img + '" alt="' + c.name + '" onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + c.name + '\';">' +
+      '<div class="shc-name">' + c.name + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function supplyOpenPopup(idx) {
+  SUPPLY_POPUP_CARD = SUPPLY_HAND[idx];
+  if (!SUPPLY_POPUP_CARD) return;
+
+  var cardContainer = document.getElementById('supplyPopupCard');
+  cardContainer.innerHTML = '<img src="' + SUPPLY_POPUP_CARD.img + '" alt="' + SUPPLY_POPUP_CARD.name + '" ' +
+    'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+    '<div class="cz-popup-fallback" style="display:none;">' +
+      '<div class="cz-popup-fb-name">' + SUPPLY_POPUP_CARD.name + '</div>' +
+      '<div class="cz-popup-fb-level">' + (SUPPLY_POPUP_CARD.level || '') + ' · 物资卡</div>' +
+      '<div class="cz-popup-fb-effect">' + (SUPPLY_POPUP_CARD.effect || '') + '</div>' +
+    '</div>';
+  cardContainer.onclick = function(e) { e.stopPropagation(); showFullImage(SUPPLY_POPUP_CARD); };
+
+  document.getElementById('supplyPopup').classList.add('show');
+}
+
+function supplyClosePopup() {
+  document.getElementById('supplyPopup').classList.remove('show');
+}
+
+function supplyConfirm() {
+  if (!SUPPLY_POPUP_CARD) return;
+  supplyClosePopup();
+}
+
+function supplyUse() {
+  if (!SUPPLY_POPUP_CARD) return;
+
+  var idx = SUPPLY_HAND.indexOf(SUPPLY_POPUP_CARD);
+  if (idx >= 0) {
+    SUPPLY_HAND.splice(idx, 1);
+  }
+
+  var card = { name: SUPPLY_POPUP_CARD.name, img: SUPPLY_POPUP_CARD.img,
+               level: SUPPLY_POPUP_CARD.level, effect: SUPPLY_POPUP_CARD.effect };
+
+  var poolExists = COMP_POOLS.bottom.find(function(c) { return c.name === card.name; });
+  if (!poolExists) {
+    COMP_POOLS.bottom.push(card);
+  }
+
+  var stackExists = COMP_STACKS.bottom.find(function(s) { return s.name === card.name; });
+  if (!stackExists) {
+    COMP_STACKS.bottom.push(card);
+  }
+
+  supplyClosePopup();
+  refreshSupplyHand();
+  buildCompPool('bottom');
+  buildCompStack('bottom');
+  updateCompStatus();
+}
+
+function initSupplyPanel() {
+  buildSearchIndex();
+  refreshSupplyHand();
+}
+
+// ====== 角色卡显示（鬼角色卡：Canvas直接绘制） ======
+function drawGhostCharCard(canvas, imgPath, fallbackId) {
+  var ctx = canvas.getContext('2d');
+  var cw = canvas.width;
+  var ch = canvas.height;
+
+  ctx.fillStyle = '#1a0d1e';
+  ctx.fillRect(0, 0, cw, ch);
+
+  var cardImg = new Image();
+  cardImg.onload = function() {
+    ctx.drawImage(cardImg, 0, 0, cw, ch);
+    canvas.style.display = '';
+
+    // 尝试叠加头像（如果有的话）
+    try {
+      var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+      if (session.avatar) {
+        var avatar = new Image();
+        avatar.onload = function() {
+          // 照片区（同人类角色卡坐标映射）
+          var srcW = 1920, srcH = 2685;
+          var scale = cw / srcW;
+          var photoX = 1152, photoY = 183, photoW = 585, photoH = 780;
+          var px = photoX * scale, py = photoY * scale;
+          var pw = photoW * scale, ph = photoH * scale;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(px, py, pw, ph);
+          ctx.clip();
+          var avW = avatar.width, avH = avatar.height;
+          var avScale = Math.max(pw / avW, ph / avH);
+          var drawW = avW * avScale, drawH = avH * avScale;
+          var dx = px - (drawW - pw) / 2;
+          var dy = py - (drawH - ph) / 2;
+          ctx.drawImage(avatar, dx, dy, drawW, drawH);
+          ctx.restore();
+        };
+        avatar.src = session.avatar;
+      }
+    } catch(e) {}
+
+    var fb = document.getElementById(fallbackId);
+    if (fb) fb.style.display = 'none';
+  };
+  cardImg.onerror = function() {
+    // 鬼角色卡加载失败：显示fallback
+    canvas.style.display = 'none';
+    var fb = document.getElementById(fallbackId);
+    if (fb) fb.style.display = 'flex';
+  };
+  cardImg.src = imgPath;
+}
+
+function showCharDetail() {
+  var overlay = document.getElementById('cardDetailOverlay');
+  var imgEl = document.getElementById('cardDetailImg');
+  var nameEl = document.getElementById('cardDetailName');
+  var metaEl = document.getElementById('cardDetailMeta');
+  var effectEl = document.getElementById('cardDetailEffect');
+  if (!overlay) return;
+  imgEl.src = GHOST_CHAR_IMG;
+  nameEl.textContent = GHOST_DISPLAY_NAME;
+  metaEl.textContent = '鬼角色卡';
+  effectEl.textContent = GHOST_TYPE === 'egui' ? '恶鬼形态 · 理智5/5' : '煞鬼形态 · 理智8/8';
+  overlay.classList.add('open');
+}
+
+function closeCardDetail() {
+  var overlay = document.getElementById('cardDetailOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function showFullImage(card) {
+  var fiOverlay = document.getElementById('fullImageOverlay');
+  var fiImg = document.getElementById('fullImageZoom');
+  if (!fiOverlay || !fiImg) return;
+  fiImg.src = (card && card.img) ? card.img : GHOST_CHAR_IMG;
+  fiOverlay.classList.add('open');
+}
+
+function closeFullImage() {
+  var overlay = document.getElementById('fullImageOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function initCharacterDisplay() {
+  var compCanvas = document.getElementById('compCharImg');
+  if (compCanvas) {
+    drawGhostCharCard(compCanvas, GHOST_CHAR_IMG, 'compCharFallback');
+  }
+}
+
+// ====== 初始化 ======
+initComposite();
+initCharacterDisplay();
+
+// ====== 共享游戏状态 ======
+let PLAY = {
+  round: 0,
+  phase: 'day',
+  discard: [],
+  useOthers: [],
+  scene: {
+    whisper: [],
+    inactive: [],
+    active: [],
+    counterStack: [],
+    damage: [],
+    supply: [],
+    persistent: [],
+  },
+};
+
+function refreshAllPlay() { updatePlayStatus(); }
+
+// ====== 搜索索引 ======
+let SEARCH_IDX = { whisper: [], counter: [], supply: [] };
+
+function buildSearchIndex() {
+  if (typeof CARD_DB === 'undefined') return;
+
+  // 怪谈卡：名称+效果（鬼模式使用名称+效果，但在操作台也开放效果搜索）
+  SEARCH_IDX.whisper = (CARD_DB.whispers || []).map(function(c) {
+    return {
+      id: c.id, name: c.name, level: c.level || '',
+      effect: c.effect || c.description || '',
+      img: (typeof getCardImagePath === 'function')
+        ? getCardImagePath({ _type: 'whispers', type: 'whispers', level: c.level, name: c.name })
+        : ''
+    };
+  });
+
+  SEARCH_IDX.counter = (CARD_DB.countermeasures || []).map(function(c) {
+    return {
+      id: c.id, name: c.name, level: c.level || '',
+      effect: c.effect || c.description || '',
+      img: (typeof getCardImagePath === 'function')
+        ? getCardImagePath({ _type: 'countermeasures', type: 'countermeasures', level: c.level, name: c.name })
+        : ''
+    };
+  });
+
+  SEARCH_IDX.supply = (CARD_DB.supplies || []).map(function(c) {
+    return {
+      id: c.id, name: c.name, level: c.level || '',
+      effect: c.effect || c.description || '',
+      img: (typeof getCardImagePath === 'function')
+        ? getCardImagePath({ _type: 'supplies', type: 'supplies', level: c.level, name: c.name })
+        : ''
+    };
+  });
+}
+
+initWhisperZone();
+
+function updatePlayStatus() {
+  var numEl = document.getElementById('roundNum');
+  var labelEl = document.getElementById('roundLabel');
+  if (PLAY.phase === 'dawn') {
+    if (numEl) numEl.textContent = PLAY.round + '.5';
+    if (labelEl) labelEl.textContent = '黎明 / 12';
+  } else {
+    if (numEl) numEl.textContent = PLAY.round;
+    if (labelEl) labelEl.textContent = '白天 / 12';
+  }
+}
+
+// ─── 操作台搜索（鬼模式：怪谈卡名称+效果匹配）───
+function onSearchBar(type, value) {
+  var q = value.trim().toLowerCase();
+  var resultsEl = document.getElementById('results' + type.charAt(0).toUpperCase() + type.slice(1));
+  var clearEl = document.getElementById('clear' + type.charAt(0).toUpperCase() + type.slice(1));
+  var pool = SEARCH_IDX[type] || [];
+
+  if (q.length === 0) {
+    resultsEl.classList.remove('show');
+    resultsEl.innerHTML = '';
+    clearEl.classList.remove('visible');
+    return;
+  }
+
+  clearEl.classList.add('visible');
+
+  // 鬼模式：所有类型都支持名称+效果匹配
+  var results = pool.filter(function(c) {
+    return c.name.toLowerCase().indexOf(q) !== -1 ||
+      (c.effect && c.effect.toLowerCase().indexOf(q) !== -1);
+  }).slice(0, 12);
+
+  resultsEl.innerHTML = results.length === 0
+    ? '<div class="search-bar-result-item" style="color:var(--text-muted);cursor:default;">没有找到匹配的卡牌</div>'
+    : results.map(function(c, i) {
+        return '<div class="search-bar-result-item" onclick="selectSearchResult(\'' + type + '\',' + i + ')" onmouseenter="focusSearchResult(\'' + type + '\',' + i + ')">' +
+          '<span class="sbr-name">' + c.name + '</span>' +
+          (c.level ? '<span class="sbr-level">' + c.level + '</span>' : '') +
+        '</div>';
+      }).join('');
+  resultsEl.classList.add('show');
+}
+
+function focusSearchResult(type, idx) {
+  var el = document.getElementById('results' + type.charAt(0).toUpperCase() + type.slice(1));
+  var items = el.querySelectorAll('.search-bar-result-item');
+  items.forEach(function(item) { item.classList.remove('focused'); });
+  if (items[idx]) items[idx].classList.add('focused');
+}
+
+function selectSearchResult(type, idx) {
+  var pool = SEARCH_IDX[type] || [];
+  var q = document.getElementById('search' + type.charAt(0).toUpperCase() + type.slice(1)).value.trim().toLowerCase();
+  var results = pool.filter(function(c) {
+    return c.name.toLowerCase().indexOf(q) !== -1 ||
+      (c.effect && c.effect.toLowerCase().indexOf(q) !== -1);
+  }).slice(0, 12);
+
+  var card = results[idx];
+  if (!card) return;
+
+  if (type === 'whisper') {
+    // 鬼模式：怪谈卡 → 加入怪诞系统的未激活区 + 同步可视化堆叠
+    var maxCopies = 1;
+    if (typeof CARD_DB !== 'undefined' && CARD_DB.whispers) {
+      var db = CARD_DB.whispers;
+      for (var j = 0; j < db.length; j++) {
+        if (db[j].id === card.id) { maxCopies = db[j].copies || 1; break; }
+      }
+    }
+    var allCards = WHISPER_CZ.inactive.concat(WHISPER_CZ.active).concat(WHISPER_CZ.persistent);
+    var already = 0;
+    for (var k = 0; k < allCards.length; k++) {
+      if (allCards[k].id === card.id) already++;
+    }
+    if (already >= maxCopies) {
+      alert(card.name + ' 牌库仅有 ' + maxCopies + ' 张，已全部加入');
+    } else {
+      var newCard = { name: card.name, level: card.level, img: card.img, effect: card.effect, id: card.id };
+      WHISPER_CZ.inactive.push(newCard);
+    }
+
+    // 同时推入可视化左侧（操作台立即可见）
+    var poolExists = COMP_POOLS.left.find(function(c) { return c.name === card.name; });
+    if (!poolExists) {
+      COMP_POOLS.left.push({ name: card.name, level: card.level, img: card.img, effect: card.effect });
+    }
+    var stackExists = COMP_STACKS.left.find(function(s) { return s.name === card.name; });
+    if (!stackExists) {
+      COMP_STACKS.left.push({ name: card.name, level: card.level, img: card.img, effect: card.effect });
+    }
+  } else if (type === 'supply') {
+    var supplyExists = SUPPLY_HAND.find(function(c) { return c.id === card.id; });
+    if (!supplyExists) {
+      SUPPLY_HAND.push({ name: card.name, level: card.level, img: card.img, effect: card.effect, id: card.id });
+    }
+  }
+
+  clearSearchBar(type);
+  if (type === 'supply') {
+    refreshSupplyHand();
+  }
+  if (type === 'whisper') {
+    wzRefreshAll();
+    initCompositePools();
+  }
+  updatePlayStatus();
+}
+
+function clearSearchBar(type) {
+  document.getElementById('search' + type.charAt(0).toUpperCase() + type.slice(1)).value = '';
+  document.getElementById('clear' + type.charAt(0).toUpperCase() + type.slice(1)).classList.remove('visible');
+  var resultsEl = document.getElementById('results' + type.charAt(0).toUpperCase() + type.slice(1));
+  resultsEl.classList.remove('show');
+  resultsEl.innerHTML = '';
+}
+
+document.addEventListener('click', function(e) {
+  ['whisper','supply'].forEach(function(type) {
+    var col = document.getElementById('searchCol' + type.charAt(0).toUpperCase() + type.slice(1));
+    if (col && !col.contains(e.target)) {
+      var resultsEl = document.getElementById('results' + type.charAt(0).toUpperCase() + type.slice(1));
+      resultsEl.classList.remove('show');
+    }
+  });
+});
+
+// ─── 回合计数器按钮 ───
+function playDawnAction() {
+  if (PLAY.phase !== 'dawn') {
+    showConfirmMini('⚠️ 尚在白天', '当前是白天阶段，请先点击"回合结束"进入黎明。', null);
+    return;
+  }
+  showConfirmMini(
+    '🌅 迎接黎明',
+    '黎明结束，推进至第' + (PLAY.round + 1) + '回合白天。确定继续吗？',
+    function() { advanceRound(); }
+  );
+}
+
+function playEndRound() {
+  if (PLAY.phase !== 'day') {
+    showConfirmMini('⚠️ 已是黎明', '当前已经是黎明阶段，请点击"迎接黎明"推进至下一回合。', null);
+    return;
+  }
+  showConfirmMini(
+    '🌙 回合结束',
+    '第' + PLAY.round + '回合白天结束，进入黎明阶段。确定继续吗？',
+    function() { endCurrentRound(); }
+  );
+}
+
+function advanceRound() {
+  if (PLAY.phase !== 'dawn') return;
+  if (PLAY.round >= 12) {
+    showConfirmMini('⚠️ 已达上限', '已到达第12回合（游戏结束）。无法继续推进。', null);
+    return;
+  }
+  PLAY.round++;
+  PLAY.phase = 'day';
+
+  var numEl = document.getElementById('roundNum');
+  var labelEl = document.getElementById('roundLabel');
+  if (numEl) numEl.textContent = PLAY.round;
+  if (labelEl) labelEl.textContent = '白天 / 12';
+  if (numEl) { numEl.classList.add('pulse'); setTimeout(function() { numEl.classList.remove('pulse'); }, 350); }
+
+  updatePlayStatus();
+}
+
+function endCurrentRound() {
+  if (PLAY.phase !== 'day') return;
+  PLAY.phase = 'dawn';
+
+  var numEl2 = document.getElementById('roundNum');
+  var labelEl2 = document.getElementById('roundLabel');
+  if (numEl2) numEl2.textContent = PLAY.round + '.5';
+  if (labelEl2) labelEl2.textContent = '黎明 / 12';
+  if (numEl2) { numEl2.classList.add('pulse'); setTimeout(function() { numEl2.classList.remove('pulse'); }, 350); }
+
+  updatePlayStatus();
+}
+
+// ─── 确认对话框 ───
+function showConfirmMini(title, body, onOk) {
+  var overlay = document.getElementById('confirmMiniOverlay');
+  if (!overlay) {
+    if (onOk && confirm(title + '\n\n' + body)) { onOk(); }
+    return;
+  }
+  document.getElementById('confirmMiniTitle').textContent = title;
+  document.getElementById('confirmMiniBody').textContent = body;
+  var okBtn = document.getElementById('confirmMiniOk');
+  okBtn.onclick = function() {
+    closeConfirmMini();
+    if (onOk) onOk();
+  };
+  okBtn.style.display = onOk ? '' : 'none';
+  overlay.classList.add('open');
+}
+
+function closeConfirmMini() {
+  var overlay = document.getElementById('confirmMiniOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+// ─── 内联抽屉 ───
+function toggleInlineDrawer(name) {
+  var el = document.getElementById('drawerInline' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (el) el.classList.toggle('open');
+}
+
+function refreshAllInlineDrawers() {
+  var discCnt = document.getElementById('drawerInlineDiscardCnt');
+  var discCards = document.getElementById('drawerInlineDiscardCards');
+  if (discCnt) {
+    discCnt.textContent = PLAY.discard.length;
+    if (PLAY.discard.length > 0) discCnt.classList.add('has-cards');
+    else discCnt.classList.remove('has-cards');
+  }
+  if (discCards) {
+    if (PLAY.discard.length === 0) {
+      discCards.innerHTML = '<div class="drawer-inline-empty">弃牌堆为空</div>';
+    } else {
+      discCards.innerHTML = PLAY.discard.map(function(c) {
+        return '<div style="width:54px;height:76px;border-radius:3px;overflow:hidden;cursor:pointer;" onclick="event.stopPropagation();showFullImage({img:\'' + c.img + '\'})">' +
+          '<img src="' + c.img + '" alt="' + c.name + '" style="width:100%;height:100%;object-fit:cover;">' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  var giftCnt = document.getElementById('drawerInlineGiftCnt');
+  var giftCards = document.getElementById('drawerInlineGiftCards');
+  if (giftCnt) {
+    giftCnt.textContent = PLAY.useOthers.length;
+    if (PLAY.useOthers.length > 0) giftCnt.classList.add('has-cards');
+    else giftCnt.classList.remove('has-cards');
+  }
+  if (giftCards) {
+    if (PLAY.useOthers.length === 0) {
+      giftCards.innerHTML = '<div class="drawer-inline-empty">暂无待赠与的卡牌</div>';
+    } else {
+      giftCards.innerHTML = PLAY.useOthers.map(function(c) {
+        return '<div style="width:54px;height:76px;border-radius:3px;overflow:hidden;cursor:pointer;" onclick="event.stopPropagation();showFullImage({img:\'' + c.img + '\'})">' +
+          '<img src="' + c.img + '" alt="' + c.name + '" style="width:100%;height:100%;object-fit:cover;">' +
+        '</div>';
+      }).join('');
+    }
+  }
+}
+
+// ====== Tab 5: 鬼的私有隐藏规则板 ======
+var GR_STORAGE_KEY = 'dawn_ghost_rules_v1';
+
+var grState = [];
+var grAllRules = [];
+var grActiveTab = 'all';
+var grSelectedCardId = null;
+
+function grGetAllRules() {
+  if (typeof CARD_DB === 'undefined' || !CARD_DB.rules) return [];
+  return CARD_DB.rules.map(function(r) { var c = {}; for (var k in r) c[k] = r[k]; c._type = 'rules'; return c; });
+}
+
+function grGetRuleImagePath(card) {
+  var name = card.name;
+  var BASE = '';
+  if (name.indexOf('规则 ') === 0) {
+    var code = name.replace('规则 ', '');
+    return BASE + 'images/cards/规则卡/规则卡_' + code + '.png';
+  }
+  if (name.indexOf('特殊规则') === 0) {
+    var rulesArr = CARD_DB.rules || [];
+    for (var i = 0; i < rulesArr.length; i++) {
+      if (rulesArr[i].id === card.id) {
+        if (i >= 30) {
+          var offset = i - 30;
+          var pairNum = String(Math.floor(offset / 2) + 1);
+          if (pairNum.length < 2) pairNum = '0' + pairNum;
+          var letter = offset % 2 === 0 ? 'A' : 'B';
+          return BASE + 'images/cards/规则卡/规则卡_S-' + pairNum + letter + '.png';
+        }
+        break;
+      }
+    }
+  }
+  return null;
+}
+
+function grGetRuleDifficulty(card) {
+  var d = card.difficulty || '';
+  if (d.indexOf('T') === 0) return d;
+  if (d.indexOf('S') === 0 || card.category === '特殊规则') return 'S';
+  return 'S';
+}
+
+function grGetRuleBadgeClass(card) {
+  var d = grGetRuleDifficulty(card);
+  if (d === 'T1') return 'rb-badge-t1';
+  if (d === 'T2') return 'rb-badge-t2';
+  if (d === 'T3') return 'rb-badge-t3';
+  return 'rb-badge-s';
+}
+
+function grLoadState() {
+  try {
+    var raw = localStorage.getItem(GR_STORAGE_KEY);
+    if (raw) {
+      var state = JSON.parse(raw);
+      if (Array.isArray(state)) return state;
+    }
+  } catch(e) {}
+  return [];
+}
+
+function grSaveState(state) {
+  localStorage.setItem(GR_STORAGE_KEY, JSON.stringify(state));
+  var el = document.getElementById('grSaveStatus');
+  if (!el) return;
+  el.textContent = '已保存 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+  setTimeout(function() { el.textContent = ''; }, 2000);
+}
+
+function grIsCardInZone(cardId) {
+  return grState.indexOf(cardId) >= 0;
+}
+
+// --- 渲染 ---
+function grInit() {
+  grAllRules = grGetAllRules();
+  grState = grLoadState();
+  grBuildPoolTabs();
+  grApplyTabFilter();
+  grRenderGhostZone();
+  grSetupDragDrop();
+  grSetupTouch();
+}
+
+function grBuildPoolTabs() {
+  var diffs = {};
+  grAllRules.forEach(function(r) {
+    var d = grGetRuleDifficulty(r);
+    diffs[d] = (diffs[d] || 0) + 1;
+  });
+  var tabs = [
+    { key: 'all', label: '全部', count: grAllRules.length },
+    { key: 'T1', label: 'T1', count: diffs['T1'] || 0 },
+    { key: 'T2', label: 'T2', count: diffs['T2'] || 0 },
+    { key: 'T3', label: 'T3', count: diffs['T3'] || 0 },
+    { key: 'S',  label: '特殊规则', count: diffs['S'] || 0 }
+  ];
+  var container = document.getElementById('grPoolTabs');
+  if (!container) return;
+  container.innerHTML = tabs.map(function(t) {
+    return '<button class="rb-pool-tab' + (grActiveTab === t.key ? ' active' : '') + '" data-tab="' + t.key + '">'
+      + t.label + ' <small style="opacity:0.7">' + t.count + '</small></button>';
+  }).join('');
+  container.querySelectorAll('.rb-pool-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      grActiveTab = btn.dataset.tab;
+      container.querySelectorAll('.rb-pool-tab').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      grApplyTabFilter();
+    });
+  });
+}
+
+function grApplyTabFilter() {
+  var poolCards = grAllRules.filter(function(r) { return !grIsCardInZone(r.id); });
+  var filtered = poolCards;
+  if (grActiveTab !== 'all') {
+    filtered = poolCards.filter(function(r) { return grGetRuleDifficulty(r) === grActiveTab; });
+  }
+  grRenderPoolCards(filtered);
+  var cntEl = document.getElementById('grPoolCount');
+  if (cntEl) cntEl.textContent = '(' + filtered.length + ')';
+}
+
+function grRenderPoolCards(cards) {
+  var container = document.getElementById('grPoolCards');
+  if (!container) return;
+  if (cards.length === 0) {
+    container.innerHTML = '<div class="rb-zone-empty">卡池已空</div>';
+    return;
+  }
+  container.innerHTML = cards.map(function(c) { return grBuildCardHTML(c, 'pool'); }).join('');
+  grBindCardEvents(container);
+}
+
+function grRenderGhostZone() {
+  var body = document.getElementById('grGhostZoneBody');
+  var count = document.getElementById('grGhostZoneCount');
+  if (!body || !count) return;
+
+  var cards = [];
+  for (var i = 0; i < grState.length; i++) {
+    for (var j = 0; j < grAllRules.length; j++) {
+      if (grAllRules[j].id === grState[i]) { cards.push(grAllRules[j]); break; }
+    }
+  }
+
+  count.textContent = cards.length;
+
+  if (cards.length === 0) {
+    body.innerHTML = '<div class="rb-zone-empty">从卡池拖拽规则卡到此处（不限制数量）</div>';
+    return;
+  }
+
+  body.innerHTML = cards.map(function(c) { return grBuildCardHTML(c, 'zone'); }).join('');
+  grBindCardEvents(body);
+}
+
+function grBuildCardHTML(card, location) {
+  var imgPath = grGetRuleImagePath(card) || '';
+  var text = card.rule_text || '';
+  var badgeClass = grGetRuleBadgeClass(card);
+  var diff = card.difficulty || 'S';
+
+  if (location === 'zone') {
+    return '<div class="rb-card in-zone" data-card-id="' + card.id + '" data-from="zone" draggable="true">'
+      + '<button class="rb-card-return" data-action="gr-return" data-card-id="' + card.id + '">← 返回卡池</button>'
+      + '<div class="rb-card-img">'
+      + (imgPath
+        ? '<img src="' + imgPath + '" alt="' + card.name + '" loading="lazy" onerror="this.parentElement.innerHTML=\'<div style=display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:0.72rem>' + card.name + '</div>\'">'
+        : '<div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:60px;color:var(--text-muted);font-size:0.72rem">' + card.name + '</div>')
+      + '</div></div>';
+  }
+
+  return '<div class="rb-card" data-card-id="' + card.id + '" data-from="pool" draggable="true">'
+    + '<div class="rb-card-img">'
+    + (imgPath
+      ? '<img src="' + imgPath + '" alt="' + card.name + '" loading="lazy" onerror="this.parentElement.innerHTML=\'<span style=font-size:0.6rem;padding:4px>' + card.name.charAt(0) + '</span>\'">'
+      : '' + card.name.charAt(0))
+    + '</div>'
+    + '<div class="rb-card-info">'
+    + '<div class="rb-card-name">' + card.name + '</div>'
+    + '<div class="rb-card-text">' + text + '</div>'
+    + '<span class="rb-card-badge ' + badgeClass + '">' + diff + '</span>'
+    + '</div></div>';
+}
+
+function grBindCardEvents(container) {
+  container.querySelectorAll('[data-action="gr-return"]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var cardId = btn.dataset.cardId;
+      grState = grState.filter(function(id) { return id !== cardId; });
+      grSaveState(grState);
+      grRenderGhostZone();
+      grApplyTabFilter();
+    });
+  });
+
+  container.querySelectorAll('.rb-card[draggable]').forEach(function(card) {
+    card.addEventListener('dragstart', grHandleDragStart);
+    card.addEventListener('dragend', grHandleDragEnd);
+  });
+}
+
+function grSetupDragDrop() {
+  var zoneEl = document.getElementById('grGhostZone');
+  if (zoneEl) {
+    zoneEl.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      zoneEl.classList.add('drag-over');
+    });
+    zoneEl.addEventListener('dragleave', function() {
+      zoneEl.classList.remove('drag-over');
+    });
+    zoneEl.addEventListener('drop', function(e) {
+      e.preventDefault();
+      zoneEl.classList.remove('drag-over');
+      var cardId = e.dataTransfer.getData('text/plain');
+      if (!cardId) return;
+      if (grIsCardInZone(cardId)) return;
+      grState.push(cardId);
+      grSaveState(grState);
+      grRenderGhostZone();
+      grApplyTabFilter();
+    });
+  }
+
+  var pool = document.getElementById('grPoolPanel');
+  if (pool) {
+    pool.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    pool.addEventListener('drop', function(e) {
+      e.preventDefault();
+      var cardId = e.dataTransfer.getData('text/plain');
+      if (!cardId) return;
+      if (!grIsCardInZone(cardId)) return;
+      grState = grState.filter(function(id) { return id !== cardId; });
+      grSaveState(grState);
+      grRenderGhostZone();
+      grApplyTabFilter();
+    });
+  }
+}
+
+function grHandleDragStart(e) {
+  var cardId = this.dataset.cardId;
+  e.dataTransfer.setData('text/plain', cardId);
+  e.dataTransfer.effectAllowed = 'move';
+  this.classList.add('dragging');
+}
+
+function grHandleDragEnd() {
+  this.classList.remove('dragging');
+}
+
+// ============ 触屏选择模式 ============
+function grSetupTouch() {
+  document.addEventListener('click', function(e) {
+    var panel = document.getElementById('panel-ghost-rules');
+    if (!panel || !panel.classList.contains('active')) return;
+
+    var card = e.target.closest('.rb-card');
+    if (!card) {
+      if (grSelectedCardId) {
+        grDeselectAll();
+        grSelectedCardId = null;
+      }
+      return;
+    }
+    if (e.target.closest('[data-action="gr-return"]')) return;
+
+    var cardId = card.dataset.cardId;
+
+    if (grSelectedCardId === cardId) {
+      grDeselectAll();
+      grSelectedCardId = null;
+      return;
+    }
+
+    if (!grSelectedCardId) {
+      grSelectCard(cardId);
+      return;
+    }
+
+    var clickedInZone = card.dataset.from === 'zone';
+
+    if (clickedInZone) {
+      if (!grIsCardInZone(grSelectedCardId)) {
+        grState.push(grSelectedCardId);
+        grSaveState(grState);
+        grRenderGhostZone();
+        grApplyTabFilter();
+      }
+    } else {
+      if (grIsCardInZone(grSelectedCardId)) {
+        grState = grState.filter(function(id) { return id !== grSelectedCardId; });
+        grSaveState(grState);
+        grRenderGhostZone();
+        grApplyTabFilter();
+      }
+    }
+
+    grDeselectAll();
+    grSelectedCardId = null;
+  });
+
+  var zoneEl = document.getElementById('grGhostZone');
+  if (zoneEl) {
+    zoneEl.addEventListener('click', function(e) {
+      if (!grSelectedCardId) return;
+      if (e.target.closest('.rb-card')) return;
+      if (grIsCardInZone(grSelectedCardId)) {
+        grDeselectAll();
+        grSelectedCardId = null;
+        return;
+      }
+      grState.push(grSelectedCardId);
+      grSaveState(grState);
+      grRenderGhostZone();
+      grApplyTabFilter();
+      grDeselectAll();
+      grSelectedCardId = null;
+    });
+  }
+}
+
+function grSelectCard(cardId) {
+  grDeselectAll();
+  grSelectedCardId = cardId;
+  document.querySelectorAll('.rb-card[data-card-id="' + cardId + '"]').forEach(function(c) { c.classList.add('selected'); });
+  var el = document.getElementById('grSaveStatus');
+  if (el) {
+    el.textContent = '已选择：点击私有规则区放置（或再次点击取消）';
+    setTimeout(function() { if (el.textContent.indexOf('已选择') >= 0) el.textContent = ''; }, 3000);
+  }
+}
+
+function grDeselectAll() {
+  document.querySelectorAll('.rb-card.selected').forEach(function(c) { c.classList.remove('selected'); });
+}
+
+function grResetBoard() {
+  if (!confirm('确定要清空私有规则区？全部规则卡将返回卡池。')) return;
+  grState = [];
+  grSaveState(grState);
+  grSelectedCardId = null;
+  grDeselectAll();
+  grRenderGhostZone();
+  grApplyTabFilter();
+}
+
+</script>
+
+<!-- 回合确认弹窗（body直接子级） -->
+<div class="confirm-mini-overlay" id="confirmMiniOverlay" onclick="closeConfirmMini()">
+  <div class="confirm-mini-dialog" id="confirmMiniDialog" onclick="event.stopPropagation()">
+    <div class="cmd-title" id="confirmMiniTitle">确认操作</div>
+    <div class="cmd-body" id="confirmMiniBody"></div>
+    <div class="confirm-mini-actions">
+      <button class="confirm-mini-btn cancel" onclick="closeConfirmMini()">取消</button>
+      <button class="confirm-mini-btn ok" id="confirmMiniOk">确认</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

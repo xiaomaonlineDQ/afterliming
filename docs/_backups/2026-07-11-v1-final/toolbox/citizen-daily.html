@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>市民日报 · 黎明之后</title>
+<link rel="stylesheet" href="../css/main.css?v=2026071116">
+<style>
+/* ========== Citizen Daily Report ========== */
+:root {
+  --cd-header-h: 48px;
+  --cd-toolbar-h: 44px;
+  --cd-citizen-row-h: 80px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+.cd-page {
+  height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--bg-base);
+  font-family: var(--font-primary, -apple-system, 'Microsoft YaHei', sans-serif);
+  color: var(--text-primary);
+}
+
+/* ── Header ── */
+.cd-header {
+  background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);
+  height: var(--cd-header-h); min-height: var(--cd-header-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-md); flex-shrink: 0;
+}
+.cd-header h1 { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.cd-header h1 span { font-weight: 300; color: var(--text-muted); }
+.cd-header-actions { display: flex; gap: 6px; align-items: center; }
+.cd-header-actions .btn { font-size: 0.72rem; padding: 4px 10px; }
+
+/* ── Toolbar (Day selector + actions) ── */
+.cd-toolbar {
+  background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);
+  height: var(--cd-toolbar-h); min-height: var(--cd-toolbar-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-md); flex-shrink: 0; gap: 10px;
+}
+.cd-day-selector {
+  display: flex; align-items: center; gap: 6px;
+}
+.cd-day-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border-medium); background: var(--bg-card);
+  color: var(--text-secondary); cursor: pointer; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.cd-day-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.cd-day-num {
+  font-size: 1.1rem; font-weight: 800; min-width: 60px; text-align: center;
+  color: var(--color-rule-glow);
+}
+.cd-toolbar-actions { display: flex; gap: 6px; align-items: center; }
+.cd-round-end-btn {
+  font-size: 0.75rem; padding: 5px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-whisper); background: rgba(192,57,43,0.1);
+  color: var(--color-whisper-glow); cursor: pointer; font-weight: 700;
+  white-space: nowrap;
+}
+.cd-round-end-btn:hover { background: rgba(192,57,43,0.2); }
+.cd-auto-desc { font-size: 0.65rem; color: var(--text-muted); }
+
+/* ── Citizen Row ── */
+.cd-citizen-row {
+  background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);
+  height: var(--cd-citizen-row-h); min-height: var(--cd-citizen-row-h);
+  display: flex; align-items: center; gap: 8px; padding: 0 var(--space-md);
+  overflow-x: auto; flex-shrink: 0;
+}
+.cd-citizen-chip {
+  min-width: 72px; padding: 8px 10px; border-radius: var(--radius-md);
+  border: 2px solid transparent; cursor: pointer; text-align: center;
+  background: var(--bg-card); transition: all 0.15s; flex-shrink: 0;
+  opacity: 0.6;
+}
+.cd-citizen-chip:hover { opacity: 0.85; border-color: var(--border-medium); }
+.cd-citizen-chip.active {
+  opacity: 1; border-color: var(--color-primary);
+  box-shadow: 0 0 12px rgba(200,146,62,0.2);
+}
+.cd-citizen-chip .chip-avatar {
+  width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 4px;
+  background: var(--bg-hover); display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.cd-citizen-chip .chip-name {
+  font-size: 0.65rem; font-weight: 700; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60px;
+}
+.cd-citizen-chip .chip-badge {
+  font-size: 0.55rem; color: var(--text-muted); margin-top: 2px;
+}
+.cd-citizen-chip.ghost-chip { border-color: var(--color-whisper); }
+.cd-citizen-chip.ghost-chip.active { border-color: var(--color-whisper); box-shadow: 0 0 12px rgba(192,57,43,0.2); }
+.cd-citizen-chip.ghost-chip .chip-avatar { background: rgba(192,57,43,0.1); }
+
+/* Death / ghost markers on chips */
+.cd-citizen-chip .chip-marker {
+  position: absolute; top: -4px; right: -4px;
+  font-size: 0.7rem; line-height: 1; pointer-events: none;
+}
+.cd-citizen-chip.dead-chip { opacity: 0.45; border-color: #555; }
+.cd-citizen-chip.dead-chip .chip-avatar { background: rgba(100,100,100,0.2); }
+.cd-citizen-chip { position: relative; }
+
+/* Round advance dialog */
+.rd-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 300;
+  display: none; justify-content: center; align-items: center;
+}
+.rd-overlay.show { display: flex; }
+.rd-card {
+  background: var(--bg-card); border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg); padding: var(--space-lg);
+  max-width: 440px; width: 90%; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+.rd-card h3 { font-size: 0.9rem; margin-bottom: var(--space-md); display: flex; align-items: center; gap: 6px; }
+.rd-section { margin-bottom: var(--space-md); }
+.rd-section h4 { font-size: 0.75rem; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+.rd-section .rd-list { font-size: 0.68rem; color: var(--text-secondary); padding-left: 16px; }
+.rd-section .rd-list li { margin-bottom: 3px; }
+.rd-section .rd-list .rd-name { font-weight: 700; color: var(--text-primary); }
+.rd-section .rd-list .rd-stat { color: var(--text-muted); font-size: 0.62rem; }
+.rd-section .rd-none { font-size: 0.68rem; color: var(--text-muted); padding-left: 16px; }
+.rd-actions { display: flex; gap: 8px; margin-top: var(--space-md); }
+.rd-actions .btn { flex: 1; text-align: center; }
+.rd-btn-confirm {
+  background: var(--color-primary); color: #fff; font-size: 0.78rem;
+  padding: 8px 16px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 700;
+}
+.rd-btn-confirm:hover { opacity: 0.9; }
+.rd-btn-cancel {
+  background: var(--bg-hover); color: var(--text-secondary); font-size: 0.78rem;
+  padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-medium); cursor: pointer;
+}
+.rd-btn-cancel:hover { border-color: var(--text-muted); }
+
+/* End game button */
+.cd-end-btn {
+  font-size: 0.68rem; padding: 5px 10px; border-radius: var(--radius-sm);
+  border: 1px solid #555; background: rgba(100,100,100,0.1);
+  color: var(--text-muted); cursor: pointer; font-weight: 700; white-space: nowrap;
+}
+.cd-end-btn:hover { border-color: var(--color-whisper-glow); color: var(--color-whisper-glow); background: rgba(192,57,43,0.1); }
+
+/* Settlement block in history */
+.hist-settlement {
+  margin-bottom: var(--space-md); padding: 10px 12px;
+  border-left: 3px solid var(--color-rule-glow);
+  background: rgba(200,146,62,0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.hist-settlement h4 { font-size: 0.72rem; color: var(--color-rule-glow); margin-bottom: 4px; }
+.hist-settlement .sett-entry { font-size: 0.65rem; color: var(--text-secondary); padding: 2px 0; }
+.hist-end-block {
+  margin-bottom: var(--space-md); padding: 10px 12px;
+  border-left: 3px solid var(--color-whisper-glow);
+  background: rgba(192,57,43,0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  text-align: center;
+}
+.hist-end-block h4 { font-size: 0.78rem; color: var(--color-whisper-glow); margin: 0; }
+
+/* Active citizen ghost indicator */
+.cd-active-citizen-header .meta-ghost-tag {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 0.62rem; font-weight: 700;
+}
+.meta-ghost-tag.ghost { background: rgba(192,57,43,0.15); color: var(--color-whisper-glow); }
+.meta-ghost-tag.transferred { background: rgba(100,100,100,0.2); color: var(--text-muted); }
+
+/* ── Main Content ── */
+.cd-main {
+  flex: 1; overflow-y: auto; padding: var(--space-md);
+}
+.cd-panel { display: none; }
+.cd-panel.active { display: block; }
+
+/* ── Set-up Panel ── */
+.cd-setup { max-width: 680px; margin: 0 auto; }
+.cd-setup-step { margin-bottom: var(--space-xl); }
+.cd-setup-step h3 { font-size: 0.95rem; margin-bottom: var(--space-sm); display: flex; align-items: center; gap: 6px; }
+.cd-setup-step .step-desc { font-size: 0.75rem; color: var(--text-muted); margin-bottom: var(--space-md); }
+
+.cd-count-select {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.cd-count-btn {
+  width: 48px; height: 48px; border-radius: var(--radius-md);
+  border: 2px solid var(--border-medium); background: var(--bg-card);
+  color: var(--text-primary); cursor: pointer; font-size: 1.1rem; font-weight: 700;
+  transition: all 0.15s;
+}
+.cd-count-btn:hover { border-color: var(--color-primary); }
+.cd-count-btn.selected {
+  border-color: var(--color-rule-glow); background: rgba(200,146,62,0.15);
+  color: var(--color-rule-glow); box-shadow: 0 0 10px rgba(200,146,62,0.2);
+}
+
+.cd-char-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;
+}
+.cd-char-card {
+  padding: 10px; border-radius: var(--radius-md); border: 2px solid var(--border-subtle);
+  background: var(--bg-card); cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.cd-char-card:hover { border-color: var(--border-medium); }
+.cd-char-card.selected {
+  border-color: var(--color-counter-glow); background: rgba(46,134,193,0.1);
+  box-shadow: 0 0 10px rgba(46,134,193,0.15);
+}
+.cd-char-card .char-avatar { font-size: 1.5rem; margin-bottom: 4px; }
+.cd-char-card .char-name { font-size: 0.72rem; font-weight: 700; line-height: 1.3; }
+.cd-char-card .char-level {
+  font-size: 0.6rem; color: var(--text-muted); margin-top: 2px;
+  padding: 1px 6px; border-radius: 6px; display: inline-block;
+  background: var(--bg-hover);
+}
+.cd-char-card .char-select-num {
+  position: absolute; top: 4px; right: 6px; font-size: 0.65rem; font-weight: 800;
+  color: var(--color-counter-glow);
+}
+.cd-char-card { position: relative; }
+.cd-char-card.selected .char-select-num { display: block; }
+
+.cd-setup-actions { display: flex; gap: 8px; margin-top: var(--space-lg); }
+.cd-setup-actions .btn {
+  font-size: 0.8rem; padding: 8px 20px; border-radius: var(--radius-sm);
+  border: none; cursor: pointer; font-weight: 700;
+}
+.btn-confirm {
+  background: var(--color-primary); color: #fff; font-size: 0.85rem;
+  padding: 10px 28px;
+}
+.btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-cancel { background: var(--bg-hover); color: var(--text-secondary); }
+.cd-selected-count {
+  font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center;
+  margin-left: auto;
+}
+.cd-selected-count .count-n { font-size: 1rem; font-weight: 800; color: var(--color-primary); margin: 0 3px; }
+.cd-selected-count .count-need { font-size: 1rem; font-weight: 800; color: var(--text-secondary); }
+
+/* ── Recording Panel ── */
+.cd-recording { height: 100%; display: flex; flex-direction: column; }
+.cd-active-citizen-header {
+  padding: var(--space-sm) var(--space-md); background: var(--bg-card);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  margin-bottom: var(--space-md); flex-shrink: 0;
+}
+.cd-active-citizen-header h3 {
+  font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
+}
+.cd-active-citizen-header .citizen-meta {
+  display: flex; gap: 12px; margin-top: 4px; font-size: 0.68rem; color: var(--text-muted);
+}
+.cd-active-citizen-header .citizen-meta span { display: flex; align-items: center; gap: 3px; }
+.cd-active-citizen-header .meta-ghost { color: var(--color-whisper-glow); font-weight: 700; }
+
+/* Search */
+.cd-search-area {
+  margin-bottom: var(--space-sm); flex-shrink: 0;
+}
+.cd-search-input-wrap {
+  position: relative;
+}
+.cd-search-input {
+  width: 100%; padding: 8px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium); background: var(--bg-surface);
+  color: var(--text-primary); font-size: 0.8rem; outline: none;
+}
+.cd-search-input:focus { border-color: var(--color-primary); }
+.cd-search-results {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--bg-card); border: 1px solid var(--border-medium);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  max-height: 200px; overflow-y: auto; z-index: 50; display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.cd-search-results.show { display: block; }
+.cd-search-result-item {
+  padding: 8px 12px; cursor: pointer; font-size: 0.72rem; display: flex;
+  align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.1s;
+}
+.cd-search-result-item:hover { background: var(--bg-hover); }
+.cd-search-result-item .sri-info { display: flex; flex-direction: column; gap: 1px; }
+.cd-search-result-item .sri-name { font-weight: 700; }
+.cd-search-result-item .sri-meta { font-size: 0.6rem; color: var(--text-muted); }
+.cd-search-result-item .btn-add {
+  font-size: 0.62rem; padding: 2px 8px; border-radius: 4px;
+  border: 1px solid var(--color-primary); background: transparent;
+  color: var(--color-primary); cursor: pointer; white-space: nowrap;
+  flex-shrink: 0; margin-left: 8px;
+}
+.cd-search-result-item .btn-add:hover { background: rgba(200,146,62,0.15); }
+.cd-search-no-results {
+  padding: 12px; text-align: center; font-size: 0.72rem; color: var(--text-muted);
+}
+
+/* Type tags */
+.tag-cm { background: rgba(46,134,193,0.15); color: var(--color-counter-glow); border: 1px solid rgba(46,134,193,0.3); }
+.tag-sup { background: rgba(200,146,62,0.15); color: var(--color-rule-glow); border: 1px solid rgba(200,146,62,0.3); }
+.tag-skill { background: rgba(142,68,173,0.15); color: var(--color-character-glow); border: 1px solid rgba(142,68,173,0.3); }
+.tag-whisper { background: rgba(192,57,43,0.15); color: var(--color-whisper-glow); border: 1px solid rgba(192,57,43,0.3); }
+
+.tag {
+  font-size: 0.6rem; font-weight: 700; padding: 1px 6px; border-radius: 6px;
+  white-space: nowrap; display: inline-block;
+}
+
+/* Declaration Log */
+.cd-declaration-section {
+  margin-bottom: var(--space-sm); flex-shrink: 0;
+}
+.cd-declaration-section h4 {
+  font-size: 0.78rem; margin-bottom: var(--space-sm); display: flex;
+  align-items: center; gap: 6px;
+}
+.cd-declaration-section .decl-count {
+  font-size: 0.62rem; color: var(--text-muted); font-weight: 400;
+}
+.cd-decl-list {
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  min-height: 60px; max-height: 200px; overflow-y: auto;
+  background: var(--bg-surface);
+}
+.cd-decl-empty {
+  padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.72rem;
+}
+.cd-decl-item {
+  display: flex; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.72rem; gap: 8px;
+}
+.cd-decl-item:last-child { border-bottom: none; }
+.cd-decl-item .decl-tag { flex-shrink: 0; }
+.cd-decl-item .decl-desc { flex: 1; }
+.cd-decl-item .decl-desc strong { color: var(--text-primary); }
+.cd-decl-item .decl-action {
+  font-size: 0.62rem; color: var(--text-muted);
+  background: var(--bg-hover); padding: 1px 6px; border-radius: 4px;
+}
+.cd-decl-item .btn-del {
+  font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;
+  border: none; background: transparent; color: var(--color-whisper-glow);
+  cursor: pointer; flex-shrink: 0; opacity: 0.5;
+}
+.cd-decl-item .btn-del:hover { opacity: 1; }
+
+/* Notes */
+.cd-notes-area { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.cd-notes-area h4 { font-size: 0.78rem; margin-bottom: var(--space-sm); }
+.cd-notes-area textarea {
+  flex: 1; min-height: 80px; padding: 10px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-medium); background: var(--bg-surface);
+  color: var(--text-primary); font-size: 0.75rem; resize: vertical;
+  font-family: inherit; outline: none;
+}
+.cd-notes-area textarea:focus { border-color: var(--color-primary); }
+
+/* ── History overlay ── */
+.cd-history-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
+  display: none; justify-content: center; align-items: center;
+}
+.cd-history-overlay.show { display: flex; }
+.cd-history-card {
+  background: var(--bg-card); border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg); padding: var(--space-lg); max-width: 500px;
+  width: 90%; max-height: 80vh; overflow-y: auto;
+}
+.cd-history-card h3 { font-size: 0.9rem; margin-bottom: var(--space-md); }
+.cd-history-card .hist-day { margin-bottom: var(--space-md); }
+.cd-history-card .hist-day h4 {
+  font-size: 0.78rem; color: var(--color-primary); margin-bottom: 4px;
+}
+.cd-history-card .hist-decl {
+  font-size: 0.7rem; padding: 3px 0; color: var(--text-secondary);
+}
+.cd-history-card .btn-close {
+  width: 100%; margin-top: var(--space-md); padding: 8px;
+  border-radius: var(--radius-sm); border: 1px solid var(--border-medium);
+  background: var(--bg-hover); color: var(--text-primary); cursor: pointer;
+}
+
+/* ── Action Buttons (common) ── */
+.btn {
+  font-size: 0.72rem; padding: 6px 14px; border-radius: var(--radius-sm);
+  border: none; cursor: pointer; font-weight: 600; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;
+}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-neutral {
+  background: var(--bg-hover); color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+}
+.btn-neutral:hover { border-color: var(--text-muted); }
+.btn-ghost { background: transparent; color: var(--text-muted); }
+.btn-ghost:hover { color: var(--text-secondary); }
+.btn-sm { font-size: 0.68rem; padding: 4px 10px; }
+
+/* History Day Badge */
+.history-day-locked {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 0.62rem; font-weight: 700;
+}
+.history-day-locked.locked { background: rgba(46,134,193,0.1); color: var(--color-counter-glow); }
+.history-day-locked.current { background: rgba(200,146,62,0.1); color: var(--color-rule-glow); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .cd-char-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+  .cd-count-btn { width: 40px; height: 40px; font-size: 1rem; }
+  .cd-citizen-chip { min-width: 56px; padding: 6px 6px; }
+  .cd-citizen-chip .chip-name { font-size: 0.58rem; max-width: 48px; }
+}
+</style>
+</head>
+<body class="cd-page">
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="cd-header">
+  <h1>📰 市民日报<span>· 宣言记录</span></h1>
+  <div class="cd-header-actions">
+    <button class="btn btn-neutral btn-sm" onclick="resetGame()" id="btnReset" style="display:none;">🔄 新对局</button>
+    <a href="../index.html" class="btn btn-ghost btn-sm" style="text-decoration:none;">← 返回</a>
+  </div>
+</header>
+
+<!-- ═══════════ TOOLBAR ═══════════ -->
+<header class="cd-toolbar" id="cdToolbar" style="display:none;">
+  <div class="cd-day-selector">
+    <button class="cd-day-btn" onclick="prevDay()" title="前一天">◀</button>
+    <span class="cd-day-num" id="cdDayNum">第0天</span>
+    <button class="cd-day-btn" onclick="nextDay()" title="后一天">▶</button>
+    <span class="cd-auto-desc">/ 第12天</span>
+  </div>
+  <div class="cd-toolbar-actions">
+    <button class="btn btn-sm btn-neutral" onclick="showHistory()">📜 查看历史</button>
+    <button class="cd-end-btn" onclick="endGameManually()" id="btnEndGame" style="display:none;">🏁 终局</button>
+    <button class="cd-round-end-btn" onclick="advanceRound()" id="btnAdvance">🔒 回合结束</button>
+  </div>
+</header>
+
+<!-- ═══════════ CITIZEN ROW ═══════════ -->
+<nav class="cd-citizen-row" id="cdCitizenRow" style="display:none;"></nav>
+
+<!-- ═══════════ MAIN CONTENT ═══════════ -->
+<main class="cd-main">
+
+  <!-- Set-up Panel -->
+  <section class="cd-panel active cd-setup" id="panelSetup">
+    <div class="cd-setup-step">
+      <h3>👥 第一步：选择人数</h3>
+      <p class="step-desc">选择本局游戏的市民数量（6~12人）</p>
+      <div class="cd-count-select" id="countSelect"></div>
+    </div>
+    <div class="cd-setup-step" id="stepChars" style="display:none;">
+      <h3>🎭 第二步：选择市民</h3>
+      <p class="step-desc">从12位市民中选取刚刚选择的人数。点击角色卡片即可选中/取消。</p>
+      <div class="cd-char-grid" id="charGrid"></div>
+      <div class="cd-setup-actions">
+        <button class="btn btn-cancel" onclick="cancelSetup()">取消</button>
+        <span class="cd-selected-count">已选 <span class="count-n" id="selCount">0</span> / <span class="count-need" id="selNeed">6</span> 人</span>
+        <button class="btn btn-confirm" id="btnConfirm" disabled onclick="confirmGame()">✅ 确认开报</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recording Panel -->
+  <section class="cd-panel cd-recording" id="panelRecording" style="display:none;">
+    <!-- Active citizen header -->
+    <div class="cd-active-citizen-header" id="activeCitizenHeader"></div>
+
+    <!-- Search -->
+    <div class="cd-search-area">
+      <div class="cd-search-input-wrap">
+        <input type="text" class="cd-search-input" id="searchInput"
+          placeholder="🔍 搜索反击卡 / 物资卡 / 技能 / 怪谈卡，点击添加宣言…"
+          autocomplete="off">
+        <div class="cd-search-results" id="searchResults"></div>
+      </div>
+    </div>
+
+    <!-- Declarations -->
+    <div class="cd-declaration-section">
+      <h4>📝 本日宣言 <span class="decl-count" id="declCount">(0条)</span></h4>
+      <div class="cd-decl-list" id="declList">
+        <div class="cd-decl-empty">暂无宣言记录。在上方搜索并添加。</div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="cd-notes-area">
+      <h4>🗒️ 备注</h4>
+      <textarea id="notesArea" placeholder="市长备注（自动保存）…"></textarea>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════ HISTORY OVERLAY ═══════════ -->
+<div class="cd-history-overlay" id="historyOverlay">
+  <div class="cd-history-card" id="historyCard"></div>
+</div>
+
+<!-- ═══════════ ROUND ADVANCE DIALOG ═══════════ -->
+<div class="rd-overlay" id="roundDialogOverlay">
+  <div class="rd-card" id="roundDialogCard"></div>
+</div>
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script src="../js/data.js?v=2026071116"></script>
+<script>
+'use strict';
+
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+const STORAGE_KEY = 'dawn_citizen_daily_v1';
+const SETTLEMENT_KEY = 'dawn_settlement_v1';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+}
+
+// ── Settlement helpers ──
+function loadSettlement() {
+  try {
+    const raw = localStorage.getItem(SETTLEMENT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+function saveSettlement(s) {
+  localStorage.setItem(SETTLEMENT_KEY, JSON.stringify(s));
+}
+function getSettlement() {
+  return loadSettlement() || { gameStarted: null, rounds: {}, gameEnded: false, endReason: null, endedAt: null };
+}
+
+// ── Ghost helpers ──
+function isGhost(c) {
+  if (!c) return false;
+  return c.status === 'ghost' || c.status === 'transferred' || c.health <= 0 || c.sanity <= 0;
+}
+function isTransferred(c) {
+  return c && c.status === 'transferred';
+}
+function isDead(c) {
+  if (!c) return true;
+  return c.status === 'transferred' || (c.health <= 0 && c.sanity <= 0);
+}
+
+let STATE = loadState() || {
+  gameStarted: false,
+  playerCount: 6,
+  citizens: [],  // [{ id, name, level, health, sanity, skill, days: { [dayNum]: { declarations: [], notes: "" } } }]
+  currentDay: 0
+};
+
+// Current UI state
+let tempPlayerCount = 6;
+let tempSelectedChars = [];  // char IDs
+let activeCitizenIdx = 0;
+let searchTimeout = null;
+
+// ============================================================
+// CARD SEARCH INDEX
+// ============================================================
+let CARD_INDEX = [];
+
+function buildCardIndex() {
+  CARD_INDEX = [];
+
+  // Countermeasures (反击卡)
+  if (CARD_DB.countermeasures) {
+    CARD_DB.countermeasures.forEach(c => {
+      CARD_INDEX.push({
+        id: c.id, name: c.name, type: '反击卡', level: c.level,
+        label: `反击卡·${c.level}`, tagClass: 'tag-cm',
+        action: c.trigger_condition ? c.trigger_condition.substring(0,30) : '使用'
+      });
+    });
+  }
+
+  // Supplies (物资卡)
+  if (CARD_DB.supplies) {
+    CARD_DB.supplies.forEach(c => {
+      CARD_INDEX.push({
+        id: c.id, name: c.name, type: '物资卡', level: c.level,
+        label: `物资卡·${c.level}`, tagClass: 'tag-sup',
+        action: '使用'
+      });
+    });
+  }
+
+  // Whispers (怪谈卡)
+  if (CARD_DB.whispers) {
+    CARD_DB.whispers.forEach(c => {
+      CARD_INDEX.push({
+        id: c.id, name: c.name, type: '怪谈卡', level: c.level,
+        label: `怪谈卡·${c.level}`, tagClass: 'tag-whisper',
+        action: c.trigger_condition ? c.trigger_condition.substring(0,30) : '发动'
+      });
+    });
+  }
+
+  // Character skills
+  if (CARD_DB.characters) {
+    CARD_DB.characters.forEach(ch => {
+      CARD_INDEX.push({
+        id: `skill_${ch.id}`, name: `【${ch.skill_name || '技能'}】`,
+        type: '技能', level: ch.name,
+        label: `技能·${ch.name}`, tagClass: 'tag-skill',
+        action: '发动'
+      });
+    });
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  buildCardIndex();
+
+  if (STATE.gameStarted && STATE.citizens.length > 0) {
+    showRecordingView();
+  } else {
+    showSetupView();
+  }
+
+  // Search input
+  document.getElementById('searchInput').addEventListener('input', onSearchInput);
+  document.getElementById('searchInput').addEventListener('focus', onSearchInput);
+  document.getElementById('searchInput').addEventListener('blur', () => {
+    setTimeout(() => document.getElementById('searchResults').classList.remove('show'), 200);
+  });
+
+  // Notes auto-save
+  document.getElementById('notesArea').addEventListener('input', onNotesChange);
+
+  // History overlay close
+  document.getElementById('historyOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) hideHistory();
+  });
+
+  // Round dialog overlay close
+  document.getElementById('roundDialogOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeRoundDialog();
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' && e.ctrlKey) { e.preventDefault(); prevDay(); }
+    if (e.key === 'ArrowRight' && e.ctrlKey) { e.preventDefault(); nextDay(); }
+    if (e.key === 'Escape') {
+      if (document.getElementById('roundDialogOverlay').classList.contains('show')) {
+        closeRoundDialog();
+      }
+      if (document.getElementById('historyOverlay').classList.contains('show')) {
+        hideHistory();
+      }
+    }
+  });
+});
+
+// ============================================================
+// SET-UP VIEW
+// ============================================================
+function showSetupView() {
+  document.getElementById('panelSetup').style.display = 'block';
+  document.getElementById('panelSetup').classList.add('active');
+  document.getElementById('panelRecording').classList.remove('active');
+  document.getElementById('panelRecording').style.display = 'none';
+  document.getElementById('cdToolbar').style.display = 'none';
+  document.getElementById('cdCitizenRow').style.display = 'none';
+  document.getElementById('btnReset').style.display = 'none';
+
+  tempPlayerCount = 6;
+  tempSelectedChars = [];
+  buildCountButtons();
+}
+
+function buildCountButtons() {
+  const container = document.getElementById('countSelect');
+  container.innerHTML = '';
+  for (let n = 6; n <= 12; n++) {
+    const btn = document.createElement('button');
+    btn.className = 'cd-count-btn' + (n === tempPlayerCount ? ' selected' : '');
+    btn.textContent = n;
+    btn.onclick = () => selectPlayerCount(n);
+    container.appendChild(btn);
+  }
+}
+
+function selectPlayerCount(n) {
+  tempPlayerCount = n;
+  tempSelectedChars = [];
+  document.querySelectorAll('.cd-count-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.textContent) === n);
+  });
+  document.getElementById('stepChars').style.display = 'block';
+  document.getElementById('selNeed').textContent = n;
+  updateSelectedCount();
+  buildCharGrid();
+}
+
+function buildCharGrid() {
+  const grid = document.getElementById('charGrid');
+  grid.innerHTML = '';
+
+  if (!CARD_DB.characters) { grid.innerHTML = '<div style="color:var(--text-muted);padding:20px;">角色数据加载失败</div>'; return; }
+
+  CARD_DB.characters.forEach(ch => {
+    const card = document.createElement('div');
+    card.className = 'cd-char-card';
+    card.dataset.cid = ch.id;
+    card.innerHTML = `
+      <div class="char-avatar">${getCharEmoji(ch.id)}</div>
+      <div class="char-name">${ch.name}</div>
+      <div class="char-level">${ch.level || ''}</div>
+    `;
+    card.onclick = () => toggleChar(ch.id, card);
+    grid.appendChild(card);
+  });
+}
+
+function getCharEmoji(id) {
+  const map = {
+    'ch_001': '😄', 'ch_002': '🍀', 'ch_003': '🤕', 'ch_004': '🧠',
+    'ch_005': '😶', 'ch_006': '💼', 'ch_007': '👁️', 'ch_008': '👑',
+    'ch_009': '🛵', 'ch_010': '🔍', 'ch_011': '📋', 'ch_012': '✊'
+  };
+  return map[id] || '👤';
+}
+
+function toggleChar(cid, el) {
+  const idx = tempSelectedChars.indexOf(cid);
+  if (idx >= 0) {
+    tempSelectedChars.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    if (tempSelectedChars.length >= tempPlayerCount) {
+      // Remove first selected to make room
+      const removed = tempSelectedChars.shift();
+      const prevEl = document.querySelector(`.cd-char-card[data-cid="${removed}"]`);
+      if (prevEl) prevEl.classList.remove('selected');
+    }
+    tempSelectedChars.push(cid);
+    el.classList.add('selected');
+  }
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  document.getElementById('selCount').textContent = tempSelectedChars.length;
+  document.getElementById('selNeed').textContent = tempPlayerCount;
+  document.getElementById('btnConfirm').disabled = tempSelectedChars.length !== tempPlayerCount;
+}
+
+function cancelSetup() {
+  tempSelectedChars = [];
+  document.getElementById('stepChars').style.display = 'none';
+  document.querySelectorAll('.cd-char-card').forEach(el => el.classList.remove('selected'));
+  updateSelectedCount();
+}
+
+// ============================================================
+// CONFIRM GAME
+// ============================================================
+function confirmGame() {
+  if (tempSelectedChars.length !== tempPlayerCount) return;
+
+  const citizens = tempSelectedChars.map(cid => {
+    const char = CARD_DB.characters.find(c => c.id === cid);
+    return {
+      id: char.id,
+      name: char.name,
+      level: char.level || '',
+      health: char.health || 6,
+      sanity: char.sanity || 6,
+      skill: char.skill_name || '',
+      skillEffect: char.skill_effect || '',
+      status: 'alive',
+      days: {}
+    };
+  });
+
+  STATE = {
+    gameStarted: true,
+    playerCount: tempPlayerCount,
+    citizens: citizens,
+    currentDay: 0
+  };
+
+  // Initialize day 0 for all citizens
+  citizens.forEach(c => {
+    c.days[0] = { declarations: [], notes: '' };
+  });
+
+  saveState();
+  showRecordingView();
+}
+
+// ============================================================
+// RECORDING VIEW
+// ============================================================
+function showRecordingView() {
+  document.getElementById('panelSetup').style.display = 'none';
+  document.getElementById('panelSetup').classList.remove('active');
+  document.getElementById('panelRecording').style.display = 'flex';
+  document.getElementById('panelRecording').classList.add('active');
+  document.getElementById('cdToolbar').style.display = 'flex';
+  document.getElementById('cdCitizenRow').style.display = 'flex';
+  document.getElementById('btnReset').style.display = 'inline-flex';
+
+  activeCitizenIdx = Math.min(activeCitizenIdx, STATE.citizens.length - 1);
+  updateDayDisplay();
+  buildCitizenRow();
+  renderActiveCitizen();
+  ensureDayExists();
+}
+
+function updateDayDisplay() {
+  const settlement = getSettlement();
+  document.getElementById('cdDayNum').textContent = `第${STATE.currentDay}天`;
+  const btnAdv = document.getElementById('btnAdvance');
+  const btnEnd = document.getElementById('btnEndGame');
+
+  if (settlement.gameEnded) {
+    btnAdv.textContent = '✅ 已终局';
+    btnAdv.style.opacity = '0.5';
+    btnAdv.onclick = null;
+    if (btnEnd) btnEnd.style.display = 'none';
+  } else if (STATE.currentDay >= 12) {
+    btnAdv.textContent = '✅ 已完结';
+    btnAdv.style.opacity = '0.5';
+    btnAdv.onclick = null;
+    if (btnEnd) btnEnd.style.display = 'inline-flex';
+  } else {
+    btnAdv.textContent = '🔒 回合结束';
+    btnAdv.style.opacity = '1';
+    btnAdv.onclick = advanceRound;
+    if (btnEnd) btnEnd.style.display = 'inline-flex';
+  }
+}
+
+function buildCitizenRow() {
+  const row = document.getElementById('cdCitizenRow');
+  row.innerHTML = '';
+
+  STATE.citizens.forEach((c, i) => {
+    const ghost = isGhost(c);
+    const dead = isDead(c);
+    const chip = document.createElement('button');
+    let cls = 'cd-citizen-chip' + (i === activeCitizenIdx ? ' active' : '');
+    if (dead) cls += ' dead-chip';
+    else if (ghost) cls += ' ghost-chip';
+    chip.className = cls;
+
+    let marker = '';
+    if (dead) marker = '<span class="chip-marker">⚰️</span>';
+    else if (ghost) marker = '<span class="chip-marker">👻</span>';
+
+    chip.innerHTML = `
+      ${marker}
+      <div class="chip-avatar">${getCharEmoji(c.id)}</div>
+      <div class="chip-name">${c.name.substring(0,4)}</div>
+      <div class="chip-badge">${c.level.substring(0,4)}</div>
+    `;
+    chip.onclick = () => selectCitizen(i);
+    row.appendChild(chip);
+  });
+}
+
+function selectCitizen(idx) {
+  activeCitizenIdx = idx;
+  document.querySelectorAll('.cd-citizen-chip').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+  renderActiveCitizen();
+}
+
+function renderActiveCitizen() {
+  const c = STATE.citizens[activeCitizenIdx];
+  if (!c) return;
+
+  const ghost = isGhost(c);
+  const dead = isDead(c);
+  const transferred = isTransferred(c);
+
+  let ghostTag = '';
+  if (transferred) ghostTag = '<span class="meta-ghost-tag transferred">⚠️ 已转移</span>';
+  else if (dead) ghostTag = '<span class="meta-ghost-tag transferred">⚰️ 已死亡</span>';
+  else if (ghost) ghostTag = '<span class="meta-ghost-tag ghost">👻 鬼魂状态</span>';
+
+  // Header
+  document.getElementById('activeCitizenHeader').innerHTML = `
+    <h3>${getCharEmoji(c.id)} ${c.name} ${ghostTag}</h3>
+    <div class="citizen-meta">
+      <span>❤️ 健康${c.health}</span>
+      <span>🧠 理智${c.sanity}</span>
+      <span>⭐ ${c.skill || '无技能'}</span>
+      <span>🏷️ ${c.level}</span>
+      ${ghost ? '<span class="meta-ghost">👻 鬼魂</span>' : ''}
+    </div>
+  `;
+
+  // Ensure day data exists
+  ensureDayExists();
+
+  // Render declarations
+  renderDeclarations();
+
+  // Render notes
+  const notesArea = document.getElementById('notesArea');
+  notesArea.value = c.days[STATE.currentDay]?.notes || '';
+}
+
+function ensureDayExists() {
+  STATE.citizens.forEach(c => {
+    if (!c.days[STATE.currentDay]) {
+      c.days[STATE.currentDay] = { declarations: [], notes: '' };
+    }
+  });
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+function onSearchInput() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(doSearch, 100);
+}
+
+function doSearch() {
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+  const resultsDiv = document.getElementById('searchResults');
+
+  if (query.length < 1) {
+    resultsDiv.classList.remove('show');
+    return;
+  }
+
+  let results = CARD_INDEX.filter(item => {
+    return item.name.toLowerCase().includes(query) ||
+           item.type.includes(query) ||
+           item.level.toLowerCase().includes(query) ||
+           item.label.toLowerCase().includes(query);
+  });
+
+  // Limit results
+  results = results.slice(0, 15);
+
+  if (results.length === 0) {
+    resultsDiv.innerHTML = '<div class="cd-search-no-results">未找到匹配的卡牌或技能</div>';
+  } else {
+    resultsDiv.innerHTML = results.map(r => `
+      <div class="cd-search-result-item">
+        <div class="sri-info">
+          <span class="sri-name">${r.name}</span>
+          <span class="sri-meta"><span class="tag ${r.tagClass}">${r.label}</span></span>
+        </div>
+        <button class="btn-add" onclick="addDeclaration('${r.id}','${escapeHTML(r.name)}','${r.type}','${escapeHTML(r.level)}','${escapeHTML(r.action || '使用')}')">+ 添加</button>
+      </div>
+    `).join('');
+  }
+
+  resultsDiv.classList.add('show');
+}
+
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============================================================
+// DECLARATIONS
+// ============================================================
+function addDeclaration(cardId, cardName, cardType, cardLevel, action) {
+  const c = STATE.citizens[activeCitizenIdx];
+  if (!c) return;
+
+  ensureDayExists();
+
+  const decl = {
+    cardId, cardName, cardType, cardLevel, action,
+    timestamp: Date.now()
+  };
+
+  c.days[STATE.currentDay].declarations.push(decl);
+  saveState();
+  renderDeclarations();
+
+  // Clear search
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').classList.remove('show');
+}
+
+function removeDeclaration(idx) {
+  const c = STATE.citizens[activeCitizenIdx];
+  if (!c) return;
+  c.days[STATE.currentDay].declarations.splice(idx, 1);
+  saveState();
+  renderDeclarations();
+}
+
+function renderDeclarations() {
+  const c = STATE.citizens[activeCitizenIdx];
+  if (!c) return;
+  const decls = c.days[STATE.currentDay]?.declarations || [];
+  const list = document.getElementById('declList');
+
+  document.getElementById('declCount').textContent = `(${decls.length}条)`;
+
+  if (decls.length === 0) {
+    list.innerHTML = '<div class="cd-decl-empty">暂无宣言记录。在上方搜索并添加。</div>';
+    return;
+  }
+
+  let tagClass = 'tag-cm';
+  list.innerHTML = decls.map((d, i) => {
+    if (d.cardType === '反击卡') tagClass = 'tag-cm';
+    else if (d.cardType === '物资卡') tagClass = 'tag-sup';
+    else if (d.cardType === '技能') tagClass = 'tag-skill';
+    else if (d.cardType === '怪谈卡') tagClass = 'tag-whisper';
+
+    return `
+      <div class="cd-decl-item">
+        <span class="tag ${tagClass} decl-tag">${d.cardType}</span>
+        <span class="decl-desc"><strong>${d.cardName}</strong> <span class="decl-action">${d.action}</span></span>
+        <span style="font-size:0.58rem;color:var(--text-muted);">${d.cardLevel}</span>
+        <button class="btn-del" onclick="removeDeclaration(${i})" title="删除">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// NOTES
+// ============================================================
+function onNotesChange() {
+  const c = STATE.citizens[activeCitizenIdx];
+  if (!c) return;
+  ensureDayExists();
+  c.days[STATE.currentDay].notes = document.getElementById('notesArea').value;
+  saveState();
+}
+
+// ============================================================
+// DAY NAVIGATION & ROUND END
+// ============================================================
+function prevDay() {
+  if (STATE.currentDay > 0) {
+    STATE.currentDay--;
+    updateDayDisplay();
+    renderActiveCitizen();
+  }
+}
+
+function nextDay() {
+  if (STATE.currentDay < 12) {
+    STATE.currentDay++;
+    updateDayDisplay();
+    renderActiveCitizen();
+  }
+}
+
+function advanceRound() {
+  const settlement = getSettlement();
+  if (settlement.gameEnded) return;
+  if (STATE.currentDay >= 12) return;
+  openRoundDialog();
+}
+
+function openRoundDialog() {
+  const card = document.getElementById('roundDialogCard');
+  const nextDay = STATE.currentDay + 1;
+
+  // Dawn deduction: alive citizens lose 1 HP
+  const aliveCitizens = STATE.citizens.filter(c => !isDead(c) && c.status === 'alive');
+  const ghosts = STATE.citizens.filter(c => isGhost(c) && !isTransferred(c));
+
+  // Survival reward (F mechanism): alive for >= 3 rounds
+  const survivalEligible = aliveCitizens.filter(c => {
+    if (!c.survivedRounds) c.survivedRounds = 0;
+    return c.survivedRounds >= 3;
+  });
+
+  let html = '<h3>🌅 回合结算 — 进入第' + nextDay + '天</h3>';
+
+  // Section 1: Dawn deduction
+  html += '<div class="rd-section"><h4>🌅 黎明扣除（健康 -1）</h4>';
+  if (aliveCitizens.length > 0) {
+    html += '<ul class="rd-list">';
+    aliveCitizens.forEach(c => {
+      html += `<li><span class="rd-name">${c.name}</span> <span class="rd-stat">❤️${c.health}→${c.health - 1}</span></li>`;
+    });
+    html += '</ul>';
+  } else {
+    html += '<div class="rd-none">无存活市民</div>';
+  }
+  html += '</div>';
+
+  // Section 2: Survival reward
+  html += '<div class="rd-section"><h4>🎁 生存奖励（F机制）</h4>';
+  if (survivalEligible.length > 0) {
+    html += '<ul class="rd-list">';
+    survivalEligible.forEach(c => {
+      html += `<li><span class="rd-name">${c.name}</span> <span class="rd-stat">存活≥3回合，获得物资卡</span></li>`;
+    });
+    html += '</ul>';
+  } else {
+    html += '<div class="rd-none">无符合条件的市民</div>';
+  }
+  html += '</div>';
+
+  // Section 3: Ghost sanity cost
+  html += '<div class="rd-section"><h4>👻 鬼魂理智消耗（理智 -1）</h4>';
+  if (ghosts.length > 0) {
+    html += '<ul class="rd-list">';
+    ghosts.forEach(c => {
+      html += `<li><span class="rd-name">${c.name}</span> <span class="rd-stat">🧠${c.sanity}→${Math.max(0, c.sanity - 1)}</span></li>`;
+    });
+    html += '</ul>';
+  } else {
+    html += '<div class="rd-none">无鬼魂</div>';
+  }
+  html += '</div>';
+
+  // Actions
+  html += '<div class="rd-actions">';
+  html += '<button class="rd-btn-confirm" onclick="confirmAdvance()">✅ 确认结算</button>';
+  html += '<button class="rd-btn-cancel" onclick="closeRoundDialog()">取消</button>';
+  html += '</div>';
+
+  card.innerHTML = html;
+  document.getElementById('roundDialogOverlay').classList.add('show');
+}
+
+function closeRoundDialog() {
+  document.getElementById('roundDialogOverlay').classList.remove('show');
+}
+
+function confirmAdvance() {
+  const settlement = getSettlement();
+  const aliveCitizens = STATE.citizens.filter(c => !isDead(c) && c.status === 'alive');
+  const ghosts = STATE.citizens.filter(c => isGhost(c) && !isTransferred(c));
+
+  // Initialize settlement if needed
+  if (!settlement.gameStarted) {
+    settlement.gameStarted = new Date().toISOString();
+  }
+
+  // Apply dawn deduction: HP-1 for alive
+  const hpAffected = [];
+  aliveCitizens.forEach(c => {
+    c.health = Math.max(0, c.health - 1);
+    hpAffected.push(c.name);
+    // Track survival rounds
+    if (!c.survivedRounds) c.survivedRounds = 0;
+    c.survivedRounds++;
+
+    // Check if citizen died from HP loss
+    if (c.health <= 0 && c.sanity <= 0) {
+      c.status = 'transferred';
+    } else if (c.health <= 0) {
+      c.status = 'ghost';
+    }
+  });
+
+  // Ghost sanity cost: SAN-1
+  const ghostsAffected = [];
+  ghosts.forEach(c => {
+    c.sanity = Math.max(0, c.sanity - 1);
+    ghostsAffected.push(c.name);
+    if (c.sanity <= 0 && c.status !== 'transferred') {
+      c.status = 'transferred';
+    }
+  });
+
+  // Survival reward eligibility
+  const survivalEligible = aliveCitizens.filter(c => (c.survivedRounds || 0) >= 3);
+
+  // Generate settlement report
+  const dayKey = STATE.currentDay;
+  settlement.rounds[dayKey] = {
+    day: '第' + dayKey + '天',
+    timestamp: new Date().toISOString(),
+    dawnHpDeduction: 1,
+    hpAffected: hpAffected,
+    survivalRewardEligible: survivalEligible.map(c => c.name),
+    ghostSanityCost: 1,
+    ghostsAffected: ghostsAffected,
+    summary: `黎明扣除: ${hpAffected.length}人HP-1 | 鬼魂消耗: ${ghostsAffected.length}人SAN-1 | 生存奖励: ${survivalEligible.length}人`
+  };
+  saveSettlement(settlement);
+
+  // Check game end
+  checkGameEnd();
+
+  // Advance day
+  STATE.currentDay++;
+  ensureDayExists();
+  saveState();
+  updateDayDisplay();
+  renderActiveCitizen();
+  buildCitizenRow();
+  closeRoundDialog();
+}
+
+function checkGameEnd() {
+  const settlement = getSettlement();
+  if (settlement.gameEnded) return;
+
+  const allDead = STATE.citizens.every(c => isDead(c));
+  if (allDead) {
+    settlement.gameEnded = true;
+    settlement.endReason = 'all_dead';
+    settlement.endedAt = new Date().toISOString();
+    saveSettlement(settlement);
+  }
+}
+
+function endGameManually() {
+  const settlement = getSettlement();
+  if (settlement.gameEnded) return;
+
+  if (!confirm('确定要手动结束本局游戏吗？这将记录为"市长终局"。')) return;
+
+  settlement.gameEnded = true;
+  settlement.endReason = 'mayor_ended';
+  settlement.endedAt = new Date().toISOString();
+  saveSettlement(settlement);
+  updateDayDisplay();
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function showHistory() {
+  const c = STATE.citizens[activeCitizenIdx];
+  if (!c) return;
+
+  const settlement = getSettlement();
+
+  let html = `<h3>📜 ${c.name} · 历史记录</h3>`;
+
+  const dayNums = Object.keys(c.days).map(Number).sort((a, b) => a - b);
+
+  if (dayNums.length === 0) {
+    html += '<div style="color:var(--text-muted);text-align:center;padding:20px;">暂无记录</div>';
+  } else {
+    dayNums.forEach(dn => {
+      const day = c.days[dn];
+      const isCurrent = dn === STATE.currentDay;
+      const badge = isCurrent
+        ? '<span class="history-day-locked current">当前</span>'
+        : '<span class="history-day-locked locked">已封存</span>';
+
+      html += `<div class="hist-day">`;
+      html += `<h4>📅 第${dn}天 ${badge}</h4>`;
+
+      if (day.declarations && day.declarations.length > 0) {
+        day.declarations.forEach(d => {
+          html += `<div class="hist-decl">• <strong>${d.cardName}</strong> (${d.cardType}·${d.cardLevel}) — ${d.action}</div>`;
+        });
+      } else {
+        html += '<div class="hist-decl" style="color:var(--text-muted);">无宣言记录</div>';
+      }
+
+      if (day.notes) {
+        html += `<div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;padding:4px 8px;background:var(--bg-hover);border-radius:4px;">🗒️ ${day.notes}</div>`;
+      }
+
+      html += '</div>';
+
+      // Settlement block after each day
+      if (settlement.rounds && settlement.rounds[dn]) {
+        const s = settlement.rounds[dn];
+        html += `<div class="hist-settlement">`;
+        html += `<h4>📋 回合结算</h4>`;
+        html += `<div class="sett-entry">🌅 黎明扣除: ${s.hpAffected.join('、') || '无'} HP-1</div>`;
+        if (s.ghostsAffected && s.ghostsAffected.length > 0) {
+          html += `<div class="sett-entry">👻 鬼魂消耗: ${s.ghostsAffected.join('、')} SAN-1</div>`;
+        }
+        if (s.survivalRewardEligible && s.survivalRewardEligible.length > 0) {
+          html += `<div class="sett-entry">🎁 生存奖励: ${s.survivalRewardEligible.join('、')}</div>`;
+        }
+        html += `</div>`;
+      }
+    });
+  }
+
+  // End block
+  if (settlement.gameEnded) {
+    html += `<div class="hist-end-block">`;
+    html += `<h4>🏁 游戏终局</h4>`;
+    html += `<div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">`;
+    html += settlement.endReason === 'all_dead' ? '原因: 所有市民已死亡或转移' : '原因: 市长手动终局';
+    html += `</div></div>`;
+  }
+
+  html += '<button class="btn-close" onclick="hideHistory()">关闭</button>';
+
+  document.getElementById('historyCard').innerHTML = html;
+  document.getElementById('historyOverlay').classList.add('show');
+}
+
+function hideHistory() {
+  document.getElementById('historyOverlay').classList.remove('show');
+}
+
+// ============================================================
+// RESET
+// ============================================================
+function resetGame() {
+  if (!confirm('确定要开启新对局吗？当前记录将被清除。')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(SETTLEMENT_KEY);
+  STATE = {
+    gameStarted: false,
+    playerCount: 6,
+    citizens: [],
+    currentDay: 0
+  };
+  activeCitizenIdx = 0;
+  tempPlayerCount = 6;
+  tempSelectedChars = [];
+  showSetupView();
+}
+
+// Verify data loaded
+console.log('[市民日报] 数据已加载 | 反击卡', CARD_DB.countermeasures?.length || 0, '张 | 物资卡', CARD_DB.supplies?.length || 0, '种 | 角色', CARD_DB.characters?.length || 0, '个');
+</script>
+</body>
+</html>

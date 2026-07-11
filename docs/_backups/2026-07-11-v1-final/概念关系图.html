@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《黎明之后》概念关系图 — 精确机制网络</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --card: #12121a;
+  --text: #c8c8d4;
+  --accent: #7B6F9E;
+  --coral: #D4756B;
+  --teal: #4A90A4;
+  --amber: #C8923E;
+  --blue: #5B7CB0;
+  --green: #5ea86b;
+  --red: #c0392b;
+  --darkred: #8b1a1a;
+  --purple: #7B6F9E;
+  --gray: #6b7b8d;
+  --orange: #d4853c;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+#container {
+  position: relative;
+  width: 100vw; height: 100vh;
+}
+#graph {
+  width: 100%; height: 100%;
+}
+svg { width:100%; height:100%; display:block; }
+
+/* Tooltip */
+#tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(18,18,26,0.95);
+  border: 1px solid rgba(123,111,158,0.4);
+  border-radius: 8px;
+  padding: 12px 16px;
+  max-width: 360px;
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+}
+#tooltip .tt-title {
+  font-weight: 700; font-size: 15px; margin-bottom: 4px;
+}
+#tooltip .tt-desc { font-size: 12px; color: #999; }
+#tooltip .tt-edges { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); }
+#tooltip .tt-edge { font-size: 11px; margin: 2px 0; display:flex; align-items:flex-start; gap:6px; }
+#tooltip .tt-edge .dot { width:8px; height:8px; border-radius:50%; margin-top:3px; flex-shrink:0; }
+
+/* Legend */
+#legend {
+  position: absolute;
+  bottom: 20px; left: 20px;
+  background: rgba(18,18,26,0.92);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 11px;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+#legend h3 { font-size:13px; margin-bottom:10px; color:var(--accent); }
+#legend .lg-section { margin-bottom: 10px; }
+#legend .lg-title { font-size:11px; font-weight:700; margin-bottom:4px; }
+#legend .lg-item { display:flex; align-items:center; gap:6px; margin:2px 0; }
+#legend .lg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+#legend .lg-line { width:20px; height:2px; flex-shrink:0; border-radius:1px; }
+
+/* Controls */
+#controls {
+  position: absolute;
+  top: 20px; right: 20px;
+  display: flex; flex-direction: column; gap: 6px;
+  z-index: 50;
+}
+#controls button {
+  background: rgba(18,18,26,0.85);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+}
+#controls button:hover {
+  background: rgba(123,111,158,0.2);
+  border-color: rgba(123,111,158,0.4);
+}
+#controls button.active {
+  background: rgba(123,111,158,0.3);
+  border-color: var(--accent);
+}
+
+/* Search */
+#search {
+  position: absolute;
+  top: 20px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+}
+#search input {
+  background: rgba(18,18,26,0.9);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 13px;
+  width: 260px;
+  backdrop-filter: blur(8px);
+  outline: none;
+  transition: border-color 0.2s;
+}
+#search input:focus {
+  border-color: var(--accent);
+}
+
+/* Node label styling */
+.node-label {
+  font-size: 9px;
+  fill: #c8c8d4;
+  pointer-events: none;
+  text-anchor: middle;
+  font-weight: 500;
+}
+
+/* Edge label */
+.edge-label {
+  font-size: 8px;
+  fill: #888;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+/* Arrow markers */
+marker path { fill: #555; }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <svg id="graph"></svg>
+  <div id="tooltip"></div>
+
+  <div id="search">
+    <input type="text" id="searchInput" placeholder="搜索节点... (支持中文/拼音)">
+  </div>
+
+  <div id="controls">
+    <button id="btnReset">⟲ 重置视图</button>
+    <button id="btnLabels" class="active">🏷 标签</button>
+    <button id="btnEdges">↗ 边标签</button>
+    <button id="btnFit">⊞ 适应窗口</button>
+  </div>
+
+  <div id="legend">
+    <h3>图例</h3>
+    <div class="lg-section">
+      <div class="lg-title" style="color:#d4853c">玩家层</div>
+      <div class="lg-item"><span class="lg-dot" style="background:#d4853c"></span> 人类/鬼/AI市长</div>
+    </div>
+    <div class="lg-section">
+      <div class="lg-title" style="color:#e74c3c">双维属性</div>
+      <div class="lg-item"><span class="lg-dot" style="background:#e74c3c"></span> 健康值 / 理智值</div>
+    </div>
+    <div class="lg-section">
+      <div class="lg-title" style="color:#7B6F9E">规则系统</div>
+      <div class="lg-item"><span class="lg-dot" style="background:#7B6F9E"></span> 隐藏/公开/特殊规则</div>
+    </div>
+    <div class="lg-section">
+      <div class="lg-title" style="color:#5ea86b">反击卡</div>
+      <div class="lg-item"><span class="lg-dot" style="background:#5ea86b"></span> 基础→觉醒→极致→真理</div>
+    </div>
+    <div class="lg-section">
+      <div class="lg-title" style="color:#c0392b">怪谈卡</div>
+      <div class="lg-item"><span class="lg-dot" style="background:#c0392b"></span> 流言→异常→怪诞→灾厄</div>
+    </div>
+    <div class="lg-section">
+      <div class="lg-title" style="color:#C8923E">物资/地图</div>
+      <div class="lg-item"><span class="lg-dot" style="background:#C8923E"></span> 物资卡 / 地点</div>
+    </div>
+    <div class="lg-section">
+      <div class="lg-title" style="color:#4A90A4">机制系统</div>
+      <div class="lg-item"><span class="lg-dot" style="background:#4A90A4"></span> 宣言/质询/探索/交易等</div>
+    </div>
+    <div class="lg-section">
+      <div class="lg-title" style="color:#6b7b8d">关系线类型</div>
+      <div class="lg-item"><span class="lg-line" style="background:#c0392b"></span> 伤害/扣除</div>
+      <div class="lg-item"><span class="lg-line" style="background:#5ea86b"></span> 恢复/增益/奖励</div>
+      <div class="lg-item"><span class="lg-line" style="background:#4A90A4"></span> 反制/抹除/质询</div>
+      <div class="lg-item"><span class="lg-line" style="background:#C8923E"></span> 消耗/限制/来源</div>
+      <div class="lg-item"><span class="lg-line" style="background:#7B6F9E"></span> 持有/操控</div>
+      <div class="lg-item"><span class="lg-line" style="background:#6b7b8d"></span> 判定/记录</div>
+      <div class="lg-item"><span class="lg-line" style="background:#8b1a1a"></span> 转化/死亡</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// ─── DATA ────────────────────────────────────────────
+const nodes = [
+  // Layer 1: 玩家
+  { id:"人类玩家",      layer:1, cat:"player",   x:0,    y:0,    r:28, desc:"封锁区内的幸存者。目标：抹除全部隐藏规则 或 存活至终局。核心资源：健康值+理智值。" },
+  { id:"鬼·煞鬼",       layer:1, cat:"player",   x:250,  y:0,    r:26, desc:"第0天被选定的初始鬼。持有隐藏规则卡，讲述煞鬼故事暗示规则。共享全部怪谈卡。" },
+  { id:"鬼·恶鬼",       layer:1, cat:"player",   x:380,  y:80,   r:22, desc:"理智归零被同化而成。加入鬼阵营，共享怪谈牌池。继承前任鬼的规则。" },
+  { id:"AI市长",        layer:1, cat:"player",   x:480,  y:-120, r:22, desc:"裁判+叙事者+记录员。判定宣言质询、每回合讲述煞鬼故事、终局生成全玩家生存日记。" },
+
+  // Layer 2: 双维属性
+  { id:"健康值 HP",     layer:2, cat:"dual",     x:-120, y:-80,  r:24, desc:"代表生理生存状态。初始6点(因角色3~7)。≤0=死亡。黎明递增扣除。地图探索cost健康-1。" },
+  { id:"理智值 SP",     layer:2, cat:"dual",     x:-120, y:80,   r:24, desc:"代表精神理智。初始6点(因角色3~7)。≤0=化鬼。触犯规则扣罚。质询/宣言猜错扣罚。" },
+
+  // Layer 3: 规则系统
+  { id:"隐藏规则",      layer:3, cat:"rules",    x:180,  y:-200, r:22, desc:"鬼从128张牌库抽取X张(X=人类数)。T1(-3)/T2(-2)/T3(-1)三级。第1天起生效。可被宣言抹除。" },
+  { id:"公开规则",      layer:3, cat:"rules",    x:320,  y:-200, r:20, desc:"公开即生效(含第0天)。不可被宣言抹除。来源：闹鬼特殊规则、怪谈产生、鬼公开宣言。" },
+  { id:"特殊规则卡",    layer:3, cat:"rules",    x:450,  y:-200, r:18, desc:"24张(12地点×2)。闹鬼时检索公开。撞鬼时激活。鬼也须遵守→人类可质询。" },
+  { id:"公开规则栏",    layer:3, cat:"rules",    x:380,  y:-280, r:18, desc:"物理板。四分区：影响全体/只影响人/只影响鬼/被抹除规则。管理全部公开+被抹除的规则。" },
+
+  // Layer 4: 反击卡
+  { id:"反击·基础",    layer:4, cat:"counter",  x:-280, y:-220, r:18, desc:"12种×3张=36张。数值互换/牌库压缩/上限提升。基础→觉醒的升级链起点。" },
+  { id:"反击·觉醒",    layer:4, cat:"counter",  x:-380, y:-220, r:16, desc:"8种×2张=16张。条件触发战术核心。逆境翻盘。升级链中继。" },
+  { id:"反击·极致",    layer:4, cat:"counter",  x:-460, y:-180, r:14, desc:"8种×1张=8张。绝境咏叹调。高风险高回报。镇杀=反怪谈终端。" },
+  { id:"反击·真理",    layer:4, cat:"counter",  x:-510, y:-120, r:12, desc:"2种×1张=2张。终局神器。你们才是挑战者/人类群星闪耀时。决定胜负。" },
+
+  // Layer 5: 怪谈卡
+  { id:"怪谈·流言",    layer:5, cat:"whisper",  x:280,  y:220,  r:18, desc:"16种×1张。轻量干扰/社交破坏。鬼的入场券。门槛最低。" },
+  { id:"怪谈·异常",    layer:5, cat:"whisper",  x:380,  y:250,  r:16, desc:"10种×1张。中等干扰/战术灵活。需要时机把握。" },
+  { id:"怪谈·怪诞",    layer:5, cat:"whisper",  x:470,  y:220,  r:14, desc:"6种×1张。强力干扰/改变战局。条件严苛。" },
+  { id:"怪谈·灾厄",    layer:5, cat:"whisper",  x:540,  y:160,  r:14, desc:"4种×1张。极致效果。我即是灾厄→鬼终极翻盘。整局可能只出现一次。" },
+
+  // Layer 6: 物资
+  { id:"官方物资",      layer:6, cat:"supply",   x:-200, y:200,  r:18, desc:"保障餐A×18张。健康+1/理智+1。稳定补给源。第0天每人1张。库存18张用完即止。" },
+  { id:"物资牌库",      layer:6, cat:"supply",   x:-200, y:280,  r:18, desc:"63张五等级。普通34+中级18+高级8+绝顶3。地图探索获取。耗尽时洗切弃牌堆。" },
+
+  // Layer 7: 角色/目的
+  { id:"角色卡",        layer:7, cat:"char",     x:-380, y:60,   r:20, desc:"12张(8已设计)。赋予身份/被动技能/初始双维上限(3~7)。乐天派/幸运儿/倒霉蛋/外卖单王等。" },
+  { id:"个人目的卡",    layer:7, cat:"char",     x:-380, y:140,  r:16, desc:"24张。秘密生存目标。个人利益vs阵营利益。为双引擎提供动力叠加层。" },
+
+  // Layer 8: 机制
+  { id:"宣言抹除",      layer:8, cat:"mech",     x:-100, y:-380, r:18, desc:"推理出隐藏规则→公开宣言。猜对→规则进入被抹除区。猜错→理智-1。每回合每人1次。D智慧奖励。" },
+  { id:"质询",          layer:8, cat:"mech",     x:50,  y:-380,  r:16, desc:"怀疑鬼违规→即时质询。成立→鬼受损+质询者得免费宣言。不成立→理智-1。E奖赏奖励。" },
+  { id:"地图探索",      layer:8, cat:"mech",     x:-350, y:340,  r:18, desc:"回合玩家在官方补给和地图探索中二选一。cost健康-1。选地点→依次处理物资/事件/撞鬼。" },
+  { id:"官方补给",      layer:8, cat:"mech",     x:-350, y:260,  r:16, desc:"从官方物资牌库抽3张保障餐A。稳定但库存有限(18张用完即止)。健康≤0不可探索时的唯一选择。" },
+  { id:"交易",          layer:8, cat:"mech",     x:-480, y:260,  r:14, desc:"自愿行为，不限次数。限制：已使用物资不可变动；事件卡不可因规则外原因转移。" },
+  { id:"黎明扣除",      layer:8, cat:"mech",     x:-200, y:-200, r:16, desc:"每回合黎明：第1天-1/第2天-2/第3天起-3封顶。健康值递增扣除。存活3/6/9/12回合→F奖励。" },
+  { id:"撞鬼",          layer:8, cat:"mech",     x:-250, y:420,  r:16, desc:"地图探索含鬼地点。回合玩家→理智-1+激活特殊规则(不被同化)。非回合玩家→被同化。" },
+  { id:"获取机制A-F",   layer:8, cat:"mech",     x:-550, y:-50,  r:16, desc:"A初始/B效果/C不屈(死亡时全队抽)/D智慧(抹除2/4/6次)/E奖赏(质询成功)/F存活(3/6/9/12回合)。" },
+
+  // Layer 9: 物理/地图
+  { id:"堆叠面板",      layer:9, cat:"board",    x:350,  y:350,  r:16, desc:"六区域系统。左右上下+正面背面。卡牌从背面插入正面露出。已使用物资永久不可移动。" },
+  { id:"A市12地点",     layer:9, cat:"board",    x:-500, y:370,  r:16, desc:"东区6+西区6。医院/大学/酒吧/图书馆/写字楼/菜市场/大排档/羽毛球馆/博物馆/步行街/网吧/KTV。" },
+
+  // Layer 10: 终局
+  { id:"死亡",          layer:10, cat:"end",     x:150,  y:-380,  r:16, desc:"健康值≤0→玩家死亡，退出游戏。触发C-不屈获取(剩余全员各抽1张反击卡)。" },
+  { id:"化鬼",          layer:10, cat:"end",     x:280,  y:-360,  r:16, desc:"理智值≤0→被同化为鬼，加入鬼阵营。触发C-不屈获取。" },
+  { id:"人类胜利",      layer:10, cat:"end",     x:-350, y:-380, r:16, desc:"全部隐藏规则被宣言抹除→人类阵营胜利。" },
+  { id:"鬼胜利",        layer:10, cat:"end",     x:480,  y:-360,  r:16, desc:"全部人类死亡或化鬼→鬼阵营胜利。或固定回合结束。" },
+];
+
+const edges = [
+  // ── 规则卡 → 人类（触犯扣罚）──
+  { source:"隐藏规则", target:"人类玩家", type:"damage",   label:"触犯扣理智(T1-3/T2-2/T3-1)" },
+  { source:"公开规则", target:"人类玩家", type:"damage",   label:"公开约束行为" },
+  { source:"特殊规则卡",target:"人类玩家",type:"damage",   label:"撞鬼后约束人类(仅对人分区)" },
+
+  // ── 规则卡 → 鬼（持有+约束）──
+  { source:"隐藏规则", target:"鬼·煞鬼",   type:"hold",    label:"持有并操控（鬼的武器）" },
+  { source:"公开规则", target:"鬼·煞鬼",   type:"constrain",label:"鬼也须遵守公开规则" },
+  { source:"公开规则", target:"鬼·恶鬼",   type:"constrain",label:"鬼也须遵守公开规则" },
+  { source:"特殊规则卡",target:"鬼·煞鬼",  type:"constrain",label:"鬼也必须遵守→可质询" },
+  { source:"特殊规则卡",target:"鬼·恶鬼",  type:"constrain",label:"鬼也必须遵守→可质询" },
+
+  // ── 双维属性 → 人类存活 ──
+  { source:"健康值 HP",target:"人类玩家",  type:"death",    label:"≤0 → 死亡，退出游戏" },
+  { source:"理智值 SP",target:"人类玩家",  type:"death",    label:"≤0 → 被同化为鬼" },
+
+  // ── 双维属性 → 规则/机制（cost链接）──
+  { source:"健康值 HP",target:"地图探索",  type:"cost",     label:"探索cost：健康-1" },
+  { source:"健康值 HP",target:"宣言抹除",  type:"cost",     label:"部分反击卡cost：健康-1" },
+  { source:"理智值 SP",target:"宣言抹除",  type:"cost",     label:"猜错：理智-1" },
+  { source:"理智值 SP",target:"质询",      type:"cost",     label:"不成立：理智-1" },
+
+  // ── 黎明扣除 → 健康值 ──
+  { source:"黎明扣除", target:"健康值 HP", type:"damage",   label:"递增扣除(第1天-1/第2天-2/第3天起-3封顶)" },
+  { source:"黎明扣除", target:"人类玩家",  type:"reward",   label:"存活到3/6/9/12回合→F奖励(反击卡)" },
+
+  // ── 宣言抹除 → 规则 ──
+  { source:"宣言抹除", target:"隐藏规则",  type:"counter",  label:"猜对→抹除(进被抹除区)" },
+  { source:"宣言抹除", target:"人类胜利",  type:"reward",   label:"全部隐藏规则抹除=人类胜利" },
+  { source:"宣言抹除", target:"获取机制A-F",type:"reward",  label:"累计2/4/6次→D智慧(抽反击卡)" },
+
+  // ── 质询 → 鬼 ──
+  { source:"质询",     target:"鬼·煞鬼",   type:"counter",  label:"质询成立→鬼受损+免费宣言" },
+  { source:"质询",     target:"鬼·恶鬼",   type:"counter",  label:"质询成立→鬼受损" },
+  { source:"质询",     target:"获取机制A-F",type:"reward",  label:"质询成功→E奖赏(抽卡)" },
+
+  // ── 反击卡升级链 ──
+  { source:"反击·基础",target:"反击·觉醒", type:"upgrade",  label:"检索升级(回响→宿命回响;抗拒→封印→镇杀)" },
+  { source:"反击·觉醒",target:"反击·极致", type:"upgrade",  label:"升级链(封印弃置→激活镇杀)" },
+  { source:"反击·极致",target:"反击·真理", type:"upgrade",  label:"终局神器前置" },
+
+  // ── 反击卡 → 双维 ──
+  { source:"反击·基础",target:"健康值 HP", type:"restore",  label:"恢复健康/提升上限(强壮+1)" },
+  { source:"反击·基础",target:"理智值 SP", type:"restore",  label:"恢复理智/提升上限(振奋+1/突破+1+1)" },
+  { source:"反击·觉醒",target:"健康值 HP", type:"restore",  label:"生死之间→规则扣罚固定-1" },
+  { source:"反击·觉醒",target:"理智值 SP", type:"restore",  label:"清醒一点!!!→他人理智+3" },
+  { source:"反击·极致",target:"人类玩家",  type:"restore",  label:"地表最强人类→黎明不扣+免cost" },
+
+  // ── 反击卡 vs 怪谈卡 ──
+  { source:"反击·基础",target:"怪谈·流言", type:"counter",  label:"抗拒→无效化流言+异常" },
+  { source:"反击·觉醒",target:"怪谈·异常", type:"counter",  label:"封印→无效化流言+异常+怪诞" },
+  { source:"反击·极致",target:"怪谈·怪诞", type:"counter",  label:"镇杀→无效化全部四级怪谈" },
+  { source:"反击·极致",target:"怪谈·灾厄", type:"counter",  label:"镇杀→终结灾厄(代价=等额健康)" },
+
+  // ── 反击卡 → 人类/鬼 ──
+  { source:"反击·觉醒",target:"鬼·煞鬼",   type:"counter",  label:"我真是受够你了→物理殴打+理智-1" },
+  { source:"反击·觉醒",target:"鬼·恶鬼",   type:"counter",  label:"我真是受够你了→物理殴打+理智-1" },
+
+  // ── 怪谈卡 → 人类 ──
+  { source:"怪谈·流言",target:"人类玩家",  type:"damage",   label:"轻量干扰/社交破坏(做鬼脸/嘘/感情破裂等)" },
+  { source:"怪谈·异常",target:"人类玩家",  type:"damage",   label:"中等干扰/战术灵活(灵异干扰/即视感/鬼契等)" },
+  { source:"怪谈·怪诞",target:"人类玩家",  type:"damage",   label:"强力干扰/改变战局(吞噬恐惧/理智崩塌等)" },
+  { source:"怪谈·灾厄",target:"人类玩家",  type:"damage",   label:"极致效果/整局震撼(夺舍/末日等)" },
+
+  // ── 怪谈卡 → 鬼 ──
+  { source:"怪谈·流言",target:"鬼·煞鬼",   type:"hold",     label:"共享牌池(全部36张开局即拥有)" },
+  { source:"怪谈·异常",target:"鬼·煞鬼",   type:"hold",     label:"满足激活条件即可激活" },
+  { source:"怪谈·怪诞",target:"鬼·煞鬼",   type:"hold",     label:"已激活→全局共享→任何鬼可发动" },
+  { source:"怪谈·灾厄",target:"鬼·煞鬼",   type:"hold",     label:"激活/发动手续类同反击卡" },
+
+  // ── 怪谈·灾厄 → 鬼胜利 ──
+  { source:"怪谈·灾厄",target:"鬼胜利",    type:"win",      label:"我即是灾厄→鬼终极翻盘" },
+
+  // ── 物资 → 双维 ──
+  { source:"官方物资", target:"健康值 HP", type:"restore",  label:"保障餐A→健康+1" },
+  { source:"官方物资", target:"理智值 SP", type:"restore",  label:"保障餐A→理智+1" },
+  { source:"物资牌库", target:"健康值 HP", type:"restore",  label:"普通→绝顶物资渐进恢复健康(+1~+5)" },
+  { source:"物资牌库", target:"理智值 SP", type:"restore",  label:"可乐/豆汁/心灵鸡汤等→恢复理智(+1~+5)" },
+
+  // ── 官方补给 → 官方物资 ──
+  { source:"官方补给", target:"官方物资",   type:"source",   label:"每次抽3张保障餐A(18张耗尽为止)" },
+
+  // ── 地图探索 → 物资/撞鬼/反击卡 ──
+  { source:"地图探索", target:"物资牌库",   type:"source",   label:"按地点物资数量抽取物资" },
+  { source:"地图探索", target:"撞鬼",       type:"trigger",  label:"含鬼地点→触发撞鬼" },
+  { source:"地图探索", target:"获取机制A-F",type:"reward",   label:"含事件→抽反击卡(类B效果)" },
+
+  // ── 撞鬼 → 理智/规则/人类 ──
+  { source:"撞鬼",     target:"理智值 SP", type:"damage",   label:"回合玩家理智-1" },
+  { source:"撞鬼",     target:"特殊规则卡",type:"trigger",  label:"激活地点绑定的特殊规则" },
+  { source:"撞鬼",     target:"人类玩家",  type:"death",    label:"非回合玩家→被同化为鬼" },
+
+  // ── 交易 ──
+  { source:"交易",     target:"人类玩家",  type:"interact", label:"自愿交换物资/情报" },
+  { source:"交易",     target:"物资牌库",   type:"limit",    label:"已使用物资(插入面板)不可交易" },
+
+  // ── 获取机制 → 反击卡 ──
+  { source:"获取机制A-F",target:"反击·基础",type:"reward",  label:"A初始/C不屈/D智慧/E奖赏/F存活→获取反击卡" },
+  { source:"获取机制A-F",target:"反击·觉醒",type:"reward",  label:"随机抽取可能获得觉醒/极致/真理" },
+  { source:"获取机制A-F",target:"反击·极致",type:"reward",  label:"低概率(13%)获取极致卡" },
+  { source:"获取机制A-F",target:"反击·真理",type:"reward",  label:"极低概率(3%)获取真理卡" },
+
+  // ── 角色卡 → 人类/双维 ──
+  { source:"角色卡",   target:"人类玩家",  type:"define",   label:"赋予身份/被动技能" },
+  { source:"角色卡",   target:"健康值 HP", type:"define",   label:"初始上限(豪门之后3/标准6/乐天派7)" },
+  { source:"角色卡",   target:"理智值 SP", type:"define",   label:"初始上限(法医侦探7/标准6/豪门之后3)" },
+
+  // ── 个人目的卡 → 人类 ──
+  { source:"个人目的卡",target:"人类玩家", type:"motivate", label:"秘密目标→个人vs阵营张力" },
+
+  // ── AI市长 → 全局 ──
+  { source:"AI市长",   target:"人类玩家",  type:"judge",    label:"判定宣言质询/记录状态" },
+  { source:"AI市长",   target:"鬼·煞鬼",   type:"judge",    label:"生成煞鬼故事(每回合讲述)" },
+  { source:"AI市长",   target:"鬼·恶鬼",   type:"judge",    label:"记录化鬼/规则变更" },
+  { source:"AI市长",   target:"公开规则栏",type:"judge",    label:"管理四分区规则放置" },
+  { source:"AI市长",   target:"黎明扣除",  type:"judge",    label:"执行递增黎明扣除" },
+
+  // ── 公开规则栏 → 规则 ──
+  { source:"公开规则栏",target:"公开规则",  type:"manage",   label:"分区一/二/三管理公开规则" },
+  { source:"公开规则栏",target:"隐藏规则",  type:"manage",   label:"被抹除→分区四(被抹除规则区)" },
+  { source:"公开规则栏",target:"特殊规则卡",type:"manage",   label:"闹鬼/撞鬼→检索并置入" },
+
+  // ── 堆叠面板 → 玩家 ──
+  { source:"堆叠面板", target:"人类玩家",  type:"visualize",label:"六区域物理可视化：上=伤害/下=物资/左=怪谈/右=反击" },
+  { source:"堆叠面板", target:"鬼·煞鬼",   type:"visualize",label:"物理可视化伤害/增益/状态" },
+
+  // ── A市12地点 → 地图/规则 ──
+  { source:"A市12地点",target:"地图探索",  type:"location", label:"回合玩家选择地点探索" },
+  { source:"A市12地点",target:"特殊规则卡",type:"location", label:"每个地点绑定2张特殊规则" },
+
+  // ── 化鬼 → 恶鬼 ──
+  { source:"化鬼",     target:"鬼·恶鬼",   type:"death",    label:"理智≤0→同化为恶鬼" },
+  { source:"化鬼",     target:"获取机制A-F",type:"reward",   label:"死亡/化鬼→C不屈(全员抽反击卡)" },
+
+  // ── 死亡 → 不屈 ──
+  { source:"死亡",     target:"获取机制A-F",type:"reward",   label:"死亡→C不屈(剩余全员各抽1反击卡)" },
+
+  // ── 规则卡 ─ 规则栏反向 ──
+  { source:"隐藏规则", target:"公开规则栏",type:"manage",   label:"被抹除→分区四" },
+  { source:"特殊规则卡",target:"公开规则栏",type:"manage",  label:"闹鬼→检索置入分区一/撞鬼→分区二" },
+];
+
+// ─── Pre-compute positions ──────────────────────
+// Layer-based positioning with radial spread
+function prePosition(nodes) {
+  const layers = {};
+  nodes.forEach(n => {
+    if (!layers[n.layer]) layers[n.layer] = [];
+    layers[n.layer].push(n);
+  });
+
+  Object.keys(layers).sort((a,b)=>a-b).forEach((l,li) => {
+    const group = layers[l];
+    const n = group.length;
+
+    // Base angle and radius per layer
+    const baseAngle = (li * Math.PI / 5) + (Math.PI / 4);
+    const baseR = 80 + li * 90;
+
+    if (li === 0) {
+      // Special: player layer - position around center
+      group.forEach((node, i) => {
+        const angle = baseAngle + (i * 2 * Math.PI / n);
+        const r = 50 + i * 30;
+        node.fx = Math.cos(angle) * r;
+        node.fy = Math.sin(angle) * r;
+        node.x = node.fx;
+        node.y = node.fy;
+      });
+    } else {
+      // General: spread in arc
+      group.forEach((node, i) => {
+        const spreadAngle = Math.min(Math.PI * 1.5, n * 0.35);
+        const startAngle = baseAngle - spreadAngle / 2;
+        const angle = startAngle + (i / Math.max(n-1,1)) * spreadAngle;
+        node.fx = Math.cos(angle) * baseR;
+        node.fy = Math.sin(angle) * baseR;
+        node.x = node.fx;
+        node.y = node.fy;
+      });
+    }
+  });
+}
+
+prePosition(nodes);
+
+// ─── Color map ──────────────────────────────────
+const catColors = {
+  player:   "#d4853c",
+  dual:     "#e74c3c",
+  rules:    "#7B6F9E",
+  counter:  "#5ea86b",
+  whisper:  "#c0392b",
+  supply:   "#C8923E",
+  char:     "#d4853c",
+  mech:     "#4A90A4",
+  board:    "#C8923E",
+  end:      "#8b1a1a",
+};
+
+const edgeColors = {
+  damage:    "#c0392b",
+  restore:   "#5ea86b",
+  counter:   "#4A90A4",
+  cost:      "#C8923E",
+  hold:      "#7B6F9E",
+  constrain: "#d4853c",
+  upgrade:   "#5ea86b",
+  reward:    "#5ea86b",
+  source:    "#C8923E",
+  trigger:   "#c0392b",
+  define:    "#d4853c",
+  motivate:  "#C8923E",
+  judge:     "#6b7b8d",
+  manage:    "#4A90A4",
+  visualize: "#d4853c",
+  location:  "#C8923E",
+  death:     "#8b1a1a",
+  win:       "#7B6F9E",
+  interact:  "#C8923E",
+  limit:     "#C8923E",
+};
+
+// ─── SVG Setup ──────────────────────────────────
+const svg = d3.select("#graph");
+const width = window.innerWidth;
+const height = window.innerHeight;
+
+svg.attr("viewBox", [-width/2, -height/2, width, height]);
+
+const g = svg.append("g");
+
+// Zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.15, 4])
+  .on("zoom", (event) => {
+    g.attr("transform", event.transform);
+  });
+
+svg.call(zoom);
+
+// ─── Edge rendering ─────────────────────────────
+// Arrow markers
+const defs = svg.append("defs");
+Object.entries(edgeColors).forEach(([type, color]) => {
+  defs.append("marker")
+    .attr("id", `arrow-${type}`)
+    .attr("viewBox", "0 -4 8 8")
+    .attr("refX", 16)
+    .attr("refY", 0)
+    .attr("markerWidth", 5)
+    .attr("markerHeight", 5)
+    .attr("orient", "auto")
+    .append("path")
+    .attr("d", "M0,-4L8,0L0,4")
+    .attr("fill", color)
+    .attr("opacity", 0.7);
+});
+
+// Edge groups
+const linkGroup = g.append("g").attr("class", "links");
+const edgeLabelGroup = g.append("g").attr("class", "edge-labels");
+const nodeGroup = g.append("g").attr("class", "nodes");
+
+// Lookup
+const nodeMap = {};
+nodes.forEach(n => { nodeMap[n.id] = n; });
+
+// Edges
+const linkElements = linkGroup.selectAll("line")
+  .data(edges)
+  .join("line")
+  .attr("stroke", d => edgeColors[d.type] || "#555")
+  .attr("stroke-width", d => d.type === "damage" || d.type === "death" ? 1.8 :
+    d.type === "counter" || d.type === "restore" ? 1.5 :
+    d.type === "hold" || d.type === "win" ? 1.4 : 0.9)
+  .attr("stroke-opacity", d => d.type === "damage" || d.type === "death" ? 0.6 :
+    d.type === "counter" ? 0.55 : 0.35)
+  .attr("stroke-dasharray", d => d.type === "upgrade" ? "4,3" :
+    d.type === "reward" ? "3,3" :
+    d.type === "constrain" ? "6,4" : null)
+  .attr("marker-end", d => `url(#arrow-${d.type})`);
+
+// Edge labels
+const edgeLabels = edgeLabelGroup.selectAll("text")
+  .data(edges)
+  .join("text")
+  .attr("class", "edge-label")
+  .attr("text-anchor", "middle")
+  .attr("dy", -4)
+  .text(d => d.label.length > 18 ? d.label.substring(0,16)+"…" : d.label)
+  .attr("opacity", 0);
+
+// ─── Node rendering ─────────────────────────────
+const nodeElements = nodeGroup.selectAll("g")
+  .data(nodes)
+  .join("g")
+  .attr("class", "node-group")
+  .call(d3.drag()
+    .on("start", dragStarted)
+    .on("drag", dragged)
+    .on("end", dragEnded));
+
+// Outer glow ring
+nodeElements.append("circle")
+  .attr("r", d => d.r + 8)
+  .attr("fill", "none")
+  .attr("stroke", d => catColors[d.cat] || "#888")
+  .attr("stroke-width", 1)
+  .attr("stroke-opacity", 0.25);
+
+// Main circle
+nodeElements.append("circle")
+  .attr("r", d => d.r)
+  .attr("fill", d => {
+    const c = catColors[d.cat] || "#888";
+    return d3.interpolate(c, "#0a0a0f")(0.7);
+  })
+  .attr("stroke", d => catColors[d.cat] || "#888")
+  .attr("stroke-width", 2)
+  .attr("stroke-opacity", 0.8);
+
+// Inner accent
+nodeElements.append("circle")
+  .attr("r", d => d.r - 4)
+  .attr("fill", "none")
+  .attr("stroke", d => catColors[d.cat] || "#888")
+  .attr("stroke-width", 0.5)
+  .attr("stroke-opacity", 0.4);
+
+// Label
+nodeElements.append("text")
+  .attr("class", "node-label")
+  .attr("dy", d => d.r + 14)
+  .text(d => d.id);
+
+// ─── Simulation ─────────────────────────────────
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(edges).id(d => d.id).distance(d => {
+    if (d.type === "upgrade") return 60;
+    if (d.type === "damage" || d.type === "death") return 140;
+    if (d.type === "counter") return 130;
+    if (d.type === "hold") return 100;
+    return 120;
+  }).strength(d => d.type === "upgrade" ? 0.3 : 0.1))
+  .force("charge", d3.forceManyBody().strength(-300))
+  .force("center", d3.forceCenter(0, 0))
+  .force("collision", d3.forceCollide().radius(d => d.r + 12))
+  .force("x", d3.forceX(d => d.fx || 0).strength(0.05))
+  .force("y", d3.forceY(d => d.fy || 0).strength(0.05))
+  .alphaDecay(0.02)
+  .on("tick", ticked);
+
+function ticked() {
+  linkElements
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+
+  edgeLabels
+    .attr("x", d => (d.source.x + d.target.x) / 2)
+    .attr("y", d => (d.source.y + d.target.y) / 2);
+
+  nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
+}
+
+// ─── Drag ───────────────────────────────────────
+function dragStarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  delete d.fx;
+  delete d.fy;
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+
+function dragEnded(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = event.x;
+  d.fy = event.y;
+}
+
+// ─── Interaction ────────────────────────────────
+const tooltip = d3.select("#tooltip");
+
+nodeElements
+  .on("mouseenter", function(event, d) {
+    const connectedEdges = edges.filter(e => e.source.id === d.id || e.target.id === d.id);
+
+    let html = `<div class="tt-title" style="color:${catColors[d.cat]}">${d.id}</div>`;
+    html += `<div class="tt-desc">${d.desc}</div>`;
+    if (connectedEdges.length > 0) {
+      html += `<div class="tt-edges">`;
+      connectedEdges.slice(0, 8).forEach(e => {
+        const isSource = e.source.id === d.id;
+        const other = isSource ? e.target.id : e.source.id;
+        const arrow = isSource ? "→" : "←";
+        const ec = edgeColors[e.type];
+        html += `<div class="tt-edge"><span class="dot" style="background:${ec}"></span>${arrow} <b>${other}</b>: ${e.label}</div>`;
+      });
+      if (connectedEdges.length > 8) {
+        html += `<div class="tt-edge" style="color:#666">…还有 ${connectedEdges.length-8} 条关系</div>`;
+      }
+      html += `</div>`;
+    }
+
+    tooltip.html(html)
+      .style("opacity", 1)
+      .style("left", (event.pageX + 15) + "px")
+      .style("top", (event.pageY - 10) + "px");
+
+    // Highlight connected
+    nodeElements.selectAll("circle:first-of-type")
+      .attr("stroke-opacity", n => {
+        if (n.id === d.id) return 1;
+        const connected = edges.some(e =>
+          (e.source.id === d.id && e.target.id === n.id) ||
+          (e.target.id === d.id && e.source.id === n.id));
+        return connected ? 0.8 : 0.25;
+      });
+  })
+  .on("mousemove", function(event) {
+    tooltip
+      .style("left", (event.pageX + 15) + "px")
+      .style("top", (event.pageY - 10) + "px");
+  })
+  .on("mouseleave", function() {
+    tooltip.style("opacity", 0);
+    nodeElements.selectAll("circle:first-of-type").attr("stroke-opacity", 0.25);
+  })
+  .on("click", function(event, d) {
+    // Center on node
+    const transform = d3.zoomIdentity
+      .translate(width/2 - d.x, height/2 - d.y)
+      .scale(1.8);
+    svg.transition().duration(500).call(zoom.transform, transform);
+  });
+
+// ─── Controls ───────────────────────────────────
+d3.select("#btnReset").on("click", () => {
+  nodes.forEach(n => {
+    n.fx = null; n.fy = null;
+    n.x = n._ox || 0;
+    n.y = n._oy || 0;
+  });
+  prePosition(nodes);
+  simulation.alpha(0.5).restart();
+});
+
+d3.select("#btnLabels").on("click", function() {
+  const btn = d3.select(this);
+  const visible = btn.classed("active");
+  btn.classed("active", !visible);
+  nodeElements.selectAll(".node-label")
+    .transition().duration(300)
+    .attr("opacity", visible ? 0 : 1);
+});
+
+d3.select("#btnEdges").on("click", function() {
+  const btn = d3.select(this);
+  const visible = btn.classed("active");
+  btn.classed("active", !visible);
+  edgeLabels
+    .transition().duration(300)
+    .attr("opacity", visible ? 0 : 0.8);
+});
+
+d3.select("#btnFit").on("click", () => {
+  svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+});
+
+// ─── Search ─────────────────────────────────────
+d3.select("#searchInput").on("input", function() {
+  const query = this.value.toLowerCase();
+  if (!query) {
+    nodeElements.selectAll("circle:first-of-type").attr("stroke-opacity", 0.25);
+    nodeElements.attr("opacity", 1);
+    linkElements.attr("stroke-opacity", d => d.type === "damage" ? 0.6 : 0.35);
+    return;
+  }
+
+  nodeElements.each(function(d) {
+    const match = d.id.toLowerCase().includes(query) || d.desc.toLowerCase().includes(query);
+    d3.select(this).attr("opacity", match ? 1 : 0.2);
+    if (match) {
+      d3.select(this).selectAll("circle:first-of-type").attr("stroke-opacity", 1);
+    }
+  });
+
+  linkElements.attr("stroke-opacity", d => {
+    const sMatch = d.source.id.toLowerCase().includes(query) || d.source.desc.toLowerCase().includes(query);
+    const tMatch = d.target.id.toLowerCase().includes(query) || d.target.desc.toLowerCase().includes(query);
+    return (sMatch || tMatch) ? 0.7 : 0.08;
+  });
+});
+
+// ─── Save initial positions ────────────────────
+nodes.forEach(n => { n._ox = n.x; n._oy = n.y; });
+
+// ─── Initial zoom to fit ────────────────────────
+setTimeout(() => {
+  svg.transition().duration(800).call(zoom.transform, d3.zoomIdentity.translate(40, 20).scale(0.85));
+}, 500);
+
+console.log(`概念关系图已就绪：${nodes.length}个节点，${edges.length}条关系边`);
+</script>
+</body>
+</html>

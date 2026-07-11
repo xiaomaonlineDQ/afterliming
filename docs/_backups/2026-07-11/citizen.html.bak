@@ -1,0 +1,3389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>市民面板 — 黎明之后</title>
+<link rel="stylesheet" href="css/main.css?v=2026070821">
+<script src="js/data.js?v=2026070821"></script>
+<script src="js/app.js?v=2026070821"></script>
+<style>
+.citizen-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部状态栏 */
+.citizen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.citizen-header .home-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.82rem;
+  padding: 4px 0;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.citizen-header .home-link:hover { color: var(--text-primary); }
+
+.citizen-header .user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.citizen-header .avatar-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.citizen-header .avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.citizen-header .name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.citizen-header .status-badge {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(46,134,193,0.15);
+  color: var(--color-counter-glow);
+}
+.citizen-header .status-badge.ghost {
+  background: rgba(192,57,43,0.15);
+  color: var(--color-whisper-glow);
+}
+.citizen-header .status-badge.evil {
+  background: rgba(192,57,43,0.2);
+  color: #ff4444;
+}
+.citizen-header .logout-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.citizen-header .logout-btn:hover {
+  border-color: var(--color-whisper);
+  color: var(--color-whisper-glow);
+}
+
+/* ====== 测试区通用 ====== */
+.test-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.test-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.test-tab {
+  flex: 1;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-sans);
+}
+.test-tab.active {
+  color: var(--color-counter-glow);
+  border-bottom-color: var(--color-counter-glow);
+  background: rgba(46,134,193,0.06);
+}
+.test-panel { display: none; flex-direction: column; padding: 16px; gap: 16px; flex: 1; align-items: center; }
+.test-panel.active { display: flex; }
+.test-hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 8px 0;
+}
+.test-status {
+  margin-top: auto;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-align: center;
+  border: 1px solid var(--border-subtle);
+}
+
+/* ====== 翻面卡片 ====== */
+.flip-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 8px 0;
+}
+.flip-card-wrap {
+  perspective: 800px;
+  width: 140px;
+  height: 196px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card-wrap.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+.flip-card-face {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.flip-front {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+}
+.flip-front img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.flip-front .flip-front-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: var(--color-counter-glow);
+}
+.flip-front-fallback .ff-icon { font-size: 2rem; opacity: 0.6; }
+.flip-front-fallback .ff-label { font-size: 0.7rem; opacity: 0.5; }
+.flip-back {
+  transform: rotateY(180deg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+}
+.flip-back img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.flip-back .flip-back-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(10,10,15,0.85);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.flip-back-info .fbi-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.flip-back-info .fbi-level {
+  font-size: 0.7rem;
+  color: var(--color-counter-glow);
+}
+.flip-card-wrap.flipped {
+  filter: drop-shadow(0 0 8px rgba(52,152,219,0.3));
+}
+
+/* ====== 堆叠效果 ====== */
+/* 
+  设计依据（美术Skill第13节）：
+  - 角色卡: 1920×2685px (3x of 640×895)
+  - 反击卡: 630×880px (1x)，数值栏右侧25%(X:472→630, 宽158px)
+  - 物理尺寸: 均为63×88mm
+  - 反击卡从角色卡右侧平行插入，等距50px露出
+  - 先添加的卡更靠近角色卡（更高z-index + 更大right偏移）
+*/
+.stack-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+  width: 100%;
+  max-width: 520px;
+}
+/* 堆叠主容器：宽度由JS动态设置 */
+.stack-card-area {
+  position: relative;
+  height: 280px;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: width 0.35s ease;
+}
+/* 反击卡层（在角色卡下方，平行堆叠，top始终为0） */
+.stack-counter {
+  position: absolute;
+  top: 0; /* 严格平行！ */
+  width: 200px; height: 280px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  background: var(--bg-card);
+  transition: right 0.35s ease, opacity 0.25s;
+  cursor: pointer;
+}
+.stack-counter img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.stack-counter .stack-counter-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.7);
+  color: var(--color-counter-glow);
+  font-size: 0.65rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.stack-counter:hover .stack-counter-label {
+  opacity: 1;
+}
+/* 点击移除提示 */
+.stack-counter.removing {
+  transform: scale(0.9);
+  opacity: 0.5;
+}
+
+/* 角色卡（最上层） */
+.stack-character {
+  position: absolute;
+  top: 0; left: 0;
+  width: 200px; height: 280px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 2px solid var(--color-character);
+  z-index: 10;
+  background: var(--bg-card);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.stack-character img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.stack-char-fallback {
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #2d1b3d 0%, #1a1a2e 100%);
+  border: 1px solid var(--color-character);
+}
+.stack-char-icon { font-size: 3rem; }
+.stack-char-label {
+  color: var(--color-character-glow);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* 堆叠数量徽章 */
+.stack-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: var(--color-counter);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(46,134,193,0.5);
+  z-index: 20;
+  pointer-events: none;
+  transition: transform 0.2s;
+}
+.stack-badge.pulse {
+  animation: badgePulse 0.35s ease-out;
+}
+@keyframes badgePulse {
+  0% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+/* ====== 卡片池选择器 ====== */
+.stack-pool {
+  width: 100%;
+  max-width: 460px;
+}
+.stack-pool-title {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.stack-pool-title .sep { opacity: 0.3; }
+.stack-pool-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.stack-pool-card {
+  width: 88px;
+  height: 123px;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s, border-color 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  border: 2px solid transparent;
+  background: var(--bg-card);
+  position: relative;
+}
+.stack-pool-card:active { transform: scale(0.95); }
+.stack-pool-card.selected {
+  border-color: var(--color-counter);
+  box-shadow: 0 0 10px rgba(46,134,193,0.35);
+}
+.stack-pool-card.selected img {
+  filter: brightness(1.1);
+}
+.stack-pool-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--color-counter);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+.stack-pool-card img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.stack-pool-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 3px 4px;
+  background: rgba(0,0,0,0.75);
+  color: var(--text-secondary);
+  font-size: 0.58rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 图例 */
+.stack-legend {
+  display: flex;
+  gap: 20px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.stack-legend span { display: flex; align-items: center; gap: 4px; }
+.stack-legend .dot { width: 8px; height: 8px; border-radius: 2px; }
+.stack-legend .dot.r { background: var(--color-counter-glow); }
+.stack-legend .dot.s { background: var(--color-supply-glow); }
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+  .stack-card-area {
+    height: 210px;
+  }
+  .stack-character {
+    width: 150px; height: 210px;
+  }
+  .stack-counter {
+    width: 150px; height: 210px;
+  }
+  .stack-pool-card {
+    width: 72px; height: 101px;
+  }
+}
+
+/* ====== 复合堆叠场景 ====== */
+/*
+  四方向堆叠公式（以角色卡左上角(charLeft, charTop)为锚点）：
+  - 右(反击卡 step=50): card[i].left = charLeft + step*(i+1), z=N-i
+  - 左(怪谈卡 step=50): card[i] fills [charLeft-step*(i+1), charLeft+charW-step*(i+1)]
+  - 上(伤害指示卡 step=50 h=140): card[i] fills [charTop-step*(i+1), charTop+damageH-step*(i+1)]
+  - 下(物资卡 step=70 h=280): card[i] fills [charTop+step*(i+1), charTop+step*(i+1)+charH]
+*/
+.comp-scene-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+.comp-scene {
+  position: relative;
+  width: 540px;
+  height: 700px;
+  margin: 0 auto;
+  background: radial-gradient(ellipse at center, rgba(46,134,193,0.04) 0%, transparent 70%);
+  border: 1px dashed rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+/* 角色卡（锚点） */
+.comp-char {
+  position: absolute;
+  width: 200px; height: 280px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(255,255,255,0.1), var(--shadow-lg);
+  border: 2px solid var(--color-character);
+  z-index: 100;
+  background: var(--bg-card);
+}
+.comp-char img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 方向标签（场景内小标注） */
+.comp-dir-label {
+  position: absolute;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 5;
+  letter-spacing: 0.05em;
+}
+
+/* 基础堆叠卡片样式（四个方向共用） */
+.comp-card {
+  position: absolute;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  background: var(--bg-card);
+  transition: left 0.35s ease, right 0.35s ease, top 0.35s ease, bottom 0.35s ease, opacity 0.25s;
+  cursor: pointer;
+}
+.comp-card img { width: 100%; height: 100%; object-fit: cover; }
+.comp-card .comp-card-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 2px 4px;
+  background: rgba(0,0,0,0.75);
+  color: var(--text-muted);
+  font-size: 0.52rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.comp-card:hover .comp-card-label { opacity: 1; }
+.comp-card.removing { transform: scale(0.9); opacity: 0.5; }
+
+/* 各方向颜色提示 */
+.comp-right { box-shadow: 0 2px 8px rgba(46,134,193,0.25); }
+.comp-left  { box-shadow: 0 2px 8px rgba(192,57,43,0.25); }
+.comp-top    { box-shadow: 0 2px 8px rgba(231,76,60,0.25); }
+.comp-bottom { box-shadow: 0 2px 8px rgba(39,174,96,0.25); }
+.comp-right  .comp-card-label  { color: var(--color-counter-glow); }
+.comp-left   .comp-card-label  { color: var(--color-whisper-glow); }
+.comp-top    .comp-card-label  { color: #e74c3c; }
+.comp-bottom .comp-card-label  { color: var(--color-supply-glow); }
+
+/* 四个卡片池（场景下方） */
+.comp-pools {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comp-pool-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.comp-pool-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+.comp-pool-label.l-right  { color: var(--color-counter-glow); }
+.comp-pool-label.l-left   { color: var(--color-whisper-glow); }
+.comp-pool-label.l-top    { color: #e74c3c; }
+.comp-pool-label.l-bottom { color: var(--color-supply-glow); }
+.comp-pool-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.comp-pool-card {
+  width: 72px;
+  height: 101px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.2s;
+  border: 2px solid transparent;
+  background: var(--bg-card);
+  position: relative;
+}
+.comp-pool-card:active { transform: scale(0.95); }
+.comp-pool-card.stacked {
+  border-color: var(--color-counter);
+  filter: brightness(0.7);
+}
+.comp-pool-card img { width: 100%; height: 100%; object-fit: cover; }
+
+.comp-legend-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 4px;
+}
+.comp-legend-bar span { display: flex; align-items: center; gap: 3px; }
+.comp-legend-bar .cldot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+
+/* 复合场景移动端 */
+@media (max-width: 600px) {
+  .comp-scene {
+    width: 340px;
+    height: 480px;
+  }
+  .comp-char {
+    width: 130px; height: 182px;
+  }
+  .comp-pool-card {
+    width: 56px; height: 78px;
+  }
+  .comp-pool-label {
+    font-size: 0.65rem;
+    min-width: 56px;
+  }
+}
+
+/* ============================================================
+   Tab 4: 实战面板 — 市民个人游戏面板
+   ============================================================ */
+
+/* -- 回合指示卡 -- */
+.turn-indicator {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+.turn-indicator .ti-round {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.turn-indicator .ti-round-num {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-counter-glow);
+  line-height: 1;
+}
+.turn-indicator .ti-round-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.turn-indicator .ti-sep {
+  width: 1px;
+  height: 32px;
+  background: var(--border-subtle);
+}
+.turn-indicator .ti-phase {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-xl);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.turn-indicator .ti-phase.dawn {
+  background: rgba(212,160,23,0.12);
+  color: var(--color-rule-glow);
+}
+.turn-indicator .ti-phase.day {
+  background: rgba(46,134,193,0.12);
+  color: var(--color-counter-glow);
+}
+.turn-indicator .ti-phase.dusk {
+  background: rgba(192,57,43,0.12);
+  color: var(--color-whisper-glow);
+}
+.turn-indicator .ti-phase.night {
+  background: rgba(142,68,173,0.12);
+  color: var(--color-character-glow);
+}
+.turn-indicator .ti-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.turn-indicator .ti-player.active-turn {
+  border-color: var(--color-counter);
+  box-shadow: 0 0 8px rgba(46,134,193,0.25);
+}
+.turn-indicator .ti-player .ti-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.turn-indicator .ti-player .ti-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.turn-indicator .ti-player .ti-name {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.turn-indicator .ti-arrow {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  animation: pulse 1.5s infinite;
+}
+
+/* -- 搜索框 + 建议下拉 -- */
+.search-wrap {
+  position: relative;
+  width: 100%;
+  z-index: 10;
+}
+.search-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-input-group:focus-within {
+  border-color: var(--color-counter);
+  box-shadow: 0 0 0 2px rgba(46,134,193,0.12);
+}
+.search-input-group .s-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.search-input-group .s-input {
+  flex: 1;
+  padding: 10px 12px 10px 0;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  outline: none;
+  min-width: 0;
+}
+.search-input-group .s-input::placeholder {
+  color: var(--text-muted);
+}
+.search-input-group .s-clear {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-right: 4px;
+  border-radius: 50%;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  visibility: hidden;
+}
+.search-input-group .s-clear.visible {
+  visibility: visible;
+}
+.search-input-group .s-clear:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* 搜索建议下拉 */
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: var(--shadow-lg);
+  display: none;
+}
+.search-suggestions.show {
+  display: block;
+  animation: fadeInUp 0.2s ease;
+}
+.search-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.search-suggestion-item:last-child {
+  border-bottom: none;
+}
+.search-suggestion-item:hover,
+.search-suggestion-item.focused {
+  background: var(--bg-hover);
+}
+.search-suggestion-item .ssi-thumb {
+  width: 36px; height: 50px;
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-card);
+}
+.search-suggestion-item .ssi-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.search-suggestion-item .ssi-info {
+  flex: 1;
+  min-width: 0;
+}
+.search-suggestion-item .ssi-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-suggestion-item .ssi-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.search-suggestion-item .ssi-type {
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.search-suggestion-item .ssi-type.t-counter { background: rgba(46,134,193,0.15); color: var(--color-counter-glow); }
+.search-suggestion-item .ssi-type.t-whisper { background: rgba(192,57,43,0.15); color: var(--color-whisper-glow); }
+.search-suggestion-item .ssi-type.t-supply { background: rgba(160,82,45,0.15); color: var(--color-supply-glow); }
+.search-suggestion-item .ssi-type.t-rule { background: rgba(212,160,23,0.15); color: var(--color-rule-glow); }
+.search-suggestion-item .ssi-type.t-character { background: rgba(142,68,173,0.15); color: var(--color-character-glow); }
+.search-suggestion-item .ssi-type.t-goal { background: rgba(39,174,96,0.15); color: var(--color-goal-glow); }
+.search-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+/* -- 手牌展示区 -- */
+.hand-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.hand-header .hand-title {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hand-header .hand-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 2px 10px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+}
+.hand-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 10px 0;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-medium) transparent;
+}
+.hand-strip::-webkit-scrollbar { height: 4px; }
+.hand-strip::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 2px; }
+
+.hand-card {
+  flex-shrink: 0;
+  width: 100px;
+  height: 140px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: all 0.25s;
+  scroll-snap-align: start;
+  position: relative;
+  border: 2px solid transparent;
+}
+.hand-card:hover,
+.hand-card.selected {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  border-color: var(--color-counter);
+}
+.hand-card.selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 2px var(--color-counter-glow);
+  border-radius: calc(var(--radius-md) - 2px);
+  pointer-events: none;
+}
+.hand-card img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.hand-card .hand-card-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 5px 6px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.hand-card:hover .hand-card-overlay,
+.hand-card.selected .hand-card-overlay {
+  opacity: 1;
+}
+.hand-card .hand-card-name {
+  font-size: 0.62rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hand-card .hand-card-type {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.hand-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  width: 100%;
+}
+
+/* -- 手牌详情弹窗 (选中卡片) -- */
+.hand-detail-mini {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: fadeInUp 0.25s ease;
+}
+.hand-detail-mini .hdm-thumb {
+  width: 60px; height: 84px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-card);
+}
+.hand-detail-mini .hdm-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.hand-detail-mini .hdm-info {
+  flex: 1;
+  min-width: 0;
+}
+.hand-detail-mini .hdm-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.hand-detail-mini .hdm-level {
+  font-size: 0.72rem;
+  color: var(--color-counter-glow);
+  margin-bottom: 4px;
+}
+.hand-detail-mini .hdm-effect {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hand-detail-mini .hdm-activate {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-counter);
+  color: #fff;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+.hand-detail-mini .hdm-activate:hover {
+  background: var(--color-counter-glow);
+  box-shadow: 0 0 12px rgba(46,134,193,0.4);
+}
+
+/* -- 回合按钮区 -- */
+.action-bar {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+}
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.action-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 13px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+.action-btn:active {
+  transform: scale(0.97);
+}
+.action-btn .ab-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.action-btn .ab-label {
+  font-size: 0.8rem;
+}
+.action-btn:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-hover);
+}
+.action-btn.primary-action {
+  background: linear-gradient(135deg, var(--color-counter), #2471a3);
+  border-color: var(--color-counter);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(46,134,193,0.25);
+  flex: 1.5;
+}
+.action-btn.primary-action:hover {
+  box-shadow: 0 0 24px rgba(46,134,193,0.4);
+  transform: translateY(-1px);
+}
+.action-btn.primary-action:active {
+  transform: translateY(0) scale(0.97);
+}
+.action-btn.danger-action {
+  border-color: rgba(192,57,43,0.3);
+  background: rgba(192,57,43,0.08);
+}
+.action-btn.danger-action:hover {
+  border-color: var(--color-whisper);
+  background: rgba(192,57,43,0.15);
+  color: var(--color-whisper-glow);
+}
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(0.3);
+}
+.action-btn .ab-hotkey {
+  position: absolute;
+  top: 4px; right: 6px;
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  letter-spacing: 0.05em;
+}
+
+/* 准备状态指示 */
+.action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.action-badge.ready {
+  background: rgba(39,174,96,0.12);
+  color: var(--success);
+  animation: pulse 2s infinite;
+}
+.action-badge.waiting {
+  background: rgba(243,156,18,0.12);
+  color: var(--warning);
+}
+.action-badge.used {
+  background: rgba(127,140,141,0.12);
+  color: var(--text-muted);
+}
+
+/* -- 状态面板 (固定底部) -- */
+.status-panel {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.status-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.status-item .si-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.status-item .si-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.status-item .si-bar-wrap {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-hover);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.status-item .si-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.si-health .si-value { color: var(--success); }
+.si-health .si-bar { background: var(--success); }
+.si-sanity .si-value { color: var(--color-character-glow); }
+.si-sanity .si-bar { background: var(--color-character-glow); }
+.si-gold .si-value { color: var(--color-rule-glow); }
+.si-gold .si-bar { background: var(--color-rule-glow); }
+.si-status .si-value { font-size: 0.85rem; font-weight: 600; }
+.si-status .si-value.alive { color: var(--success); }
+.si-status .si-value.ghost { color: var(--color-whisper-glow); }
+.si-status .si-value.dead { color: var(--text-muted); }
+
+/* -- 日志区域 -- */
+.game-log {
+  width: 100%;
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.game-log .log-line {
+  display: flex;
+  gap: 8px;
+  line-height: 1.5;
+  align-items: baseline;
+}
+.game-log .log-time {
+  color: var(--border-medium);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+.game-log .log-text { color: var(--text-secondary); }
+.game-log .log-text.log-action { color: var(--color-counter-glow); }
+.game-log .log-text.log-danger { color: var(--color-whisper-glow); }
+.game-log .log-text.log-system { color: var(--color-rule-glow); }
+
+/* -- 确认对话框遮罩 -- */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInUp 0.2s ease;
+}
+.confirm-dialog {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+.confirm-dialog .cd-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.confirm-dialog .cd-body {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.confirm-dialog .cd-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.confirm-dialog .cd-btn {
+  padding: 10px 24px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+.confirm-dialog .cd-btn.confirm {
+  background: var(--color-counter);
+  color: #fff;
+}
+.confirm-dialog .cd-btn.confirm:hover {
+  background: var(--color-counter-glow);
+}
+.confirm-dialog .cd-btn.cancel {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+.confirm-dialog .cd-btn.cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* -- 玩家列表 -- */
+.player-list {
+  width: 100%;
+  display: flex;
+  gap: 6px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.player-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 44px;
+  position: relative;
+}
+.player-dot.current {
+  border-color: var(--color-counter);
+  box-shadow: 0 0 10px rgba(46,134,193,0.3);
+}
+.player-dot.me {
+  background: rgba(46,134,193,0.08);
+}
+.player-dot .pd-avatar {
+  font-size: 1rem;
+  line-height: 1;
+}
+.player-dot .pd-name {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  max-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-dot .pd-hp {
+  width: 100%;
+  height: 2px;
+  background: var(--bg-hover);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.player-dot .pd-hp-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 1px;
+}
+
+/* -- 物资选择面板 -- */
+.supply-selector, .declare-selector {
+  width: 100%;
+  padding: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  animation: fadeInUp 0.2s ease;
+}
+.selector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.selector-header .sh-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.selector-header .sh-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+.selector-grid {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+}
+.selector-item {
+  flex-shrink: 0;
+  width: 80px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.selector-item:hover { transform: translateY(-3px); }
+.selector-item .si-thumb {
+  width: 80px; height: 112px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  margin-bottom: 4px;
+}
+.selector-item .si-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.selector-item .si-name {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.selector-item .si-effect {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.selector-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* -- 宣言弹窗 -- */
+.declare-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInUp 0.25s ease;
+}
+.declare-modal .dm-dialog {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  max-width: 420px;
+  width: 92%;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.declare-modal .dm-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+.declare-modal .dm-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.declare-modal .dm-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  margin-bottom: 10px;
+  outline: none;
+}
+.declare-modal .dm-input:focus {
+  border-color: var(--color-counter);
+}
+.declare-modal .dm-targets {
+  margin-bottom: 12px;
+}
+.declare-modal .dm-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.declare-modal .dm-target:hover { background: var(--bg-hover); }
+.declare-modal .dm-target.selected {
+  background: rgba(46,134,193,0.12);
+  border: 1px solid var(--color-counter);
+}
+.declare-modal .dm-radio {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border-medium);
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.declare-modal .dm-target.selected .dm-radio {
+  border-color: var(--color-counter);
+  background: var(--color-counter);
+  box-shadow: inset 0 0 0 3px var(--bg-surface);
+}
+.declare-modal .dm-target .dm-target-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.declare-modal .dm-target .dm-target-hint {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+.declare-modal .dm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.declare-modal .dm-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.2s;
+}
+.declare-modal .dm-btn.primary {
+  background: var(--color-counter);
+  color: #fff;
+}
+.declare-modal .dm-btn.primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.declare-modal .dm-btn.primary:hover:not(:disabled) {
+  background: var(--color-counter-glow);
+}
+.declare-modal .dm-btn.cancel {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Tab 4 移动端适配 */
+@media (max-width: 600px) {
+  .turn-indicator {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .turn-indicator .ti-round-num {
+    font-size: 1.1rem;
+  }
+  .turn-indicator .ti-phase {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+  }
+  .hand-card {
+    width: 82px; height: 115px;
+  }
+  .action-btn {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  .action-btn .ab-icon {
+    font-size: 1.1rem;
+  }
+  .status-panel {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .status-item .si-value {
+    font-size: 1.1rem;
+  }
+  .hand-detail-mini {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .hand-detail-mini .hdm-activate {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
+</head>
+<body class="citizen-page">
+
+<!-- 顶部 -->
+<div class="citizen-header">
+  <a href="index.html" class="home-link" title="返回首页">← 首页</a>
+  <div class="user-info">
+    <div class="avatar-small" id="headerAvatar">
+      <span style="font-size:1.2rem;">👤</span>
+    </div>
+    <span class="name" id="headerName">市民</span>
+  </div>
+  <span class="status-badge" id="statusBadge" onclick="toggleStatus()" title="点击切换状态">市民</span>
+  <button class="logout-btn" onclick="logout()">退出</button>
+</div>
+
+<!-- ====== 翻面+堆叠 原型测试区 ====== -->
+<div class="test-container">
+
+  <!-- Tab 切换 -->
+  <div class="test-tabs">
+    <button class="test-tab" data-tab="flip" onclick="switchTab('flip')">🃏 翻面测试</button>
+    <button class="test-tab" data-tab="stack" onclick="switchTab('stack')">📚 堆叠测试</button>
+    <button class="test-tab" data-tab="composite" onclick="switchTab('composite')">🔀 复合堆叠</button>
+    <button class="test-tab active" data-tab="play" onclick="switchTab('play')">🕹️ 实战面板</button>
+  </div>
+
+  <!-- ========== Tab 1: 翻面测试 ========== -->
+  <div class="test-panel" id="panel-flip">
+    <div class="test-hint">💡 点击卡片翻转 · 模拟「未激活 → 已激活」</div>
+    <div class="flip-grid" id="flipGrid">
+      <!-- JS动态生成3张翻转卡 -->
+    </div>
+    <div class="test-status" id="flipStatus">
+      未激活: 3 张 &nbsp;|&nbsp; 已激活: 0 张
+    </div>
+  </div>
+
+  <!-- ========== Tab 2: 堆叠测试 ========== -->
+  <div class="test-panel" id="panel-stack">
+    <div class="test-hint">💡 反击卡从右侧插入角色卡下方 · 只露出数值栏(25%) · 点击下方卡片添加/移除</div>
+    
+    <div class="stack-scene" id="stackScene">
+      <!-- 堆叠主容器 -->
+      <div class="stack-card-area" id="stackArea">
+        <!-- 反击卡层（在角色卡下方，右侧露出数值栏） -->
+        <!-- JS动态生成 .stack-counter.pos-0/1/2 -->
+        
+        <!-- 角色卡层（最上层） -->
+        <div class="stack-character" id="stackChar" onclick="toggleStack()" title="点击查看堆叠详情">
+          <img src="images/cards/角色卡/角色卡_命运操控者_乐天派幸存者.png" alt="乐天派幸存者"
+            onerror="this.style.display='none';this.parentElement.querySelector('.stack-char-fallback').style.display='flex';">
+          <div class="stack-char-fallback" style="display:none;">
+            <span class="stack-char-icon">😄</span>
+            <span class="stack-char-label">乐天派幸存者</span>
+          </div>
+        </div>
+        
+        <!-- 堆叠徽章 -->
+        <div class="stack-badge" id="stackBadge">×0</div>
+      </div>
+
+      <!-- 卡片池选择器 -->
+      <div class="stack-pool">
+        <div class="stack-pool-title">
+          📋 反击卡牌池 <span class="sep">·</span> 
+          <span style="color:var(--color-counter-glow)">点击添加</span>到堆叠 · 
+          <span style="color:#e74c3c">再次点击</span>移除
+        </div>
+        <div class="stack-pool-grid" id="stackPoolGrid">
+          <!-- JS动态生成 -->
+        </div>
+      </div>
+
+      <!-- 图例 -->
+      <div class="stack-legend">
+        <span><span class="dot r"></span> 数值栏(右侧25%)露出</span>
+        <span>← 角色卡遮挡左侧75%</span>
+        <span id="stackExposeInfo">最多堆叠3张</span>
+      </div>
+    </div>
+
+    <div class="test-status" id="stackStatus">
+      已堆叠 <b style="color:var(--color-counter-glow)" id="stackCountBold">0</b> 张反击卡 · 从下方牌池点选添加
+    </div>
+  </div>
+
+  <!-- ========== Tab 3: 复合堆叠测试 ========== -->
+  <div class="test-panel" id="panel-composite">
+    <div class="test-hint">💡 四向复合堆叠：左(怪谈) 右(反击) 上(伤害) 下(物资) · 各自独立牌池 · 点击卡片添加/移除</div>
+
+    <div class="comp-scene-wrap">
+      <!-- 场景容器：角色卡 + 四方向堆叠 -->
+      <div class="comp-scene" id="compScene">
+        <!-- 方向标签 -->
+        <div class="comp-dir-label" style="top:4px;left:50%;transform:translateX(-50%);">⬆ 伤害指示卡 (露出顶部38%)</div>
+        <div class="comp-dir-label" style="top:50%;left:4px;transform:translateY(-50%);">怪谈卡 ⬅</div>
+        <div class="comp-dir-label" style="top:50%;right:4px;transform:translateY(-50%);">➡ 反击卡</div>
+        <div class="comp-dir-label" style="bottom:4px;left:50%;transform:translateX(-50%);">⬇ 物资卡 (露出底部25%)</div>
+
+        <!-- 角色卡（锚点，JS动态设置位置） -->
+        <div class="comp-char" id="compChar">
+          <img src="images/cards/角色卡/角色卡_命运操控者_乐天派幸存者.png" alt="乐天派幸存者"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#2d1b3d,#1a1a2e);color:var(--color-character-glow);font-size:0.85rem;font-weight:600;">乐天派幸存者</div>
+        </div>
+
+        <!-- 四方向堆叠卡片由JS动态生成 -->
+      </div>
+
+      <!-- 四方向卡片池 -->
+      <div class="comp-pools">
+        <!-- 反击卡（右） -->
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-right">➡ 反击卡</span>
+          <div class="comp-pool-grid" id="compPoolRight"></div>
+        </div>
+        <!-- 怪谈卡（左） -->
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-left">⬅ 怪谈卡</span>
+          <div class="comp-pool-grid" id="compPoolLeft"></div>
+        </div>
+        <!-- 伤害指示卡（上） -->
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-top">⬆ 伤害卡</span>
+          <div class="comp-pool-grid" id="compPoolTop"></div>
+        </div>
+        <!-- 物资卡（下） -->
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-bottom">⬇ 物资卡</span>
+          <div class="comp-pool-grid" id="compPoolBottom"></div>
+        </div>
+      </div>
+
+      <!-- 图例 -->
+      <div class="comp-legend-bar">
+        <span><span class="cldot" style="background:var(--color-counter-glow)"></span> 反击(右50px)</span>
+        <span><span class="cldot" style="background:var(--color-whisper-glow)"></span> 怪谈(左50px)</span>
+        <span><span class="cldot" style="background:#e74c3c"></span> 伤害(上50px)</span>
+        <span><span class="cldot" style="background:var(--color-supply-glow)"></span> 物资(下70px)</span>
+      </div>
+    </div>
+
+    <div class="test-status" id="compStatus">
+      复合堆叠：右<b style="color:var(--color-counter-glow)" id="compCntR">0</b> · 左<b style="color:var(--color-whisper-glow)" id="compCntL">0</b> · 上<b style="color:#e74c3c" id="compCntT">0</b> · 下<b style="color:var(--color-supply-glow)" id="compCntB">0</b>
+    </div>
+  </div>
+
+  <!-- ========== Tab 4: 实战面板 ========== -->
+  <div class="test-panel active" id="panel-play">
+
+    <!-- 1. 回合指示卡 -->
+    <div class="turn-indicator" id="turnIndicator">
+      <div class="ti-round">
+        <div class="ti-round-num" id="tiRoundNum">1</div>
+        <div class="ti-round-label">回合</div>
+      </div>
+      <div class="ti-sep"></div>
+      <div class="ti-phase day" id="tiPhase">🌅 Day</div>
+      <div class="ti-sep"></div>
+      <div class="ti-player active-turn" id="tiPlayer">
+        <div class="ti-avatar" id="tiAvatar"><span style="font-size:0.7rem;">👤</span></div>
+        <span class="ti-name" id="tiName">你的回合</span>
+      </div>
+    </div>
+
+    <!-- 2. 搜索框 -->
+    <div class="search-wrap" id="searchWrap">
+      <div class="search-input-group">
+        <span class="s-icon">🔍</span>
+        <input class="s-input" id="cardSearchInput" type="text"
+               placeholder="搜索卡牌名称…（反击/怪谈/物资/规则/角色）"
+               autocomplete="off"
+               oninput="onCardSearch(this.value)"
+               onfocus="onCardSearch(this.value)"
+               onkeydown="handleSearchKey(event)">
+        <button class="s-clear" id="searchClear" onclick="clearSearch()" title="清除">✕</button>
+      </div>
+      <div class="search-suggestions" id="searchSuggestions"></div>
+    </div>
+
+    <!-- 3. 手牌展示区 -->
+    <div class="hand-area" id="handArea">
+      <div class="hand-header">
+        <span class="hand-title">🃏 反击卡手牌</span>
+        <span class="hand-count" id="handCount">0 / 3 张</span>
+      </div>
+      <div class="hand-strip" id="handStrip">
+        <div class="hand-empty">暂无手牌 · 等待分发</div>
+      </div>
+      <!-- 选中卡的详情迷你面板 -->
+      <div class="hand-detail-mini" id="handDetailMini" style="display:none;">
+        <div class="hdm-thumb" id="hdmThumb"></div>
+        <div class="hdm-info">
+          <div class="hdm-name" id="hdmName"></div>
+          <div class="hdm-level" id="hdmLevel"></div>
+          <div class="hdm-effect" id="hdmEffect"></div>
+        </div>
+        <button class="hdm-activate" id="hdmActivateBtn" onclick="activateHandCard()">激活</button>
+      </div>
+    </div>
+
+    <!-- 3.5 玩家列表 -->
+    <div class="player-list" id="playerList">
+      <!-- JS动态生成 -->
+    </div>
+
+    <!-- 物资选择面板 -->
+    <div class="supply-selector" id="supplySelector" style="display:none;">
+      <div class="selector-header">
+        <span class="sh-title">🎒 选择要使用的物资</span>
+        <button class="sh-close" onclick="hideSupplySelector()">✕</button>
+      </div>
+      <div class="selector-grid" id="supplyGrid">
+        <div class="selector-empty">暂无可用物资</div>
+      </div>
+    </div>
+
+    <!-- 宣言规则选择面板 -->
+    <div class="declare-selector" id="declareSelector" style="display:none;">
+      <div class="selector-header">
+        <span class="sh-title">📢 选择要宣言的规则</span>
+        <button class="sh-close" onclick="hideDeclareSelector()">✕</button>
+      </div>
+      <div class="selector-grid" id="declareGrid">
+        <div class="selector-empty">加载中…</div>
+      </div>
+    </div>
+
+    <!-- 已激活反击卡展示区 -->
+    <div class="hand-area" id="activeArea" style="display:none;">
+      <div class="hand-header">
+        <span class="hand-title">✅ 已激活反击卡</span>
+        <span class="hand-count" id="activeCount">0 张</span>
+      </div>
+      <div class="hand-strip" id="activeStrip"></div>
+    </div>
+
+    <!-- 4. 回合按钮区 -->
+    <div class="action-bar" id="actionBar">
+      <div class="action-buttons">
+        <button class="action-btn primary-action" id="btnDeclare" onclick="declareAction()">
+          <span class="ab-icon">📢</span>
+          <span class="ab-label">宣言抹除规则</span>
+          <span class="ab-hotkey">D</span>
+        </button>
+        <button class="action-btn" id="btnSupply" onclick="useSupply()">
+          <span class="ab-icon">🎒</span>
+          <span class="ab-label">使用物资</span>
+          <span class="ab-hotkey">S</span>
+        </button>
+        <button class="action-btn" id="btnSkill" onclick="useSkill()">
+          <span class="ab-icon">⭐</span>
+          <span class="ab-label">角色技能</span>
+          <span class="ab-hotkey">K</span>
+        </button>
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn danger-action" id="btnEndTurn" onclick="endTurn()">
+          <span class="ab-icon">⏭️</span>
+          <span class="ab-label">结束回合</span>
+        </button>
+        <button class="action-btn" id="btnPass" onclick="passAction()">
+          <span class="ab-icon">⏸️</span>
+          <span class="ab-label">跳过行动</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 5. 状态面板 -->
+    <div class="status-panel" id="statusPanel">
+      <div class="status-item si-health">
+        <span class="si-label">健康值</span>
+        <span class="si-value" id="siHealth">7</span>
+        <div class="si-bar-wrap"><div class="si-bar" id="siHealthBar" style="width:70%;"></div></div>
+      </div>
+      <div class="status-item si-sanity">
+        <span class="si-label">理智值</span>
+        <span class="si-value" id="siSanity">7</span>
+        <div class="si-bar-wrap"><div class="si-bar" id="siSanityBar" style="width:70%;"></div></div>
+      </div>
+      <div class="status-item si-gold">
+        <span class="si-label">金币</span>
+        <span class="si-value" id="siGold">50</span>
+        <div class="si-bar-wrap"><div class="si-bar" id="siGoldBar" style="width:25%;"></div></div>
+      </div>
+      <div class="status-item si-status">
+        <span class="si-label">状态</span>
+        <span class="si-value alive" id="siStatusText">存活</span>
+      </div>
+    </div>
+
+    <!-- 6. 日志 -->
+    <div class="game-log" id="gameLog">
+      <div class="log-line">
+        <span class="log-time">--:--</span>
+        <span class="log-text log-system">等待游戏开始…</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ===== 加载会话 =====
+let currentStatus = 'citizen';
+
+(function() {
+  let session = localStorage.getItem('dawn_session');
+  // 无会话时自动创建测试会话（便于原型预览）
+  if (!session) {
+    const testSession = { role:'citizen', status:'citizen', username:'测试市民', avatar:'', loginTime:Date.now() };
+    localStorage.setItem('dawn_session', JSON.stringify(testSession));
+    session = JSON.stringify(testSession);
+  }
+  try {
+    const data = JSON.parse(session);
+    if (data.role !== 'citizen') { window.location.href = 'toolbox/dashboard.html'; return; }
+    document.getElementById('headerName').textContent = data.username || '市民';
+    if (data.avatar) {
+      const img = document.createElement('img');
+      img.src = data.avatar;
+      document.getElementById('headerAvatar').innerHTML = '';
+      document.getElementById('headerAvatar').appendChild(img);
+    }
+    currentStatus = data.status || 'citizen';
+    updateStatusUI();
+  } catch(e) { window.location.href = 'login.html'; }
+})();
+
+// ===== 状态切换：市民 → 煞鬼 → 恶鬼 → 市民 =====
+function toggleStatus() {
+  const cycle = ['citizen', 'ghost', 'evil'];
+  const idx = cycle.indexOf(currentStatus);
+  currentStatus = cycle[(idx + 1) % 3];
+  // 持久化
+  const session = JSON.parse(localStorage.getItem('dawn_session'));
+  session.status = currentStatus;
+  localStorage.setItem('dawn_session', JSON.stringify(session));
+  updateStatusUI();
+}
+
+function updateStatusUI() {
+  const badge = document.getElementById('statusBadge');
+  const map = {
+    citizen: { label: '市民', cls: '', color: 'var(--color-counter-glow)', bg: 'rgba(46,134,193,0.15)' },
+    ghost:    { label: '煞鬼', cls: 'ghost', color: 'var(--color-whisper-glow)', bg: 'rgba(192,57,43,0.15)' },
+    evil:     { label: '恶鬼', cls: 'evil', color: '#ff4444', bg: 'rgba(192,57,43,0.2)' }
+  };
+  const s = map[currentStatus];
+  badge.textContent = s.label;
+  badge.className = 'status-badge ' + s.cls;
+  badge.style.color = s.color;
+  badge.style.background = s.bg;
+}
+
+function logout() {
+  localStorage.removeItem('dawn_session');
+  window.location.href = 'login.html';
+}
+
+// ====== 翻面测试 ======
+const DEMO_CARDS = [
+  { id:'c_001', name:'分担', level:'基础', img:'images/cards/反击卡/事件卡_基础_分担.png' },
+  { id:'c_002', name:'慰藉', level:'基础', img:'images/cards/反击卡/事件卡_基础_慰藉.png' },
+  { id:'c_003', name:'偷窃', level:'基础', img:'images/cards/反击卡/事件卡_基础_偷窃.png' }
+];
+
+const CARD_BACK = 'images/card-back.png';
+
+function buildFlipCards() {
+  const grid = document.getElementById('flipGrid');
+  grid.innerHTML = DEMO_CARDS.map((c, i) => `
+    <div class="flip-card-wrap" id="flipCard${i}" onclick="flipCard(${i})">
+      <div class="flip-card-inner">
+        <div class="flip-card-face flip-front">
+          <img src="${CARD_BACK}" alt="卡背"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="flip-front-fallback" style="display:none;">
+            <span class="ff-icon">🃏</span>
+            <span class="ff-label">反击卡</span>
+          </div>
+        </div>
+        <div class="flip-card-face flip-back">
+          <img src="${c.img}" alt="${c.name}"
+            onerror="this.style.display='none';this.parentElement.querySelector('.flip-back-info').style.top='0';this.parentElement.querySelector('.flip-back-info').style.height='100%';this.parentElement.querySelector('.flip-back-info').style.justifyContent='center';">
+          <div class="flip-back-info">
+            <span class="fbi-name">${c.name}</span>
+            <span class="fbi-level">${c.level} · 反击卡</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  updateFlipStatus();
+}
+
+function flipCard(i) {
+  const el = document.getElementById('flipCard' + i);
+  el.classList.toggle('flipped');
+  updateFlipStatus();
+}
+
+function updateFlipStatus() {
+  const total = DEMO_CARDS.length;
+  const flipped = document.querySelectorAll('.flip-card-wrap.flipped').length;
+  document.getElementById('flipStatus').innerHTML =
+    '未激活: <b style="color:var(--text-muted)">' + (total-flipped) + '</b> 张 &nbsp;|&nbsp; 已激活: <b style="color:var(--color-counter-glow)">' + flipped + '</b> 张';
+}
+
+// ====== 堆叠测试 ======
+// 等距露出步长：每张反击卡露出50px（=数值栏宽度~50px，刚好完整展示）
+// 桌面端 CHAR_W=200, 移动端=150
+const CHAR_W = 200;
+const STEP = 50; // 每张卡等距露出
+
+const CARD_POOL = [
+  { name:'分担', level:'基础', img:'images/cards/反击卡/事件卡_基础_分担.png' },
+  { name:'慰藉', level:'基础', img:'images/cards/反击卡/事件卡_基础_慰藉.png' },
+  { name:'偷窃', level:'基础', img:'images/cards/反击卡/事件卡_基础_偷窃.png' },
+  { name:'分配', level:'基础', img:'images/cards/反击卡/事件卡_基础_分配.png' },
+  { name:'回响', level:'基础', img:'images/cards/反击卡/事件卡_基础_回响.png' },
+  { name:'强壮', level:'基础', img:'images/cards/反击卡/事件卡_基础_强壮.png' },
+  { name:'激活', level:'基础', img:'images/cards/反击卡/事件卡_基础_激活.png' },
+  { name:'抗拒', level:'基础', img:'images/cards/反击卡/事件卡_基础_抗拒.png' },
+];
+let STACK_CARDS = []; // 动态：当前堆叠的卡片（按添加顺序）
+
+function getCharW() {
+  return window.innerWidth <= 600 ? 150 : CHAR_W;
+}
+function getStep() {
+  return window.innerWidth <= 600 ? 38 : STEP; // 150*50/200=37.5≈38
+}
+
+function buildPoolGrid() {
+  const grid = document.getElementById('stackPoolGrid');
+  grid.innerHTML = CARD_POOL.map((c, i) => {
+    const stacked = STACK_CARDS.find(s => s.name === c.name);
+    return `
+      <div class="stack-pool-card${stacked ? ' selected' : ''}" id="poolCard${i}"
+           onclick="togglePoolCard(${i})" title="${stacked ? '点击移除' : '点击添加'}「${c.name}」">
+        <img src="${c.img}" alt="${c.name}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <div class="stack-pool-label">${c.name} · ${c.level}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function togglePoolCard(i) {
+  const card = CARD_POOL[i];
+  const existingIdx = STACK_CARDS.findIndex(s => s.name === card.name);
+  
+  if (existingIdx >= 0) {
+    // 已在堆叠中 → 移除
+    STACK_CARDS.splice(existingIdx, 1);
+  } else {
+    // 未在堆叠中 → 添加（最多3张）
+    if (STACK_CARDS.length >= 3) {
+      STACK_CARDS.shift(); // 超过时顶掉最早的一张
+    }
+    STACK_CARDS.push(card);
+  }
+  
+  refreshStack();
+}
+
+function refreshStack() {
+  buildPoolGrid();
+  buildStackCards();
+  updateStackBadge();
+  updateStackStatus();
+}
+
+function buildStackCards() {
+  const area = document.getElementById('stackArea');
+  const charEl = document.getElementById('stackChar');
+  const charW = getCharW();
+  const step = getStep();
+  const count = STACK_CARDS.length;
+  
+  // 容器宽度 = 角色卡宽度 + 每张反击卡等距露出
+  const containerW = charW + step * count;
+  area.style.width = containerW + 'px';
+  
+  // 移除旧的堆叠卡
+  area.querySelectorAll('.stack-counter').forEach(el => el.remove());
+  
+  if (count === 0) {
+    // 恢复最小容器宽度
+    area.style.width = charW + 'px';
+    return;
+  }
+  
+  // 堆叠逻辑：
+  // - 所有反击卡严格 top:0 平行于角色卡
+  // - STACK_CARDS[0]（最先添加）→ 最靠近角色卡 → 最大 right 偏移 → z-index 最高
+  // - STACK_CARDS[N-1]（最后添加）→ 最远离角色卡 → right:0 → z-index 最低
+  // - 每张卡等距露出 step px
+  STACK_CARDS.forEach((c, i) => {
+    // i=0: 最近层, right=(count-1)*step, z=count
+    // i=1: 次近层, right=(count-2)*step, z=count-1
+    // i=count-1: 最远层, right=0, z=1
+    const rightOffset = (count - 1 - i) * step;
+    const z = count - i;
+    
+    const div = document.createElement('div');
+    div.className = 'stack-counter';
+    div.style.right = rightOffset + 'px';
+    div.style.zIndex = z;
+    div.title = '点击移除「' + c.name + '」（第' + (i+1) + '张，图层-' + (count-i) + '）';
+    div.innerHTML = `
+      <img src="${c.img}" alt="${c.name}"
+        onerror="this.src='images/card-back.png';">
+      <div class="stack-counter-label">${c.name} · ${c.level} · 图层-${count-i}</div>
+    `;
+    div.onclick = function(e) {
+      e.stopPropagation();
+      removeStackCard(c.name);
+    };
+    area.insertBefore(div, charEl);
+  });
+}
+
+function removeStackCard(name) {
+  const idx = STACK_CARDS.findIndex(s => s.name === name);
+  if (idx >= 0) {
+    const area = document.getElementById('stackArea');
+    const counters = area.querySelectorAll('.stack-counter');
+    // 找到对应DOM元素（与数组同序，因为buildStackCards按顺序创建）
+    if (counters[idx]) {
+      counters[idx].classList.add('removing');
+      setTimeout(() => {
+        const newIdx = STACK_CARDS.findIndex(s => s.name === name);
+        if (newIdx >= 0) {
+          STACK_CARDS.splice(newIdx, 1);
+          refreshStack();
+        }
+      }, 200);
+    } else {
+      STACK_CARDS.splice(idx, 1);
+      refreshStack();
+    }
+  }
+}
+
+function updateStackBadge() {
+  const badge = document.getElementById('stackBadge');
+  const count = STACK_CARDS.length;
+  badge.textContent = '×' + count;
+  if (count === 0) {
+    badge.style.opacity = '0.4';
+  } else {
+    badge.style.opacity = '1';
+    badge.classList.add('pulse');
+    setTimeout(() => badge.classList.remove('pulse'), 350);
+  }
+}
+
+function updateStackStatus() {
+  const count = STACK_CARDS.length;
+  const step = getStep();
+  const 数值栏W = Math.round(getCharW() * 0.25); // 数值栏占卡宽25%
+  
+  document.getElementById('stackCountBold').textContent = count;
+  const info = document.getElementById('stackExposeInfo');
+  
+  if (count === 0) {
+    document.getElementById('stackStatus').innerHTML = 
+      '已堆叠 <b style="color:var(--text-muted)">0</b> 张反击卡 · 从下方牌池点选添加';
+    info.textContent = '最多堆叠3张 · 每张等距露出' + step + 'px';
+  } else if (count === 1) {
+    document.getElementById('stackStatus').innerHTML = 
+      '已堆叠 <b style="color:var(--color-counter-glow)">1</b> 张 · 每张露出 ' + step + 'px · 数值栏 ' + 数值栏W + 'px ✓';
+    info.textContent = '等距平行堆叠 · 单张完整露出数值栏';
+  } else if (count === 2) {
+    document.getElementById('stackStatus').innerHTML = 
+      '已堆叠 <b style="color:var(--color-counter-glow)">2</b> 张 · 各露出 ' + step + 'px · 图层-2/' + step + 'px, 图层-1/0px';
+    info.textContent = '先加=近层(右移)×' + (count-1)*step + 'px · 后加=远层(right:0) · 各露' + step + 'px';
+  } else if (count === 3) {
+    document.getElementById('stackStatus').innerHTML = 
+      '已堆叠 <b style="color:var(--color-counter-glow)">3</b> 张 · 各露出 ' + step + 'px · 图层-3/' + (count-1)*step + 'px → -1/0px';
+    info.textContent = '三张平行等距 · 每张均露出' + step + 'px数值栏 ✓';
+  }
+}
+
+// 点击角色卡：弹窗查看所有堆叠卡详情
+let stackDialogOpen = false;
+function toggleStack() {
+  if (STACK_CARDS.length === 0) return;
+  
+  if (stackDialogOpen) {
+    closeStackDialog();
+    return;
+  }
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'stackDialogOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = closeStackDialog;
+  
+  const dialog = document.createElement('div');
+  dialog.style.cssText = 'background:var(--bg-surface);border-radius:12px;padding:20px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;border:1px solid var(--border-subtle);';
+  dialog.onclick = function(e) { e.stopPropagation(); };
+  
+  dialog.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;color:var(--color-counter-glow);">📚 已堆叠反击卡 (${STACK_CARDS.length}张)</h3>
+      <button onclick="closeStackDialog()" style="background:transparent;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:12px;">
+      堆叠顺序：先添加 → 近层(靠近角色卡) / 后添加 → 远层(远离角色卡)
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      ${STACK_CARDS.map((c, i) => {
+        const layer = STACK_CARDS.length - i; // 图层编号
+        return `
+        <div style="width:140px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.3);background:var(--bg-card);">
+          <img src="${c.img}" alt="${c.name}" style="width:100%;display:block;"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div style="display:none;height:196px;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.8rem;">🃏 ${c.name}</div>
+          <div style="padding:8px 10px;background:rgba(0,0,0,0.7);font-size:0.68rem;color:var(--text-secondary);text-align:center;">
+            <b style="color:var(--color-counter-glow)">${c.name}</b>
+            <span style="display:block;margin-top:2px;">
+              图层-${layer} · ${i===0?'最近层':i===STACK_CARDS.length-1?'最远层':'中间层'}
+            </span>
+          </div>
+        </div>
+      `}).join('')}
+    </div>
+  `;
+  
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+  stackDialogOpen = true;
+}
+
+function closeStackDialog() {
+  const overlay = document.getElementById('stackDialogOverlay');
+  if (overlay) overlay.remove();
+  stackDialogOpen = false;
+}
+
+// ====== Tab切换 ======
+function switchTab(tabId) {
+  document.querySelectorAll('.test-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.test-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.test-tab[data-tab="' + tabId + '"]').classList.add('active');
+  document.getElementById('panel-' + tabId).classList.add('active');
+
+  // Tab 4 激活时刷新面板
+  if (tabId === 'play') {
+    initPlayPanel();
+  }
+  // 复合堆叠激活时重新计算
+  if (tabId === 'composite') {
+    initComposite();
+  }
+}
+
+// ====== 复合堆叠测试 ======
+// 桌面端参数
+const COMP_CHAR_W = 200;
+const COMP_CHAR_H = 280;
+const COMP_DAMAGE_H = 140; // 伤害指示卡高度（半高）
+const COMP_STEP_R = 50; // 反击卡步长
+const COMP_STEP_L = 50; // 怪谈卡步长
+const COMP_STEP_T = 50; // 伤害指示卡步长
+const COMP_STEP_B = 70; // 物资卡步长（底部25%数值区=70px）
+
+// 角色卡在场景中的锚点位置
+const COMP_CHAR_LEFT = 170;
+const COMP_CHAR_TOP = 170;
+
+// 四个方向的卡牌池
+const COMP_POOLS = {
+  right: [
+    { name:'分担', img:'images/cards/反击卡/事件卡_基础_分担.png' },
+    { name:'慰藉', img:'images/cards/反击卡/事件卡_基础_慰藉.png' },
+    { name:'偷窃', img:'images/cards/反击卡/事件卡_基础_偷窃.png' },
+    { name:'分配', img:'images/cards/反击卡/事件卡_基础_分配.png' }
+  ],
+  left: [
+    { name:'灵异干扰I', img:'images/cards/怪谈卡/怪谈卡_异常_灵异干扰_I.png' },
+    { name:'即视感', img:'images/cards/怪谈卡/怪谈卡_异常_即视感.png' },
+    { name:'鬼打墙', img:'images/cards/怪谈卡/怪谈卡_异常_鬼打墙.png' },
+    { name:'鬼契', img:'images/cards/怪谈卡/怪谈卡_异常_鬼契.png' }
+  ],
+  top: [
+    { name:'健康值-1', img:'images/damage/伤害指示卡_健康值-1.png', h:COMP_DAMAGE_H },
+    { name:'理智值-1', img:'images/damage/伤害指示卡_理智值-1.png', h:COMP_DAMAGE_H },
+    { name:'健康值-2', img:'images/damage/伤害指示卡_健康值-2.png', h:COMP_DAMAGE_H },
+    { name:'理智值-2', img:'images/damage/伤害指示卡_理智值-2.png', h:COMP_DAMAGE_H }
+  ],
+  bottom: [
+    { name:'保障餐A', img:'images/cards/物资卡/物资卡_官方_保障餐A.png' },
+    { name:'可乐', img:'images/cards/物资卡/物资卡_普通_可乐.png' },
+    { name:'心灵鸡汤', img:'images/cards/物资卡/物资卡_中级_心灵鸡汤.png' },
+    { name:'珍珠奶茶', img:'images/cards/物资卡/物资卡_普通_珍珠奶茶.png' }
+  ]
+};
+
+// 当前堆叠状态：{ right:[], left:[], top:[], bottom:[] }
+let COMP_STACKS = { right:[], left:[], top:[], bottom:[] };
+
+function getCompScale() {
+  return window.innerWidth <= 600 ? 0.65 : 1;
+}
+
+function initComposite() {
+  const charEl = document.getElementById('compChar');
+  const s = getCompScale();
+  charEl.style.left = (COMP_CHAR_LEFT * s) + 'px';
+  charEl.style.top = (COMP_CHAR_TOP * s) + 'px';
+  charEl.style.width = (COMP_CHAR_W * s) + 'px';
+  charEl.style.height = (COMP_CHAR_H * s) + 'px';
+  buildAllCompPools();
+  buildAllCompStacks();
+  updateCompStatus();
+}
+
+function buildAllCompPools() {
+  ['right','left','top','bottom'].forEach(dir => {
+    buildCompPool(dir);
+  });
+}
+
+function buildCompPool(dir) {
+  const grid = document.getElementById('compPool' + dir.charAt(0).toUpperCase() + dir.slice(1));
+  const pool = COMP_POOLS[dir];
+  const stacked = COMP_STACKS[dir];
+  grid.innerHTML = pool.map((c, i) => {
+    const isStacked = stacked.some(s => s.name === c.name);
+    return '<div class="comp-pool-card' + (isStacked ? ' stacked' : '') + '" id="compPool_' + dir + '_' + i + '"' +
+      ' onclick="toggleCompCard(\'' + dir + '\',' + i + ')" title="' + (isStacked ? '点击移除' : '点击添加') + '「' + c.name + '」">' +
+      '<img src="' + c.img + '" alt="' + c.name + '" onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + c.name + '\';">' +
+      '</div>';
+  }).join('');
+}
+
+function toggleCompCard(dir, idx) {
+  const card = COMP_POOLS[dir][idx];
+  const stack = COMP_STACKS[dir];
+  const existingIdx = stack.findIndex(s => s.name === card.name);
+  const MAX = 3;
+
+  if (existingIdx >= 0) {
+    stack.splice(existingIdx, 1);
+  } else {
+    if (stack.length >= MAX) {
+      stack.shift();
+    }
+    stack.push(card);
+  }
+
+  buildCompPool(dir);
+  buildCompStack(dir);
+  updateCompStatus();
+}
+
+function buildAllCompStacks() {
+  ['right','left','top','bottom'].forEach(dir => buildCompStack(dir));
+}
+
+function buildCompStack(dir) {
+  const scene = document.getElementById('compScene');
+  const s = getCompScale();
+  const charW = COMP_CHAR_W * s;
+  const charH = COMP_CHAR_H * s;
+  const charLeft = COMP_CHAR_LEFT * s;
+  const charTop = COMP_CHAR_TOP * s;
+  const stack = COMP_STACKS[dir];
+  const N = stack.length;
+
+  // 移除旧卡片
+  scene.querySelectorAll('.comp-card-' + dir).forEach(el => el.remove());
+
+  if (N === 0) return;
+
+  let step, cardH;
+  const cardW = charW;
+
+  if (dir === 'right') {
+    step = COMP_STEP_R * s;
+    cardH = charH;
+    // 公式: card[i].left = charLeft + step*(i+1)
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const left = charLeft + step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: left + 'px',
+        top: charTop + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'left') {
+    step = COMP_STEP_L * s;
+    cardH = charH;
+    // 公式: card[i] fills [charLeft-step*(i+1), charLeft+charW-step*(i+1)]
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const left = charLeft - step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: left + 'px',
+        top: charTop + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'top') {
+    step = COMP_STEP_T * s;
+    cardH = COMP_DAMAGE_H * s;
+    // 公式: card[i] top = charTop - step*(i+1), bottom = charTop + damageH - step*(i+1)
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const top = charTop - step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: charLeft + 'px',
+        top: top + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'bottom') {
+    step = COMP_STEP_B * s;
+    cardH = charH;
+    // 公式: card[i] top = charTop + step*(i+1)
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const top = charTop + step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: charLeft + 'px',
+        top: top + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  }
+}
+
+function createCompCard(scene, dir, card, idx, N, style) {
+  const div = document.createElement('div');
+  div.className = 'comp-card comp-' + dir + ' comp-card-' + dir;
+  Object.assign(div.style, style);
+  div.title = '点击移除「' + card.name + '」（' + dir + ' 图层-' + (N-idx) + '）';
+  div.onclick = function(e) {
+    e.stopPropagation();
+    removeCompCard(dir, card.name);
+  };
+  div.innerHTML = '<img src="' + card.img + '" alt="' + card.name + '"' +
+    ' onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + card.name + '\';">' +
+    '<div class="comp-card-label">' + card.name + ' · L-' + (N-idx) + '</div>';
+  // 插入到角色卡之前（角色卡 z=100，始终在最上层）
+  const charEl = document.getElementById('compChar');
+  scene.insertBefore(div, charEl);
+}
+
+function removeCompCard(dir, name) {
+  const idx = COMP_STACKS[dir].findIndex(s => s.name === name);
+  if (idx >= 0) {
+    COMP_STACKS[dir].splice(idx, 1);
+    buildCompPool(dir);
+    buildCompStack(dir);
+    updateCompStatus();
+  }
+}
+
+function updateCompStatus() {
+  const cntR = COMP_STACKS.right.length;
+  const cntL = COMP_STACKS.left.length;
+  const cntT = COMP_STACKS.top.length;
+  const cntB = COMP_STACKS.bottom.length;
+  document.getElementById('compCntR').textContent = cntR;
+  document.getElementById('compCntL').textContent = cntL;
+  document.getElementById('compCntT').textContent = cntT;
+  document.getElementById('compCntB').textContent = cntB;
+  document.getElementById('compStatus').innerHTML =
+    '复合堆叠：右<b style="color:var(--color-counter-glow)">' + cntR + '</b> · ' +
+    '左<b style="color:var(--color-whisper-glow)">' + cntL + '</b> · ' +
+    '上<b style="color:#e74c3c">' + cntT + '</b> · ' +
+    '下<b style="color:var(--color-supply-glow)">' + cntB + '</b>' +
+    (cntR+cntL+cntT+cntB > 0 ? ' · <span style="color:var(--text-muted)">点击场景内卡片可移除</span>' : '');
+}
+
+// 响应窗口缩放
+window.addEventListener('resize', function() {
+  if (document.getElementById('panel-composite').classList.contains('active')) {
+    initComposite();
+  }
+});
+
+// ====== 初始化 ======
+buildFlipCards();
+buildPoolGrid();
+buildStackCards();
+initComposite();
+initPlayPanel();
+
+// ============================================================
+// Tab 4: 实战面板 — 完整JS逻辑
+// ============================================================
+
+// ============ 游戏状态机 ============
+const PLAYER_NAMES = ['你(乐天派)', '法医侦探', '街道主任', '零零后', '记者', '黑客'];
+const PLAYER_AVATARS = ['😄', '🔍', '🏛️', '⚡', '📷', '💻'];
+const PHASE_ORDER = ['dawn', 'day', 'dusk', 'night'];
+const PHASE_LABELS = {
+  dawn:  { label: '🌅 黎明', cls: 'dawn' },
+  day:   { label: '☀️ Day',  cls: 'day' },
+  dusk:  { label: '🌆 黄昏', cls: 'dusk' },
+  night: { label: '🌙 黑夜', cls: 'night' }
+};
+
+// 完整游戏状态
+let GS = {
+  round: 1,
+  phase: 'day',
+  phaseIdx: 0,
+  currentPlayerIdx: 0,
+  myIdx: 0,
+  players: [],    // [{ name, avatar, health, maxHealth, sanity, maxSanity, gold, status, actionUsed }]
+  handCards: [],  // 我的手牌（反击卡）
+  activeCards: [],// 已激活的反击卡
+  supplyInv: [],  // 物资库存
+  damageCards: [],// 伤害指示卡 [{ type:'health'|'sanity', amount, img }]
+  selectedCardIdx: -1,
+  declareUsed: false,
+  supplyUsed: false,
+  skillUsed: false,
+  lastHealth: 7,
+  lastSanity: 7,
+  lastGold: 50
+};
+
+// ============ 卡牌索引 ============
+let CARD_INDEX = [];
+let RULES_POOL = [];     // 可用规则卡池
+let SUPPLY_DECK = [];    // 物资牌池
+let COUNTER_DECK = [];   // 反击牌池
+
+// ============ 初始化 ============
+function initPlayPanel() {
+  buildCardIndex();
+  buildRulesPool();
+  initGameState();
+  buildSupplyDeck();
+  buildCounterDeck();
+  updateAllUI();
+  addGameLog('系统', '🕹️ 实战面板已就绪 — 点击"下一回合"开始模拟');
+}
+
+function buildCardIndex() {
+  if (CARD_INDEX.length > 0) return;
+  if (typeof CARD_DB === 'undefined') return;
+
+  const types = [
+    { key: 'countermeasures', type: '反击卡', typeCss: 't-counter' },
+    { key: 'whispers', type: '怪谈卡', typeCss: 't-whisper' },
+    { key: 'supplies', type: '物资卡', typeCss: 't-supply' },
+    { key: 'rules', type: '规则卡', typeCss: 't-rule' },
+    { key: 'characters', type: '角色卡', typeCss: 't-character' },
+    { key: 'personal_goals', type: '个人目的卡', typeCss: 't-goal' }
+  ];
+
+  types.forEach(t => {
+    const cards = CARD_DB[t.key] || [];
+    cards.forEach(c => {
+      CARD_INDEX.push({
+        id: c.id,
+        name: c.name,
+        type: t.type,
+        typeKey: t.key,
+        typeCss: t.typeCss,
+        level: c.level || '',
+        effect: c.effect || c.description || '',
+        img: (typeof getCardImagePath === 'function')
+          ? getCardImagePath({ type: t.key, level: c.level, name: c.name })
+          : ''
+      });
+    });
+  });
+}
+
+function buildRulesPool() {
+  if (RULES_POOL.length > 0) return;
+  const rules = (CARD_DB && CARD_DB.rules) ? CARD_DB.rules : [];
+  RULES_POOL = rules.slice(0, 12).map(r => ({
+    id: r.id, name: r.name, effect: r.effect || r.description || '',
+    img: (typeof getCardImagePath === 'function')
+      ? getCardImagePath({ type: 'rules', level: r.level, name: r.name })
+      : ''
+  }));
+  if (RULES_POOL.length === 0) {
+    // 后备：构造示例数据
+    RULES_POOL = [
+      { id:'r1', name:'不能说出"谢谢"', effect:'任何玩家说出"谢谢"时，立即受到1点健康值伤害。', img:'' },
+      { id:'r2', name:'不能单独行动', effect:'任何玩家不得独自离开当前地点。', img:'' },
+      { id:'r3', name:'不能认可的表达', effect:'玩家不能口头表达对他人行为或言论的认可。', img:'' },
+      { id:'r4', name:'不可回头', effect:'玩家移动时不可返回上一地点。', img:'' },
+      { id:'r5', name:'不可直视', effect:'玩家之间不可直视超过3秒。', img:'' },
+      { id:'r6', name:'不可拒绝', effect:'任何玩家不得拒绝他人的合理请求。', img:'',
+        effect:'任何玩家不得拒绝他人的合理请求。' }
+    ];
+  }
+}
+
+function buildSupplyDeck() {
+  if (SUPPLY_DECK.length > 0) return;
+  const supplies = (CARD_DB && CARD_DB.supplies) ? CARD_DB.supplies : [];
+  SUPPLY_DECK = supplies.slice(0, 10).map(s => ({
+    id: s.id, name: s.name, level: s.level || '', type: 'supply',
+    effect: s.effect || s.description || '',
+    healHP: (s.effect || '').includes('健康') ? (parseInt((s.effect||'').match(/(\d+)/)?.[1]) || 1) : 0,
+    healSP: (s.effect || '').includes('理智') ? (parseInt((s.effect||'').match(/(\d+)/)?.[1]) || 1) : 0,
+    goldCost: s.cost || 0,
+    img: (typeof getCardImagePath === 'function')
+      ? getCardImagePath({ type: 'supplies', level: s.level, name: s.name })
+      : ''
+  }));
+}
+
+function buildCounterDeck() {
+  if (COUNTER_DECK.length > 0) return;
+  const counters = (CARD_DB && CARD_DB.countermeasures) ? CARD_DB.countermeasures : [];
+  COUNTER_DECK = counters.slice(0, 15).map(c => ({
+    id: c.id, name: c.name, level: c.level || '', type: 'countermeasure',
+    effect: c.effect || c.description || '',
+    img: (typeof getCardImagePath === 'function')
+      ? getCardImagePath({ type: 'countermeasures', level: c.level, name: c.name })
+      : ''
+  }));
+}
+
+function initGameState() {
+  GS.players = PLAYER_NAMES.map((name, i) => ({
+    name: name,
+    avatar: PLAYER_AVATARS[i],
+    health: i === 0 ? 6 : 7,
+    maxHealth: 7,
+    sanity: i === 0 ? 7 : 7,
+    maxSanity: 7,
+    gold: 50 + i * 5,
+    maxGold: 200,
+    status: 'alive',
+    actionUsed: { declare: false, supply: false, skill: false }
+  }));
+  GS.myIdx = 0;
+  GS.currentPlayerIdx = 0;
+  GS.round = 1;
+  GS.phase = 'day';
+  GS.phaseIdx = 1;
+
+  // 初始手牌（3张反击卡）
+  if (COUNTER_DECK.length >= 3) {
+    GS.handCards = COUNTER_DECK.slice(0, 3).map(c => ({...c}));
+  }
+
+  // 初始物资
+  if (SUPPLY_DECK.length >= 3) {
+    GS.supplyInv = SUPPLY_DECK.slice(0, 3).map(s => ({...s}));
+  }
+
+  // 示例：添加一张伤害卡
+  GS.damageCards = [];
+
+  GS.activeCards = [];
+  GS.selectedCardIdx = -1;
+  GS.declareUsed = false;
+  GS.supplyUsed = false;
+  GS.skillUsed = false;
+  GS.lastHealth = GS.players[0].health;
+  GS.lastSanity = GS.players[0].sanity;
+  GS.lastGold = GS.players[0].gold;
+}
+
+// ============ 主渲染 ============
+function updateAllUI() {
+  updateTurnIndicator();
+  updatePlayerList();
+  updateHandStrip();
+  updateActiveArea();
+  updateStatusPanel();
+  updateActionButtons();
+}
+
+function updateTurnIndicator() {
+  document.getElementById('tiRoundNum').textContent = GS.round;
+  const p = PHASE_LABELS[GS.phase] || PHASE_LABELS.day;
+  const phaseEl = document.getElementById('tiPhase');
+  phaseEl.textContent = p.label;
+  phaseEl.className = 'ti-phase ' + p.cls;
+
+  const isMyTurn = (GS.currentPlayerIdx === GS.myIdx);
+  const playerEl = document.getElementById('tiPlayer');
+  if (isMyTurn) {
+    playerEl.classList.add('active-turn');
+    document.getElementById('tiName').textContent = '你的回合';
+    document.getElementById('tiAvatar').innerHTML = '<span style="font-size:0.7rem;">'+PLAYER_AVATARS[GS.myIdx]+'</span>';
+  } else {
+    playerEl.classList.remove('active-turn');
+    const cp = GS.players[GS.currentPlayerIdx];
+    document.getElementById('tiName').textContent = cp ? cp.name + ' 行动中' : '等待中…';
+    document.getElementById('tiAvatar').innerHTML = '<span style="font-size:0.7rem;">' + (cp ? cp.avatar : '⏳') + '</span>';
+  }
+}
+
+// ============ 玩家列表 ============
+function updatePlayerList() {
+  const list = document.getElementById('playerList');
+  list.innerHTML = GS.players.map((p, i) => {
+    let cls = 'player-dot';
+    if (i === GS.currentPlayerIdx) cls += ' current';
+    if (i === GS.myIdx) cls += ' me';
+    const hpPct = Math.max(0, p.health / p.maxHealth * 100);
+    const hpColor = p.health <= 2 ? '#e74c3c' : p.health <= 4 ? '#f39c12' : 'var(--success)';
+    const statusIcon = p.status === 'ghost' ? ' 👻' : p.status === 'evil' ? ' 💀' : p.status === 'dead' ? ' ✝' : '';
+    return '<div class="player-dot ' + cls + '">' +
+      '<span class="pd-avatar">' + p.avatar + '</span>' +
+      '<span class="pd-name">' + p.name.replace('你(', '').replace(')', '') + statusIcon + '</span>' +
+      '<div class="pd-hp"><div class="pd-hp-fill" style="width:' + hpPct + '%;background:' + hpColor + ';"></div></div>' +
+      '</div>';
+  }).join('');
+}
+
+// ============ 手牌展示 ============
+function updateHandStrip() {
+  const strip = document.getElementById('handStrip');
+  const count = GS.handCards.length;
+  document.getElementById('handCount').textContent = count + ' / 3 张';
+
+  if (count === 0) {
+    strip.innerHTML = '<div class="hand-empty">暂无手牌 · 等待分发</div>';
+    document.getElementById('handDetailMini').style.display = 'none';
+    GS.selectedCardIdx = -1;
+  } else {
+    strip.innerHTML = GS.handCards.map((c, i) => {
+      const sel = i === GS.selectedCardIdx ? ' selected' : '';
+      return '<div class="hand-card' + sel + '" onclick="selectHandCard(' + i + ')" title="' + c.name + ' · ' + c.level + '">' +
+        '<img src="' + (c.img || '') + '" alt="' + c.name + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+        '<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a2e,#16213e);color:var(--color-counter-glow);font-size:0.7rem;text-align:center;padding:4px;">🃏<br>' + c.name + '</div>' +
+        '<div class="hand-card-overlay"><div class="hand-card-name">' + c.name + '</div><div class="hand-card-type">' + (c.level || '') + '</div></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  if (GS.selectedCardIdx >= 0 && GS.selectedCardIdx < count) {
+    showHandDetail(GS.selectedCardIdx);
+  }
+}
+
+function selectHandCard(idx) {
+  const max = GS.handCards.length;
+  GS.selectedCardIdx = (idx >= 0 && idx < max && GS.selectedCardIdx !== idx) ? idx : -1;
+  updateHandStrip();
+}
+
+function showHandDetail(idx) {
+  const c = GS.handCards[idx];
+  if (!c) { document.getElementById('handDetailMini').style.display = 'none'; return; }
+
+  const panel = document.getElementById('handDetailMini');
+  panel.style.display = 'flex';
+  document.getElementById('hdmName').textContent = c.name;
+  document.getElementById('hdmLevel').textContent = (c.level || '基础') + ' · 反击卡';
+  document.getElementById('hdmEffect').textContent = c.effect || '效果描述待加载';
+
+  const thumb = document.getElementById('hdmThumb');
+  thumb.innerHTML = '<img src="' + (c.img || '') + '" alt="' + c.name + '" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span style=font-size:2rem;opacity:0.4>🃏</span>\';">';
+
+  const btn = document.getElementById('hdmActivateBtn');
+  btn.disabled = !isMyTurn();
+  btn.textContent = '激活';
+  btn.onclick = activateHandCard;
+}
+
+function activateHandCard() {
+  const idx = GS.selectedCardIdx;
+  if (idx < 0 || idx >= GS.handCards.length) return;
+
+  const card = GS.handCards.splice(idx, 1)[0];
+  GS.activeCards.push(card);
+  GS.selectedCardIdx = -1;
+  updateAllUI();
+  addGameLog('行动', '已激活「' + card.name + '」→ 进入已激活区，等待发动时机');
+}
+
+// ============ 已激活区 ============
+function updateActiveArea() {
+  const area = document.getElementById('activeArea');
+  const strip = document.getElementById('activeStrip');
+  const count = GS.activeCards.length;
+  document.getElementById('activeCount').textContent = count + ' 张';
+
+  if (count === 0) {
+    area.style.display = 'none';
+    return;
+  }
+  area.style.display = 'block';
+
+  strip.innerHTML = GS.activeCards.map((c, i) =>
+    '<div class="hand-card" title="' + c.name + ' · 已激活 · 等待发动">' +
+      '<img src="' + (c.img || '') + '" alt="' + c.name + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+      '<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a2e1a,#0f3460);color:var(--success);font-size:0.7rem;text-align:center;padding:4px;">✅<br>' + c.name + '</div>' +
+      '<div class="hand-card-overlay"><div class="hand-card-name">' + c.name + '</div><div class="hand-card-type">' + (c.level || '已激活') + '</div></div>' +
+    '</div>'
+  ).join('');
+}
+
+// ============ 回合按钮 ============
+function updateActionButtons() {
+  const myTurn = isMyTurn();
+  const me = GS.players[GS.myIdx];
+  const alive = me && me.status === 'alive';
+
+  document.getElementById('btnDeclare').disabled = GS.declareUsed || !myTurn || !alive;
+  document.getElementById('btnSupply').disabled = GS.supplyUsed || !myTurn || !alive;
+  document.getElementById('btnSkill').disabled = GS.skillUsed || !myTurn || !alive;
+}
+
+function isMyTurn() {
+  return GS.currentPlayerIdx === GS.myIdx && GS.players[GS.myIdx].status === 'alive';
+}
+
+// ============ 行动：宣言抹除规则 ============
+function declareAction() {
+  if (!isMyTurn() || GS.declareUsed) return;
+  hideSupplySelector();
+
+  const sel = document.getElementById('declareSelector');
+  const grid = document.getElementById('declareGrid');
+
+  if (sel.style.display === 'block') {
+    hideDeclareSelector();
+    return;
+  }
+
+  // 目标玩家列表（排除自己 + 死亡玩家）
+  const targets = GS.players.filter((p, i) =>
+    i !== GS.myIdx && (p.status === 'alive' || p.status === 'ghost')
+  );
+
+  grid.innerHTML = '<div class="selector-header" style="margin-bottom:8px;">' +
+    '<span style="font-size:0.75rem;color:var(--text-muted);">选择要抹除的规则 + 指向的玩家</span></div>' +
+    RULES_POOL.map((r, ri) => {
+      let html = '<div class="selector-item" style="width:auto;text-align:left;" onclick="showDeclareModal(' + ri + ')">' +
+        '<div style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:var(--radius-sm);margin-bottom:4px;">' +
+        '<span style="font-size:0.82rem;font-weight:600;color:var(--color-rule-glow);">' + r.name + '</span>' +
+        '<span style="font-size:0.65rem;color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.effect||'').substring(0,30) + '</span>' +
+        '</div></div>';
+      return html;
+    }).join('');
+  sel.style.display = 'block';
+  sel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showDeclareModal(ruleIdx) {
+  const rule = RULES_POOL[ruleIdx];
+  if (!rule) return;
+
+  // 可选目标玩家
+  const targets = GS.players.filter((p, i) =>
+    i !== GS.myIdx && (p.status === 'alive' || p.status === 'ghost')
+  );
+
+  const overlay = document.createElement('div');
+  overlay.className = 'declare-modal';
+  overlay.id = 'declareModalOverlay';
+  overlay.innerHTML =
+    '<div class="dm-dialog">' +
+      '<div class="dm-title">📢 宣言抹除规则</div>' +
+      '<div class="dm-subtitle">规则：<b style="color:var(--color-rule-glow)">' + rule.name + '</b></div>' +
+      '<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;padding:8px;background:var(--bg-deep);border-radius:var(--radius-sm);">' + (rule.effect || '无描述') + '</div>' +
+      '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px;">选择这条规则指向的目标玩家：</div>' +
+      '<div class="dm-targets" id="dmTargets">' +
+        targets.map((t, i) =>
+          '<div class="dm-target" id="dmTarget' + i + '" onclick="selectDeclareTarget(' + ruleIdx + ',' + i + ')">' +
+            '<div class="dm-radio"></div>' +
+            '<div><div class="dm-target-name">' + t.avatar + ' ' + t.name + '</div>' +
+            '<div class="dm-target-hint">HP:' + t.health + '/' + t.maxHealth + ' SP:' + t.sanity + '/' + t.maxSanity + '</div></div>' +
+          '</div>'
+        ).join('') +
+      '</div>' +
+      '<div class="dm-actions">' +
+        '<button class="dm-btn cancel" onclick="document.getElementById(\'declareModalOverlay\').remove()">取消</button>' +
+        '<button class="dm-btn primary" id="dmConfirmBtn" disabled onclick="confirmDeclare(' + ruleIdx + ')">确认宣言</button>' +
+      '</div>' +
+    '</div>';
+  overlay.onclick = function(e) {
+    if (e.target === overlay) overlay.remove();
+  };
+  document.body.appendChild(overlay);
+}
+
+let selectedDeclareTarget = -1;
+function selectDeclareTarget(ruleIdx, targetIdx) {
+  selectedDeclareTarget = targetIdx;
+  document.querySelectorAll('.dm-target').forEach(el => el.classList.remove('selected'));
+  const el = document.getElementById('dmTarget' + targetIdx);
+  if (el) el.classList.add('selected');
+  const btn = document.getElementById('dmConfirmBtn');
+  if (btn) btn.disabled = false;
+}
+
+function confirmDeclare(ruleIdx) {
+  if (selectedDeclareTarget < 0) return;
+
+  const rule = RULES_POOL[ruleIdx];
+  const targets = GS.players.filter((p, i) => i !== GS.myIdx && (p.status === 'alive' || p.status === 'ghost'));
+  const target = targets[selectedDeclareTarget];
+
+  document.getElementById('declareModalOverlay').remove();
+  hideDeclareSelector();
+  GS.declareUsed = true;
+
+  // 模拟市长判定（75%成功率）
+  const success = Math.random() > 0.25;
+  if (success) {
+    addGameLog('行动', '📢 宣言「' + rule.name + '」指向「' + target.name + '」→ ✅ 市长判定：宣言成立！规则被抹除');
+    // 奖励：抽一张反击卡
+    if (COUNTER_DECK.length > GS.handCards.length + GS.activeCards.length) {
+      const newCard = COUNTER_DECK[GS.handCards.length + GS.activeCards.length];
+      GS.handCards.push({...newCard});
+      addGameLog('系统', '🎁 宣言成功奖励 → 获得「' + newCard.name + '」');
+    }
+  } else {
+    addGameLog('危险', '📢 宣言「' + rule.name + '」→ ❌ 市长判定：宣言失败！理智-1');
+    applyStatusChange('sanity', -1);
+  }
+
+  selectedDeclareTarget = -1;
+  updateAllUI();
+}
+
+function hideDeclareSelector() {
+  document.getElementById('declareSelector').style.display = 'none';
+}
+
+// ============ 行动：使用物资 ============
+function useSupply() {
+  if (!isMyTurn() || GS.supplyUsed) return;
+  hideDeclareSelector();
+
+  const sel = document.getElementById('supplySelector');
+  if (sel.style.display === 'block') {
+    hideSupplySelector();
+    return;
+  }
+
+  const grid = document.getElementById('supplyGrid');
+  if (GS.supplyInv.length === 0) {
+    grid.innerHTML = '<div class="selector-empty">暂无可用物资</div>';
+  } else {
+    grid.innerHTML = GS.supplyInv.map((s, i) =>
+      '<div class="selector-item" onclick="useSupplyItem(' + i + ')" title="' + (s.effect||'') + '">' +
+        '<div class="si-thumb"><img src="' + (s.img||'') + '" alt="' + s.name + '" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span style=font-size:2rem;opacity:0.4>🎒</span>\';"></div>' +
+        '<div class="si-name">' + s.name + '</div>' +
+        '<div class="si-effect">' + (s.effect||'').substring(0,20) + '</div>' +
+        '</div>'
+    ).join('');
+  }
+  sel.style.display = 'block';
+  sel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function useSupplyItem(idx) {
+  const item = GS.supplyInv[idx];
+  if (!item) return;
+
+  GS.supplyInv.splice(idx, 1);
+  GS.supplyUsed = true;
+
+  // 应用效果
+  let effectDesc = '';
+  if (item.healHP > 0) {
+    applyStatusChange('health', item.healHP);
+    effectDesc += '健康+' + item.healHP + ' ';
+  }
+  if (item.healSP > 0) {
+    applyStatusChange('sanity', item.healSP);
+    effectDesc += '理智+' + item.healSP + ' ';
+  }
+  if (!item.healHP && !item.healSP) {
+    // 其他效果（描述性）
+    effectDesc = item.effect || '效果已应用';
+  }
+
+  hideSupplySelector();
+  updateAllUI();
+  addGameLog('行动', '🎒 使用「' + item.name + '」→ ' + effectDesc);
+}
+
+function hideSupplySelector() {
+  document.getElementById('supplySelector').style.display = 'none';
+}
+
+// ============ 行动：角色技能 ============
+function useSkill() {
+  if (!isMyTurn() || GS.skillUsed) return;
+
+  GS.skillUsed = true;
+  const me = GS.players[GS.myIdx];
+
+  // 乐天派技能：本回合宣言+1次机会（额外宣言）
+  addGameLog('行动', '⭐ 乐天派技能发动 → 本回合宣言次数+1');
+  // 重置宣言状态
+  GS.declareUsed = false;
+
+  updateAllUI();
+}
+
+// ============ 结束回合 ============
+function endTurn() {
+  showConfirm('确认结束回合？',
+    '结束回合后进入下一玩家回合。你的行动机会将被重置。',
+    function() {
+      addGameLog('系统', '⏭️ ' + GS.players[GS.myIdx].name + ' 结束回合');
+      advancePlayerTurn();
+    });
+}
+
+function passAction() {
+  showConfirm('确认跳过行动？',
+    '跳过本次行动机会，回合仍属于你。',
+    function() {
+      // 直接推进到下一个玩家（跳过当前玩家剩余操作）
+      addGameLog('系统', '⏸️ ' + GS.players[GS.myIdx].name + ' 跳过行动');
+      advancePlayerTurn();
+    });
+}
+
+// ============ 回合推进 ============
+function advancePlayerTurn() {
+  // 寻找下一个存活的玩家
+  let next = (GS.currentPlayerIdx + 1) % GS.players.length;
+  let tries = 0;
+  while (GS.players[next].status === 'dead' && tries < GS.players.length) {
+    next = (next + 1) % GS.players.length;
+    tries++;
+  }
+
+  // 检查是否需要推进阶段/回合
+  if (next <= GS.currentPlayerIdx && GS.currentPlayerIdx >= GS.players.length - 1) {
+    advancePhase();
+  }
+
+  GS.currentPlayerIdx = next;
+
+  // 重置当前玩家的行动状态
+  const cp = GS.players[next];
+  cp.actionUsed = { declare: false, supply: false, skill: false };
+
+  // 如果下一个是"我"，重置我的操作状态
+  if (next === GS.myIdx) {
+    GS.declareUsed = false;
+    GS.supplyUsed = false;
+    GS.skillUsed = false;
+  }
+
+  updateAllUI();
+}
+
+function advancePhase() {
+  GS.phaseIdx = (GS.phaseIdx + 1) % 4;
+  GS.phase = PHASE_ORDER[GS.phaseIdx];
+
+  if (GS.phase === 'dawn') {
+    GS.round++;
+    // 黎明结算
+    applyDawnSettlement();
+  }
+
+  addGameLog('系统', '⏰ 进入 → ' + PHASE_LABELS[GS.phase].label +
+    (GS.phase === 'dawn' ? ' 第' + GS.round + '回合' : ''));
+}
+
+function applyDawnSettlement() {
+  const me = GS.players[GS.myIdx];
+  // 黎明健康值递减（从第1回合开始逐渐递减，这里模拟）
+  const dawnDrain = GS.round <= 3 ? 0 : GS.round <= 6 ? 1 : 2;
+  if (dawnDrain > 0) {
+    applyStatusChange('health', -dawnDrain);
+    addGameLog('危险', '🌅 黎明结算 → 健康值-' + dawnDrain + '（第' + GS.round + '回合）');
+  }
+}
+
+// ============ 数值动画 ============
+function applyStatusChange(type, delta) {
+  const me = GS.players[GS.myIdx];
+  const oldVal = type === 'health' ? me.health : type === 'sanity' ? me.sanity : me.gold;
+  const maxVal = type === 'health' ? me.maxHealth : type === 'sanity' ? me.maxSanity : me.maxGold;
+  const newVal = Math.max(0, Math.min(maxVal, oldVal + delta));
+
+  if (type === 'health') {
+    GS.lastHealth = oldVal;
+    me.health = newVal;
+  } else if (type === 'sanity') {
+    GS.lastSanity = oldVal;
+    me.sanity = newVal;
+  } else {
+    GS.lastGold = oldVal;
+    me.gold = newVal;
+  }
+
+  // 触发数值动画
+  animateStatusBar(type, oldVal, newVal, maxVal);
+
+  // 检查死亡
+  if (me.health <= 0 || me.sanity <= 0) {
+    handlePlayerDeath();
+  }
+}
+
+function animateStatusBar(type, from, to, max) {
+  const elId = type === 'health' ? 'siHealth' : type === 'sanity' ? 'siSanity' : 'siGold';
+  const barId = type === 'health' ? 'siHealthBar' : type === 'sanity' ? 'siSanityBar' : 'siGoldBar';
+
+  const el = document.getElementById(elId);
+  const bar = document.getElementById(barId);
+  if (!el || !bar) return;
+
+  const fromPct = from / max * 100;
+  const toPct = to / max * 100;
+  const steps = 10;
+  const duration = 300;
+  let step = 0;
+
+  function tick() {
+    step++;
+    const progress = step / steps;
+    const eased = progress * progress; // easeInQuad
+    const cur = from + (to - from) * eased;
+    const curPct = fromPct + (toPct - fromPct) * eased;
+
+    el.textContent = Math.round(cur);
+    bar.style.width = curPct + '%';
+
+    // 颜色变化
+    if (type === 'health') {
+      el.style.color = cur <= 2 ? '#e74c3c' : cur <= 4 ? '#f39c12' : 'var(--success)';
+    } else if (type === 'sanity') {
+      el.style.color = cur <= 2 ? '#e74c3c' : cur <= 4 ? '#f39c12' : 'var(--color-character-glow)';
+    }
+
+    if (step < steps) {
+      requestAnimationFrame(tick);
+    } else {
+      el.textContent = to;
+      bar.style.width = toPct + '%';
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function handlePlayerDeath() {
+  const me = GS.players[GS.myIdx];
+  if (me.status === 'alive') {
+    me.status = 'ghost';
+    addGameLog('危险', '💀 你已化为煞鬼！现在你可以激活怪谈卡对抗存活玩家');
+    // 简化：保持幽灵状态
+  }
+}
+
+// ============ 状态面板 ============
+function updateStatusPanel() {
+  const me = GS.players[GS.myIdx];
+
+  document.getElementById('siHealth').textContent = me.health;
+  document.getElementById('siHealthBar').style.width = (me.health / me.maxHealth * 100) + '%';
+  document.getElementById('siSanity').textContent = me.sanity;
+  document.getElementById('siSanityBar').style.width = (me.sanity / me.maxSanity * 100) + '%';
+  document.getElementById('siGold').textContent = me.gold;
+  document.getElementById('siGoldBar').style.width = Math.min(me.gold / me.maxGold * 100, 100) + '%';
+
+  const statusEl = document.getElementById('siStatusText');
+  statusEl.textContent = me.status === 'alive' ? '存活' : me.status === 'ghost' ? '煞鬼' : me.status === 'evil' ? '恶鬼' : '死亡';
+  statusEl.className = 'si-value ' + me.status;
+}
+
+// ============ 搜索框 ============
+let searchFocusedIdx = -1;
+let searchResults = [];
+
+function onCardSearch(value) {
+  const q = value.trim().toLowerCase();
+  const suggest = document.getElementById('searchSuggestions');
+  const clearBtn = document.getElementById('searchClear');
+
+  if (q.length === 0) {
+    suggest.classList.remove('show');
+    suggest.innerHTML = '';
+    clearBtn.classList.remove('visible');
+    searchResults = [];
+    searchFocusedIdx = -1;
+    return;
+  }
+
+  clearBtn.classList.add('visible');
+  searchResults = CARD_INDEX.filter(c =>
+    c.name.toLowerCase().includes(q) ||
+    (c.effect && c.effect.toLowerCase().includes(q))
+  ).slice(0, 20);
+  searchFocusedIdx = -1;
+
+  if (searchResults.length === 0) {
+    suggest.innerHTML = '<div class="search-empty">没有找到匹配的卡牌</div>';
+  } else {
+    suggest.innerHTML = searchResults.map((c, i) =>
+      '<div class="search-suggestion-item" id="sugItem' + i + '" onclick="selectSuggestion(' + i + ')" onmouseenter="focusSuggestion(' + i + ')">' +
+        '<div class="ssi-thumb"><img src="' + c.img + '" alt="' + c.name + '" onerror="this.style.background=\'var(--bg-card)\';this.alt=\'\';">' +
+        '</div><div class="ssi-info">' +
+          '<div class="ssi-name">' + c.name + '</div>' +
+          '<div class="ssi-meta"><span class="ssi-type ' + c.typeCss + '">' + c.type + '</span>' + (c.level ? '<span>' + c.level + '</span>' : '') + '</div>' +
+        '</div></div>'
+    ).join('');
+  }
+  suggest.classList.add('show');
+}
+
+function focusSuggestion(idx) {
+  document.querySelectorAll('.search-suggestion-item').forEach(el => el.classList.remove('focused'));
+  const el = document.getElementById('sugItem' + idx);
+  if (el) el.classList.add('focused');
+  searchFocusedIdx = idx;
+}
+
+function handleSearchKey(event) {
+  const suggest = document.getElementById('searchSuggestions');
+  if (!suggest.classList.contains('show') || searchResults.length === 0) return;
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    searchFocusedIdx = Math.min(searchFocusedIdx + 1, searchResults.length - 1);
+    focusSuggestion(searchFocusedIdx);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    searchFocusedIdx = Math.max(searchFocusedIdx - 1, 0);
+    focusSuggestion(searchFocusedIdx);
+  } else if (event.key === 'Enter') {
+    event.preventDefault();
+    if (searchFocusedIdx >= 0) selectSuggestion(searchFocusedIdx);
+  } else if (event.key === 'Escape') {
+    clearSearch();
+  }
+}
+
+function selectSuggestion(idx) {
+  const card = searchResults[idx];
+  if (!card) return;
+
+  if (card.type === '反击卡' && GS.handCards.length < 5) {
+    const exists = GS.handCards.find(c => c.name === card.name);
+    if (!exists) {
+      GS.handCards.push({ id: card.id, name: card.name, type: 'countermeasure', level: card.level, effect: card.effect, img: card.img });
+      addGameLog('系统', '搜索添加「' + card.name + '」→ 加入手牌');
+    }
+  }
+  if (card.type === '物资卡' && GS.supplyInv.length < 8) {
+    const exists = GS.supplyInv.find(s => s.name === card.name);
+    if (!exists) {
+      GS.supplyInv.push({ id: card.id, name: card.name, level: card.level, effect: card.effect, img: card.img, healHP: 0, healSP: 0 });
+      addGameLog('系统', '搜索添加「' + card.name + '」→ 加入物资');
+    }
+  }
+  document.getElementById('cardSearchInput').value = card.name;
+  clearSearch();
+  updateAllUI();
+}
+
+function clearSearch() {
+  document.getElementById('cardSearchInput').value = '';
+  document.getElementById('searchClear').classList.remove('visible');
+  document.getElementById('searchSuggestions').classList.remove('show');
+  document.getElementById('searchSuggestions').innerHTML = '';
+  searchResults = [];
+  searchFocusedIdx = -1;
+}
+
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('searchWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('searchSuggestions').classList.remove('show');
+  }
+});
+
+// ============ 确认对话框 ============
+function showConfirm(title, body, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML =
+    '<div class="confirm-dialog">' +
+      '<div class="cd-title">' + title + '</div>' +
+      '<div class="cd-body">' + body + '</div>' +
+      '<div class="cd-actions">' +
+        '<button class="cd-btn cancel">取消</button>' +
+        '<button class="cd-btn confirm">确认</button>' +
+      '</div></div>';
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('.cancel').onclick = function() { overlay.remove(); };
+  overlay.querySelector('.confirm').onclick = function() {
+    overlay.remove();
+    if (onConfirm) onConfirm();
+  };
+  overlay.onclick = function(e) {
+    if (e.target === overlay) overlay.remove();
+  };
+}
+
+// ============ 日志 ============
+function addGameLog(type, text) {
+  const log = document.getElementById('gameLog');
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const cssMap = { '行动': 'log-action', '危险': 'log-danger', '系统': 'log-system' };
+  const cssCls = cssMap[type] || '';
+
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = '<span class="log-time">' + time + '</span><span class="log-text ' + cssCls + '">' + text + '</span>';
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+
+  while (log.children.length > 80) {
+    log.removeChild(log.firstChild);
+  }
+}
+
+// ============ 键盘快捷键 ============
+document.addEventListener('keydown', function(e) {
+  // 只在实战面板激活时响应
+  const panel = document.getElementById('panel-play');
+  if (!panel || !panel.classList.contains('active')) return;
+  // 如果在搜索输入框中，不拦截
+  if (document.activeElement && document.activeElement.id === 'cardSearchInput') return;
+  // 如果有modal打开，不拦截
+  if (document.querySelector('.confirm-overlay, .declare-modal')) return;
+
+  switch(e.key.toLowerCase()) {
+    case 'd':
+      e.preventDefault();
+      declareAction();
+      break;
+    case 's':
+      e.preventDefault();
+      useSupply();
+      break;
+    case 'k':
+      e.preventDefault();
+      useSkill();
+      break;
+    case 'e':
+      e.preventDefault();
+      endTurn();
+      break;
+    case ' ':
+      e.preventDefault();
+      passAction();
+      break;
+    case 'arrowright':
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        advancePlayerTurn();
+      }
+      break;
+  }
+});
+</script>
+
+</body>
+</html>

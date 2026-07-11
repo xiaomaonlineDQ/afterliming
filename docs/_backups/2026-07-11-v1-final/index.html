@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黎明之后 — 规则怪谈·推理反击 社交派对游戏</title>
+<meta name="description" content="《黎明之后》是一款规则怪谈×推理反击的社交派对桌游。12名幸存者在鬼的隐形规则支配下求生，推理隐藏规则，发动反击卡，在黎明之前找到真相。">
+<link rel="stylesheet" href="css/main.css?v=2026071107">
+<style>
+/* ===== 黎明论坛抽屉 ===== */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,0.6);
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+.drawer-overlay.open { opacity: 1; visibility: visible; }
+
+.drawer-panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 420px; max-width: 90vw;
+  background: var(--bg-surface);
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; flex-direction: column;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.5);
+}
+.drawer-panel.open { transform: translateX(0); }
+
+.drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.drawer-header h3 {
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, var(--text-primary), var(--color-rule-glow));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.drawer-close {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted); font-size: 1.1rem; cursor: pointer;
+  transition: all 0.2s;
+}
+.drawer-close:hover { border-color: var(--color-whisper); color: var(--color-whisper-glow); }
+
+.drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* 抽屉内选项卡 */
+.drawer-tabs {
+  display: flex; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 20px;
+}
+.drawer-tab {
+  flex: 1; padding: 12px; text-align: center; font-size: 0.9rem;
+  color: var(--text-muted); background: transparent; border: none;
+  cursor: pointer; transition: all 0.25s; position: relative;
+}
+.drawer-tab:hover { color: var(--text-secondary); }
+.drawer-tab.active { color: var(--text-primary); font-weight: 600; }
+.drawer-tab.active::after {
+  content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 32px; height: 2px; border-radius: 1px;
+}
+.drawer-tab.mayor-tab.active::after { background: var(--color-rule-glow); }
+.drawer-tab.citizen-tab.active::after { background: var(--color-counter); }
+
+.drawer-content { display: none; }
+.drawer-content.active { display: block; }
+
+/* 市长选项 */
+.drawer-mayor-options { display: flex; flex-direction: column; gap: 12px; }
+.drawer-mayor-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px; background: var(--bg-elevated);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-lg);
+  color: var(--text-primary); font-size: 0.95rem;
+  cursor: pointer; transition: all 0.2s; text-align: left;
+}
+.drawer-mayor-btn:hover { background: var(--bg-hover); border-color: var(--color-rule-glow); transform: translateY(-1px); }
+.drawer-mayor-btn .d-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.drawer-mayor-btn .d-icon.real { background: rgba(212,160,23,0.12); }
+.drawer-mayor-btn .d-icon.ai { background: rgba(142,68,173,0.12); }
+.drawer-mayor-btn .d-info { flex: 1; }
+.drawer-mayor-btn .d-info .d-title { font-weight: 600; }
+.drawer-mayor-btn .d-info .d-desc { color: var(--text-muted); font-size: 0.78rem; margin-top: 2px; }
+.drawer-mayor-btn .d-arrow { color: var(--text-muted); }
+
+.drawer-mayor-btn.ai-disabled { opacity: 0.4; cursor: not-allowed; position: relative; }
+.drawer-mayor-btn.ai-disabled:hover { background: var(--bg-elevated); border-color: rgba(255,255,255,0.08); transform: none; }
+.drawer-badge {
+  position: absolute; top: -4px; right: 12px;
+  background: var(--bg-hover); color: var(--text-muted);
+  font-size: 0.65rem; padding: 2px 8px; border-radius: 10px;
+}
+
+/* 市民表单 */
+.drawer-form { display: flex; flex-direction: column; gap: 16px; }
+.drawer-avatar-section { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.drawer-avatar-preview {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--bg-elevated); border: 2px dashed rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; overflow: hidden; transition: all 0.2s;
+}
+.drawer-avatar-preview:hover { border-color: var(--color-counter); }
+.drawer-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.drawer-avatar-preview .ph { color: var(--text-muted); font-size: 0.7rem; text-align: center; }
+.drawer-avatar-preview.has-img .ph { display: none; }
+.drawer-avatar-hint { color: var(--text-muted); font-size: 0.7rem; }
+
+.drawer-form-group { display: flex; flex-direction: column; gap: 4px; }
+.drawer-form-group label { color: var(--text-secondary); font-size: 0.82rem; font-weight: 500; }
+.drawer-form-input {
+  padding: 11px 12px; background: var(--bg-elevated);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-size: 0.9rem; outline: none;
+  transition: border-color 0.2s;
+}
+.drawer-form-input:focus { border-color: var(--color-counter); }
+.drawer-form-input::placeholder { color: var(--text-muted); }
+
+.drawer-faction { display: flex; gap: 8px; }
+.drawer-faction-opt {
+  flex: 1; padding: 10px; text-align: center;
+  background: var(--bg-elevated); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm); color: var(--text-secondary);
+  cursor: pointer; transition: all 0.2s; font-size: 0.85rem;
+}
+.drawer-faction-opt:hover { border-color: rgba(255,255,255,0.2); }
+.drawer-faction-opt.active { border-color: var(--color-counter); color: var(--color-counter-glow); background: rgba(46,134,193,0.1); }
+
+.drawer-submit {
+  width: 100%; padding: 12px; border: none; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-counter), #2471a3);
+  color: #fff; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.drawer-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(46,134,193,0.3); }
+.drawer-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.drawer-error { color: var(--color-whisper-glow); font-size: 0.78rem; min-height: 1.1em; }
+
+/* 已登录面板 */
+.drawer-session { text-align: center; }
+.drawer-session .s-avatar {
+  width: 80px; height: 80px; border-radius: 50%; overflow: hidden;
+  margin: 0 auto 12px; background: var(--bg-elevated);
+  border: 2px solid rgba(255,255,255,0.1);
+}
+.drawer-session .s-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.drawer-session .s-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+.drawer-session .s-role {
+  display: inline-block; font-size: 0.78rem; padding: 3px 12px;
+  border-radius: 10px; margin-bottom: 16px;
+}
+.drawer-session .s-role.mayor { background: rgba(212,160,23,0.12); color: var(--color-rule-glow); }
+.drawer-session .s-role.citizen { background: rgba(46,134,193,0.12); color: var(--color-counter-glow); }
+.drawer-session .s-role.ghost { background: rgba(192,57,43,0.12); color: var(--color-whisper-glow); }
+
+.drawer-session .s-links { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.drawer-session .s-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px; background: var(--bg-elevated);
+  border-radius: var(--radius-sm); color: var(--text-secondary);
+  text-decoration: none; font-size: 0.9rem; transition: all 0.2s;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.drawer-session .s-link:hover { background: var(--bg-hover); color: var(--text-primary); border-color: rgba(255,255,255,0.12); }
+.drawer-session .s-link .sl-icon { font-size: 1.1rem; }
+
+.drawer-logout {
+  width: 100%; padding: 10px; background: transparent;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm);
+  color: var(--text-muted); cursor: pointer; font-size: 0.85rem;
+  transition: all 0.2s;
+}
+.drawer-logout:hover { border-color: var(--color-whisper); color: var(--color-whisper-glow); }
+
+/* 底部隐私提示 */
+.drawer-footer-note {
+  text-align: center; color: var(--text-muted); font-size: 0.65rem;
+  padding: 12px 0; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+/* 角色选择 */
+.drawer-char-section { margin-top: 4px; }
+.drawer-char-section label { color: var(--text-secondary); font-size: 0.82rem; font-weight: 500; display: block; margin-bottom: 8px; }
+.drawer-char-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  max-height: 240px; overflow-y: auto; padding-right: 4px;
+}
+.drawer-char-grid::-webkit-scrollbar { width: 4px; }
+.drawer-char-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+.drawer-char-opt {
+  padding: 8px 10px; text-align: left; font-size: 0.78rem;
+  background: var(--bg-elevated); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm); color: var(--text-muted);
+  cursor: pointer; transition: all 0.2s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.drawer-char-opt:hover { border-color: rgba(255,255,255,0.2); color: var(--text-secondary); }
+.drawer-char-opt.selected { border-color: var(--color-counter); color: var(--color-counter-glow); background: rgba(46,134,193,0.1); }
+.drawer-char-opt .ch-cat { font-size: 0.6rem; color: var(--text-muted); display: block; margin-top: 1px; }
+.drawer-char-opt.selected .ch-cat { color: var(--color-counter-glow); opacity: 0.7; }
+
+@media (max-width: 480px) {
+  .drawer-panel { width: 100%; max-width: 100vw; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
+      <li><a href="#" class="drawer-trigger" onclick="openDrawer();return false">黎明论坛</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container" style="text-align:center;">
+    <!-- Logo: 替换 src 为实际图片路径后自动显示 -->
+    <div style="position:relative;display:inline-block;margin-bottom:var(--space-lg);">
+      <img src="images/logo.png" alt="黎明之后" 
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+           style="max-width:150px;margin:0 auto;">
+      <div class="img-placeholder logo" style="display:none;margin:0 auto;">
+        <span class="ph-icon">🎴</span>
+        <span class="ph-label">Logo</span>
+        <span class="ph-size">150×150px</span>
+      </div>
+    </div>
+    <h1 class="hero-title">黎明之后</h1>
+    <p class="hero-subtitle">
+      一座被诡异规则笼罩的城市。12个幸存者。<br>
+      鬼隐藏在你们之中，用隐形规则支配一切。<br>
+      推理规则、发动反击、在黎明之前找到真相。
+    </p>
+    <div class="hero-tags">
+      <span class="hero-tag">规则怪谈</span>
+      <span class="hero-tag">推理反击</span>
+      <span class="hero-tag">6-12人</span>
+      <span class="hero-tag">社交派对</span>
+      <span class="hero-tag">12回合</span>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="quickstart.html" class="btn btn-primary">快速入门</a>
+      <a href="cards.html" class="btn btn-secondary">探索卡牌</a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="page-section" style="background:var(--bg-surface);">
+  <div class="container">
+    <h2 style="text-align:center;margin-bottom:var(--space-xl);">数字概览</h2>
+    <div class="stat-grid">
+      <div class="stat-card animate-in stagger-1">
+        <div class="stat-number character">12</div>
+        <div class="stat-label">幸存者角色</div>
+      </div>
+      <div class="stat-card animate-in stagger-1">
+        <div class="stat-number whisper">36</div>
+        <div class="stat-label">怪谈卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-2">
+        <div class="stat-number countermeasure">62</div>
+        <div class="stat-label">反击卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-2">
+        <div class="stat-number rule">52</div>
+        <div class="stat-label">规则卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-3">
+        <div class="stat-number goal">24</div>
+        <div class="stat-label">个人目的卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-3">
+        <div class="stat-number supply">81</div>
+        <div class="stat-label">物资卡</div>
+      </div>
+      <div class="stat-card animate-in stagger-4">
+        <div class="stat-number" style="color:var(--text-accent);">12</div>
+        <div class="stat-label">A市地点</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Game Overview -->
+<section class="page-section">
+  <div class="container">
+    <h2 style="text-align:center;margin-bottom:var(--space-xl);">这游戏怎么玩？</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--space-xl);max-width:1000px;margin:0 auto;">
+
+      <div class="card animate-in stagger-1">
+        <h3 style="color:var(--color-whisper);margin-bottom:var(--space-sm);">规则怪谈</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          鬼拥有隐藏规则卡，这些规则支配着整座城市的行为边界。人类不知道规则内容，只能通过观察和推理来猜测——说错规则的人会付出代价。
+        </p>
+      </div>
+
+      <div class="card animate-in stagger-2">
+        <h3 style="color:var(--color-counter);margin-bottom:var(--space-sm);">推理反击</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          人类通过宣言来猜测规则：宣言正确→规则被抹除；宣言错误→承受惩罚。成功推理后还能发动反击卡，扭转局势。
+        </p>
+      </div>
+
+      <div class="card animate-in stagger-3">
+        <h3 style="color:var(--color-rule);margin-bottom:var(--space-sm);">双维求生</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          每个幸存者都有健康值和理智值。物资匮乏会扣健康，精神冲击会扣理智。任一归零，你就完了——而死亡并不总是终点。
+        </p>
+      </div>
+
+      <div class="card animate-in stagger-4">
+        <h3 style="color:var(--color-character);margin-bottom:var(--space-sm);">AI市长主持</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          游戏中不需要真人做主持人。AI市长接管叙事、判定规则、记录事件，在每个回合讲述城市的诡异故事。真人市长也可以用AI辅助。
+        </p>
+      </div>
+
+    </div>
+
+    <div style="text-align:center;margin-top:var(--space-2xl);">
+      <a href="rules.html" class="btn btn-primary">完整规则 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- Card Types Preview -->
+<section class="page-section" style="background:var(--bg-surface);">
+  <div class="container">
+    <h2 style="text-align:center;margin-bottom:var(--space-xl);">六类卡牌</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-lg);max-width:1000px;margin:0 auto;">
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-whisper);">
+        <h4 style="color:var(--color-whisper-glow);margin-bottom:8px;">怪谈卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">鬼的武器。36张四等级，激活后改变游戏规则，制造混乱与恐惧。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">流言16 · 异常10 · 怪诞6 · 灾厄4</div>
+      </div>
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-counter);">
+        <h4 style="color:var(--color-counter-glow);margin-bottom:8px;">反击卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">人的武器。62张四等级，推理成功后发动，扭转局势。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">基础36 · 觉醒16 · 极致8 · 真理2</div>
+      </div>
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-rule);">
+        <h4 style="color:var(--color-rule-glow);margin-bottom:8px;">规则卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">游戏的核心。52张三类，鬼持有隐藏规则，人类通过宣言推理抹除。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">普通28 · 特殊24</div>
+      </div>
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-character);">
+        <h4 style="color:var(--color-character-glow);margin-bottom:8px;">角色卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">你是谁？12个独特角色，每个人有自己的特殊技能和背景故事。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">命运操控者3 · 攻击者3 · 自保型2 · 情报型2 · 资源型2</div>
+      </div>
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-supply);">
+        <h4 style="color:var(--color-supply-glow);margin-bottom:8px;">物资卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">生存的命脉。81张五等级，恢复健康值与理智值，是交易与博弈的核心。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">官方18 · 普通34 · 中级18 · 高级8 · 绝顶3</div>
+      </div>
+
+      <div class="card" style="text-align:center;border-top:3px solid var(--color-goal);">
+        <h4 style="color:var(--color-goal-glow);margin-bottom:8px;">个人目的卡</h4>
+        <p style="color:var(--text-muted);font-size:0.85rem;">你的秘密。24张无奖惩，纯粹成就驱动——不是为了赢，而是因为"我想做"。</p>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--text-muted);">较易4 · 中等8 · 较难8 · 极难4</div>
+      </div>
+
+    </div>
+
+    <div style="text-align:center;margin-top:var(--space-2xl);">
+      <a href="cards.html" class="btn btn-secondary">浏览全部卡牌 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+    <p style="margin-top:4px;font-size:0.8rem;">项目版本 V2.0 · 六个图鉴全部竣工 · 267张物理卡</p>
+  </div>
+</footer>
+
+<!-- 黎明论坛 侧滑抽屉 -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer-panel" id="drawerPanel">
+  <div class="drawer-header">
+    <h3>黎明论坛</h3>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-footer-note">所有数据仅存储在本地浏览器 · 不会上传</div>
+</div>
+
+<script>
+// ===== 抽屉开关 =====
+function openDrawer() { renderDrawer();
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('drawerPanel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('drawerPanel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+// ===== 角色数据（12名幸存者） =====
+var CHARACTERS = [
+  { id:'ch_001', name:'乐天派幸存者', category:'命运操控者', health:7, sanity:7, img:'角色卡_命运操控者_乐天派幸存者.png' },
+  { id:'ch_002', name:'天生幸运儿', category:'命运操控者', health:6, sanity:6, img:'角色卡_命运操控者_天生幸运儿.png' },
+  { id:'ch_003', name:'倒霉体质者', category:'命运操控者', health:6, sanity:6, img:'角色卡_命运操控者_倒霉体质者.png' },
+  { id:'ch_004', name:'逻辑严谨理科生', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_逻辑严谨理科生.png' },
+  { id:'ch_005', name:'内向社恐大学生', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_内向社恐大学生.png' },
+  { id:'ch_006', name:'街道社区主任', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_街道社区主任.png' },
+  { id:'ch_007', name:'灵异研究者', category:'情报型', health:6, sanity:6, img:'角色卡_情报型_灵异研究者.png' },
+  { id:'ch_008', name:'法医侦探', category:'情报型', health:6, sanity:7, img:'角色卡_情报型_法医侦探.png' },
+  { id:'ch_009', name:'沉寂的上班族', category:'自保型', health:6, sanity:6, img:'角色卡_自保型_沉寂的上班族.png' },
+  { id:'ch_010', name:'整顿末世零零后', category:'自保型', health:6, sanity:6, img:'角色卡_自保型_整顿末世零零后.png' },
+  { id:'ch_011', name:'豪门之后', category:'资源型', health:3, sanity:3, img:'角色卡_资源型_豪门之后.png' },
+  { id:'ch_012', name:'外卖单王', category:'资源型', health:5, sanity:6, img:'角色卡_资源型_外卖单王.png' }
+];
+var selectedCharacterId = null;
+
+// ===== 渲染抽屉内容 =====
+function renderDrawer() {
+  var body = document.getElementById('drawerBody');
+  var session = localStorage.getItem('dawn_session');
+  if (!session) { body.innerHTML = getLoginHTML(); bindLoginEvents(); return; }
+  try {
+    var data = JSON.parse(session);
+    body.innerHTML = getSessionHTML(data);
+  } catch(e) { body.innerHTML = getLoginHTML(); bindLoginEvents(); }
+}
+
+// ===== 登录表单HTML =====
+function getLoginHTML() {
+  return '<div class="drawer-tabs">'
+    + '<button class="drawer-tab mayor-tab active" data-dtab="mayor">🏛️ 市长</button>'
+    + '<button class="drawer-tab citizen-tab" data-dtab="citizen">👤 市民</button>'
+    + '</div>'
+    + '<div class="drawer-content active" id="dcontent-mayor">'
+    + '<div class="drawer-mayor-options">'
+    + '<button class="drawer-mayor-btn" onclick="drawerLoginMayor(\'real\')">'
+    + '<div class="d-icon real">🏛️</div>'
+    + '<div class="d-info"><div class="d-title">真人市长登入</div><div class="d-desc">解锁工具箱 · 全图视野 · 牌库中枢</div></div>'
+    + '<div class="d-arrow">→</div></button>'
+    + '<button class="drawer-mayor-btn ai-disabled" disabled>'
+    + '<div class="d-icon ai">🤖</div>'
+    + '<div class="d-info"><div class="d-title">AI 市长登入</div><div class="d-desc">AI 接管故事生成与规则管理</div></div>'
+    + '<div class="d-arrow">→</div><div class="drawer-badge">即将开放</div></button>'
+    + '</div></div>'
+    + '<div class="drawer-content" id="dcontent-citizen">'
+    + '<form class="drawer-form" onsubmit="return drawerLoginCitizen(event)">'
+    + '<div class="drawer-avatar-section">'
+    + '<div class="drawer-avatar-preview" id="dAvatar" onclick="document.getElementById(\'dAvatarInput\').click()">'
+    + '<span class="ph">点击上传<br>头像</span></div>'
+    + '<span class="drawer-avatar-hint">可选 · 仅存本地</span>'
+    + '<input type="file" id="dAvatarInput" accept="image/*" style="display:none" onchange="handleDrawerAvatar(event)">'
+    + '</div>'
+    + '<div class="drawer-form-group">'
+    + '<label for="dUsername">用户名</label>'
+    + '<input class="drawer-form-input" id="dUsername" type="text" placeholder="输入名字…" maxlength="16" autocomplete="off">'
+    + '</div>'
+    + '<div class="drawer-char-section">'
+    + '<label>选择您的身份 <span style="color:var(--color-counter-glow)">*</span></label>'
+    + '<div class="drawer-char-grid" id="dCharGrid"></div>'
+    + '</div>'
+    + '<div class="drawer-error" id="dError"></div>'
+    + '<button class="drawer-submit" type="submit" id="dSubmit">进入游戏</button>'
+    + '</form></div>';
+}
+
+// ===== 已登录面板HTML =====
+function getSessionHTML(data) {
+  var roleLabel = '', roleClass = '', links = '';
+  if (data.role === 'mayor') {
+    roleLabel = '市长';
+    roleClass = 'mayor';
+    links = '<a class="s-link" href="toolbox/rule-board.html"><span class="sl-icon">📋</span>公开规则板</a>'
+          + '<a class="s-link" href="toolbox/dashboard.html"><span class="sl-icon">🏛️</span>市长工具箱</a>'
+          + '<a class="s-link" href="map.html"><span class="sl-icon">🗺️</span>A市地图</a>';
+  } else {
+    roleLabel = data.status === 'ghost' ? '煞鬼' : (data.status === 'evil' ? '恶鬼' : '市民');
+    roleClass = data.status === 'ghost' ? 'ghost' : (data.status === 'evil' ? 'ghost' : 'citizen');
+    links = '<a class="s-link" href="citizen.html"><span class="sl-icon">🎮</span>我的面板</a>'
+          + '<a class="s-link" href="cards.html"><span class="sl-icon">🃏</span>卡牌图鉴</a>'
+          + '<a class="s-link" href="map.html"><span class="sl-icon">🗺️</span>A市地图</a>';
+  }
+  var avatarHTML = data.avatar
+    ? '<img src="' + data.avatar + '" alt="头像">'
+    : '<span style="font-size:2rem;">👤</span>';
+  return '<div class="drawer-session">'
+    + '<div class="s-avatar">' + avatarHTML + '</div>'
+    + '<div class="s-name">' + (data.username || '市长') + '</div>'
+    + '<div class="s-role ' + roleClass + '">' + roleLabel + '</div>'
+    + '<div class="s-links">' + links + '</div>'
+    + '<button class="drawer-logout" onclick="drawerLogout()">退出登录</button>'
+    + '</div>';
+}
+
+// ===== 登录事件绑定 =====
+function bindLoginEvents() {
+  document.querySelectorAll('.drawer-tab').forEach(function(t) {
+    t.onclick = function() {
+      document.querySelectorAll('.drawer-tab').forEach(function(x){ x.classList.remove('active'); });
+      document.querySelectorAll('.drawer-content').forEach(function(x){ x.classList.remove('active'); });
+      t.classList.add('active');
+      document.getElementById('dcontent-' + t.dataset.dtab).classList.add('active');
+    };
+  });
+  // 渲染角色选择网格
+  var grid = document.getElementById('dCharGrid');
+  if (!grid) return;
+  selectedCharacterId = null;
+  grid.innerHTML = '';
+  CHARACTERS.forEach(function(ch) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'drawer-char-opt';
+    btn.innerHTML = ch.name + '<span class="ch-cat">' + ch.category + ' · 健康' + ch.health + ' 理智' + ch.sanity + '</span>';
+    btn.onclick = function() {
+      document.querySelectorAll('.drawer-char-opt').forEach(function(x){ x.classList.remove('selected'); });
+      btn.classList.add('selected');
+      selectedCharacterId = ch.id;
+    };
+    grid.appendChild(btn);
+  });
+}
+
+// ===== 头像处理 =====
+function handleDrawerAvatar(event) {
+  var file = event.target.files[0]; if (!file) return;
+  if (file.size > 2*1024*1024) { drawerError('图片太大，请小于2MB'); event.target.value=''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var size = Math.min(img.width, img.height);
+      var c = document.createElement('canvas'); c.width = 200; c.height = 200;
+      var ctx = c.getContext('2d');
+      ctx.drawImage(img, (img.width-size)/2, (img.height-size)/2, size, size, 0, 0, 200, 200);
+      var b64 = c.toDataURL('image/jpeg', 0.85);
+      var p = document.getElementById('dAvatar');
+      p.innerHTML = ''; var th = document.createElement('img'); th.src = b64; p.appendChild(th);
+      p.classList.add('has-img'); p.dataset.avatarData = b64;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function drawerError(msg) {
+  var el = document.getElementById('dError'); el.textContent = msg;
+  setTimeout(function(){ el.textContent = ''; }, 3000);
+}
+
+// ===== 登录动作 =====
+function drawerLoginMayor(type) {
+  localStorage.setItem('dawn_session', JSON.stringify({ role:'mayor', type:type, loginTime:Date.now() }));
+  closeDrawer();
+  window.location.href = 'toolbox/dashboard.html';
+}
+
+function drawerLoginCitizen(event) {
+  event.preventDefault();
+  var username = document.getElementById('dUsername').value.trim();
+  var avatar = document.getElementById('dAvatar').dataset.avatarData || '';
+  if (!username) { drawerError('请输入用户名'); return false; }
+  if (!selectedCharacterId) { drawerError('请选择您的身份角色'); return false; }
+  var character = null;
+  for (var i = 0; i < CHARACTERS.length; i++) { if (CHARACTERS[i].id === selectedCharacterId) { character = CHARACTERS[i]; break; } }
+  if (!character) { drawerError('角色选择有误，请重新选择'); return false; }
+  localStorage.setItem('dawn_session', JSON.stringify({ role:'citizen', username:username, status:'citizen', avatar:avatar, loginTime:Date.now(), character:character }));
+  closeDrawer();
+  window.location.href = 'citizen.html';
+  return false;
+}
+
+function drawerLogout() {
+  localStorage.removeItem('dawn_session');
+  renderDrawer();
+}
+</script>
+
+<script src="js/app.js"></script>
+</body>
+</html>

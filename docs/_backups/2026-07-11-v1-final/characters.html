@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>角色 — 黎明之后</title>
+<meta name="description" content="《黎明之后》12名幸存者角色：命运操控者、攻击者、自保型、情报型、资源型。在诡异规则笼罩的A市中求生。">
+<link rel="stylesheet" href="css/main.css?v=2026071017">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container page-section">
+  <h1 style="margin-bottom:var(--space-sm);">幸存者角色</h1>
+  <p style="color:var(--text-secondary);margin-bottom:var(--space-xl);">
+    12名幸存者，5种类型。每个人都背负着不同的命运，在黎明之前——你的选择决定生死。
+  </p>
+
+  <!-- Type Filters -->
+  <div class="filter-bar" id="charFilters">
+    <button class="filter-btn active" data-type="all">全部 (12)</button>
+    <button class="filter-btn type-character" data-type="命运操控者">命运操控者 (3)</button>
+    <button class="filter-btn type-character" data-type="攻击者">攻击者 (3)</button>
+    <button class="filter-btn type-character" data-type="自保型">自保型 (2)</button>
+    <button class="filter-btn type-character" data-type="情报型">情报型 (2)</button>
+    <button class="filter-btn type-character" data-type="资源型">资源型 (2)</button>
+  </div>
+
+  <div class="character-grid" id="charGrid"></div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+  </div>
+</footer>
+
+<script src="js/data.js?v=2026071017"></script>
+<script src="js/app.js?v=2026071017"></script>
+<script>
+// --- Type descriptions ---
+const TYPE_DESC = {
+  '命运操控者': '能够改写规则、操控命运走向的角色。他们的技能可以干预鬼的规则或改变事件结果，是团队中最具战略价值的成员。',
+  '攻击者': '擅长直接对抗鬼和规则的角色。他们的技能偏向进攻性，能够主动削弱鬼的力量或对规则发起挑战。',
+  '自保型': '拥有强大生存能力的角色。他们的技能专注于保护自己或队友，在恶劣环境中坚持更久。',
+  '情报型': '专注信息收集和分析的角色。他们的技能帮助团队更快推理隐藏规则，是破局的关键。',
+  '资源型': '擅长获取和管理物资的角色。在物资匮乏的世界里，他们是维系团队生存的支柱。'
+};
+
+function renderCharacters() {
+  const grid = document.getElementById('charGrid');
+  const activeBtn = document.querySelector('#charFilters .filter-btn.active');
+  const filterType = activeBtn ? activeBtn.dataset.type : 'all';
+
+  let chars = CARD_DB.characters || [];
+  if (filterType !== 'all') {
+    chars = chars.filter(c => c.level === filterType);
+  }
+
+  // Sort by type
+  chars.sort((a, b) => (a.level || '').localeCompare(b.level || ''));
+
+  grid.innerHTML = chars.map(card => {
+    const levelInfo = LEVEL_MAP[card.level] || { cn: card.level, css: '' };
+    const imgPath = getCardImagePath({ ...card, _type: 'characters' });
+    return `
+      <div class="card animate-in" style="border-top:3px solid var(--color-character);">
+        <!-- Character Card Image -->
+        <div class="card-img-wrap" style="aspect-ratio:630/880;max-width:280px;margin:0 auto var(--space-md) auto;">
+          <img src="${imgPath}" alt="${card.name}" loading="lazy"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="img-placeholder" style="display:none;">
+            <span class="ph-icon">👤</span>
+            <span class="ph-label">${card.name}</span>
+            <span class="ph-size">630×880</span>
+          </div>
+        </div>
+        <div class="card-header">
+          <span class="card-title">${card.name}</span>
+          <span class="badge-rarity ${levelInfo.css}">${levelInfo.cn}</span>
+        </div>
+        <div style="display:flex;gap:var(--space-lg);margin-bottom:var(--space-md);">
+          <div style="text-align:center;">
+            <div style="font-size:0.7rem;color:var(--text-muted);">健康</div>
+            <div style="font-size:1.3rem;font-weight:700;color:var(--success);">${card.health}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:0.7rem;color:var(--text-muted);">理智</div>
+            <div style="font-size:1.3rem;font-weight:700;color:var(--info);">${card.sanity}</div>
+          </div>
+        </div>
+        <div style="background:var(--bg-hover);border-radius:var(--radius-md);padding:var(--space-md);margin-bottom:var(--space-sm);">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:6px;">技能：${card.skill_name || '—'}</div>
+          <div style="font-size:0.9rem;line-height:1.6;">${formatSkillEffect(card.skill_effect || '')}</div>
+        </div>
+        ${card.flavor ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.5;font-style:italic;">${card.flavor.substring(0, 150)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// --- Filter ---
+document.getElementById('charFilters').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('#charFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCharacters();
+});
+
+// Init
+renderCharacters();
+</script>
+</body>
+</html>

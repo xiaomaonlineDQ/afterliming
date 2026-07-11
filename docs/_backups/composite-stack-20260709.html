@@ -1,0 +1,486 @@
+<!--
+  ============================================================
+  复合堆叠（Tab 3）完整代码备份 — 2026-07-09
+  ============================================================
+  来源: docs/citizen.html
+  用途: 参考/恢复 Tab 3 "复合堆叠测试" 栏目的全部代码
+  注意: 此文件仅供备份参考，不要在 citizen.html 中改动任何 .comp-* 相关代码
+  
+  包含:
+  1. CSS:  .comp-scene-wrap / .comp-scene / .comp-char / .comp-dir-label
+           .comp-card / .comp-pools / .comp-pool-* / .comp-legend-bar
+           + 移动端 @media 覆盖
+  2. HTML: #panel-composite 完整面板结构（场景容器 + 四方向牌池 + 图例 + 状态栏）
+  3. JS:   COMP_POOLS / COMP_STACKS 数据模型 + initComposite/buildCompPool/
+           toggleCompCard/buildCompStack/createCompCard/removeCompCard/updateCompStatus
+           + 窗口缩放响应
+  ============================================================
+-->
+
+<!-- ==================== CSS: 复合堆叠场景样式 ==================== -->
+<style>
+/* ====== 复合堆叠场景 ====== */
+/*
+  四方向堆叠公式（仅露数值栏/状态区，以角色卡左上角(charLeft,charTop)为锚点）：
+  - 右(反击卡 step=CW*0.25): card[i].left=charLeft+step*(i+1), z=N-i, 遮挡75%卡面只露25%状态栏
+  - 左(怪谈卡 step=CW*0.25): card[i].left=charLeft-step*(i+1), z=N-i, 遮挡75%卡面只露25%状态栏
+  - 上(伤害卡 step=DH*0.38): card[i].top=charTop-step*(i+1), z=N-i, 只露38%上方状态区
+  - 下(物资卡 step=CH*0.25): card[i].top=charTop+step*(i+1), z=N-i, 只露25%底部数值栏
+*/
+.comp-scene-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+.comp-scene {
+  position: relative;
+  width: 540px;
+  height: 700px;
+  margin: 0 auto;
+  background: radial-gradient(ellipse at center, rgba(46,134,193,0.04) 0%, transparent 70%);
+  border: 1px dashed rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+/* 角色卡（锚点） */
+.comp-char {
+  position: absolute;
+  width: 200px; height: 280px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(255,255,255,0.1), var(--shadow-lg);
+  border: 2px solid var(--color-character);
+  z-index: 100;
+  background: var(--bg-card);
+}
+.comp-char img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 方向标签（场景内小标注） */
+.comp-dir-label {
+  position: absolute;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 5;
+  letter-spacing: 0.05em;
+}
+
+/* 基础堆叠卡片样式（四个方向共用） */
+.comp-card {
+  position: absolute;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  background: var(--bg-card);
+  transition: left 0.35s ease, right 0.35s ease, top 0.35s ease, bottom 0.35s ease, opacity 0.25s;
+  cursor: pointer;
+}
+.comp-card img { width: 100%; height: 100%; object-fit: cover; }
+.comp-card .comp-card-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 2px 4px;
+  background: rgba(0,0,0,0.75);
+  color: var(--text-muted);
+  font-size: 0.52rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.comp-card:hover .comp-card-label { opacity: 1; }
+.comp-card.removing { transform: scale(0.9); opacity: 0.5; }
+
+/* 各方向颜色提示 */
+.comp-right { box-shadow: 0 2px 8px rgba(46,134,193,0.25); }
+.comp-left  { box-shadow: 0 2px 8px rgba(192,57,43,0.25); }
+.comp-top    { box-shadow: 0 2px 8px rgba(231,76,60,0.25); }
+.comp-bottom { box-shadow: 0 2px 8px rgba(39,174,96,0.25); }
+.comp-right  .comp-card-label  { color: var(--color-counter-glow); }
+.comp-left   .comp-card-label  { color: var(--color-whisper-glow); }
+.comp-top    .comp-card-label  { color: #e74c3c; }
+.comp-bottom .comp-card-label  { color: var(--color-supply-glow); }
+
+/* 四个卡片池（场景下方） */
+.comp-pools {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comp-pool-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.comp-pool-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+.comp-pool-label.l-right  { color: var(--color-counter-glow); }
+.comp-pool-label.l-left   { color: var(--color-whisper-glow); }
+.comp-pool-label.l-top    { color: #e74c3c; }
+.comp-pool-label.l-bottom { color: var(--color-supply-glow); }
+.comp-pool-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.comp-pool-card {
+  width: 72px;
+  height: 101px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.2s;
+  border: 2px solid transparent;
+  background: var(--bg-card);
+  position: relative;
+}
+.comp-pool-card:active { transform: scale(0.95); }
+.comp-pool-card.stacked {
+  border-color: var(--color-counter);
+  filter: brightness(0.7);
+}
+.comp-pool-card img { width: 100%; height: 100%; object-fit: cover; }
+
+.comp-legend-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 4px;
+}
+.comp-legend-bar span { display: flex; align-items: center; gap: 3px; }
+.comp-legend-bar .cldot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+
+/* 复合场景移动端 */
+@media (max-width: 600px) {
+  .comp-scene {
+    width: 340px;
+    height: 480px;
+  }
+  .comp-char {
+    width: 130px; height: 182px;
+  }
+  .comp-pool-card {
+    width: 56px; height: 78px;
+  }
+  .comp-pool-label {
+    font-size: 0.65rem;
+    min-width: 56px;
+  }
+}
+</style>
+
+<!-- ==================== HTML: Tab 3 复合堆叠面板 ==================== -->
+<!-- ========== Tab 3: 复合堆叠测试 ========== -->
+<div class="test-panel" id="panel-composite">
+  <div class="test-hint">💡 四向复合堆叠：左(怪谈) 右(反击) 上(伤害) 下(物资) · 各自独立牌池 · 点击卡片添加/移除</div>
+
+  <div class="comp-scene-wrap">
+    <!-- 场景容器：角色卡 + 四方向堆叠 -->
+    <div class="comp-scene" id="compScene">
+      <!-- 方向标签 -->
+      <div class="comp-dir-label" style="top:4px;left:50%;transform:translateX(-50%);">⬆ 伤害指示卡 (露出顶部38%)</div>
+      <div class="comp-dir-label" style="top:50%;left:4px;transform:translateY(-50%);">怪谈卡 ⬅</div>
+      <div class="comp-dir-label" style="top:50%;right:4px;transform:translateY(-50%);">➡ 反击卡</div>
+      <div class="comp-dir-label" style="bottom:4px;left:50%;transform:translateX(-50%);">⬇ 物资卡 (露出底部25%)</div>
+
+      <!-- 角色卡（锚点，JS动态设置位置） -->
+      <div class="comp-char" id="compChar">
+        <img src="images/cards/角色卡/角色卡_命运操控者_乐天派幸存者.png" alt="乐天派幸存者"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#2d1b3d,#1a1a2e);color:var(--color-character-glow);font-size:0.85rem;font-weight:600;">乐天派幸存者</div>
+      </div>
+
+      <!-- 四方向堆叠卡片由JS动态生成 -->
+    </div>
+
+    <!-- 四方向卡片池 -->
+    <div class="comp-pools">
+      <!-- 反击卡（右） -->
+      <div class="comp-pool-row">
+        <span class="comp-pool-label l-right">➡ 反击卡</span>
+        <div class="comp-pool-grid" id="compPoolRight"></div>
+      </div>
+      <!-- 怪谈卡（左） -->
+      <div class="comp-pool-row">
+        <span class="comp-pool-label l-left">⬅ 怪谈卡</span>
+        <div class="comp-pool-grid" id="compPoolLeft"></div>
+      </div>
+      <!-- 伤害指示卡（上） -->
+      <div class="comp-pool-row">
+        <span class="comp-pool-label l-top">⬆ 伤害卡</span>
+        <div class="comp-pool-grid" id="compPoolTop"></div>
+      </div>
+      <!-- 物资卡（下） -->
+      <div class="comp-pool-row">
+        <span class="comp-pool-label l-bottom">⬇ 物资卡</span>
+        <div class="comp-pool-grid" id="compPoolBottom"></div>
+      </div>
+    </div>
+
+    <!-- 图例 -->
+    <div class="comp-legend-bar">
+      <span><span class="cldot" style="background:var(--color-counter-glow)"></span> 反击(右50px)</span>
+      <span><span class="cldot" style="background:var(--color-whisper-glow)"></span> 怪谈(左50px)</span>
+      <span><span class="cldot" style="background:#e74c3c"></span> 伤害(上50px)</span>
+      <span><span class="cldot" style="background:var(--color-supply-glow)"></span> 物资(下70px)</span>
+    </div>
+  </div>
+
+  <div class="test-status" id="compStatus">
+    复合堆叠：右<b style="color:var(--color-counter-glow)" id="compCntR">0</b> · 左<b style="color:var(--color-whisper-glow)" id="compCntL">0</b> · 上<b style="color:#e74c3c" id="compCntT">0</b> · 下<b style="color:var(--color-supply-glow)" id="compCntB">0</b>
+  </div>
+</div>
+
+<!-- ==================== JS: 复合堆叠逻辑 ==================== -->
+<script>
+// ====== 复合堆叠测试 ======
+// 桌面端参数
+const COMP_CHAR_W = 200;
+const COMP_CHAR_H = 280;
+const COMP_DAMAGE_H = 140; // 伤害指示卡高度（半高）
+const COMP_STEP_R = 50; // 反击卡步长
+const COMP_STEP_L = 50; // 怪谈卡步长
+const COMP_STEP_T = 50; // 伤害指示卡步长
+const COMP_STEP_B = 70; // 物资卡步长（底部25%数值区=70px）
+
+// 角色卡在场景中的锚点位置
+const COMP_CHAR_LEFT = 170;
+const COMP_CHAR_TOP = 170;
+
+// 四个方向的卡牌池
+const COMP_POOLS = {
+  right: [
+    { name:'分担', img:'images/cards/反击卡/事件卡_基础_分担.png' },
+    { name:'慰藉', img:'images/cards/反击卡/事件卡_基础_慰藉.png' },
+    { name:'偷窃', img:'images/cards/反击卡/事件卡_基础_偷窃.png' },
+    { name:'分配', img:'images/cards/反击卡/事件卡_基础_分配.png' }
+  ],
+  left: [
+    { name:'灵异干扰I', img:'images/cards/怪谈卡/怪谈卡_异常_灵异干扰_I.png' },
+    { name:'即视感', img:'images/cards/怪谈卡/怪谈卡_异常_即视感.png' },
+    { name:'鬼打墙', img:'images/cards/怪谈卡/怪谈卡_异常_鬼打墙.png' },
+    { name:'鬼契', img:'images/cards/怪谈卡/怪谈卡_异常_鬼契.png' }
+  ],
+  top: [
+    { name:'健康值-1', img:'images/damage/伤害指示卡_健康值-1.png', h:COMP_DAMAGE_H },
+    { name:'理智值-1', img:'images/damage/伤害指示卡_理智值-1.png', h:COMP_DAMAGE_H },
+    { name:'健康值-2', img:'images/damage/伤害指示卡_健康值-2.png', h:COMP_DAMAGE_H },
+    { name:'理智值-2', img:'images/damage/伤害指示卡_理智值-2.png', h:COMP_DAMAGE_H }
+  ],
+  bottom: [
+    { name:'保障餐A', img:'images/cards/物资卡/物资卡_官方_保障餐A.png' },
+    { name:'可乐', img:'images/cards/物资卡/物资卡_普通_可乐.png' },
+    { name:'心灵鸡汤', img:'images/cards/物资卡/物资卡_中级_心灵鸡汤.png' },
+    { name:'珍珠奶茶', img:'images/cards/物资卡/物资卡_普通_珍珠奶茶.png' }
+  ]
+};
+
+// 当前堆叠状态：{ right:[], left:[], top:[], bottom:[] }
+let COMP_STACKS = { right:[], left:[], top:[], bottom:[] };
+
+function getCompScale() {
+  return window.innerWidth <= 600 ? 0.65 : 1;
+}
+
+function initComposite() {
+  const charEl = document.getElementById('compChar');
+  const s = getCompScale();
+  charEl.style.left = (COMP_CHAR_LEFT * s) + 'px';
+  charEl.style.top = (COMP_CHAR_TOP * s) + 'px';
+  charEl.style.width = (COMP_CHAR_W * s) + 'px';
+  charEl.style.height = (COMP_CHAR_H * s) + 'px';
+  buildAllCompPools();
+  buildAllCompStacks();
+  updateCompStatus();
+}
+
+function buildAllCompPools() {
+  ['right','left','top','bottom'].forEach(dir => {
+    buildCompPool(dir);
+  });
+}
+
+function buildCompPool(dir) {
+  const grid = document.getElementById('compPool' + dir.charAt(0).toUpperCase() + dir.slice(1));
+  const pool = COMP_POOLS[dir];
+  const stacked = COMP_STACKS[dir];
+  grid.innerHTML = pool.map((c, i) => {
+    const isStacked = stacked.some(s => s.name === c.name);
+    return '<div class="comp-pool-card' + (isStacked ? ' stacked' : '') + '" id="compPool_' + dir + '_' + i + '"' +
+      ' onclick="toggleCompCard(\'' + dir + '\',' + i + ')" title="' + (isStacked ? '点击移除' : '点击添加') + '「' + c.name + '」">' +
+      '<img src="' + c.img + '" alt="' + c.name + '" onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + c.name + '\';">' +
+      '</div>';
+  }).join('');
+}
+
+function toggleCompCard(dir, idx) {
+  const card = COMP_POOLS[dir][idx];
+  const stack = COMP_STACKS[dir];
+  const existingIdx = stack.findIndex(s => s.name === card.name);
+  const MAX = 3;
+
+  if (existingIdx >= 0) {
+    stack.splice(existingIdx, 1);
+  } else {
+    if (stack.length >= MAX) {
+      stack.shift();
+    }
+    stack.push(card);
+  }
+
+  buildCompPool(dir);
+  buildCompStack(dir);
+  updateCompStatus();
+}
+
+function buildAllCompStacks() {
+  ['right','left','top','bottom'].forEach(dir => buildCompStack(dir));
+}
+
+function buildCompStack(dir) {
+  const scene = document.getElementById('compScene');
+  const s = getCompScale();
+  const charW = COMP_CHAR_W * s;
+  const charH = COMP_CHAR_H * s;
+  const charLeft = COMP_CHAR_LEFT * s;
+  const charTop = COMP_CHAR_TOP * s;
+  const stack = COMP_STACKS[dir];
+  const N = stack.length;
+
+  // 移除旧卡片
+  scene.querySelectorAll('.comp-card-' + dir).forEach(el => el.remove());
+
+  if (N === 0) return;
+
+  let step, cardH;
+  const cardW = charW;
+
+  if (dir === 'right') {
+    step = COMP_STEP_R * s;
+    cardH = charH;
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const left = charLeft + step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: left + 'px',
+        top: charTop + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'left') {
+    step = COMP_STEP_L * s;
+    cardH = charH;
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const left = charLeft - step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: left + 'px',
+        top: charTop + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'top') {
+    step = COMP_STEP_T * s;
+    cardH = COMP_DAMAGE_H * s;
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const top = charTop - step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: charLeft + 'px',
+        top: top + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'bottom') {
+    step = COMP_STEP_B * s;
+    cardH = charH;
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const top = charTop + step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: charLeft + 'px',
+        top: top + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  }
+}
+
+function createCompCard(scene, dir, card, idx, N, style) {
+  const div = document.createElement('div');
+  div.className = 'comp-card comp-' + dir + ' comp-card-' + dir;
+  Object.assign(div.style, style);
+  div.title = '点击移除「' + card.name + '」（' + dir + ' 图层-' + (N-idx) + '）';
+  div.onclick = function(e) {
+    e.stopPropagation();
+    removeCompCard(dir, card.name);
+  };
+  div.innerHTML = '<img src="' + card.img + '" alt="' + card.name + '"' +
+    ' onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + card.name + '\';">' +
+    '<div class="comp-card-label">' + card.name + ' · L-' + (N-idx) + '</div>';
+  const charEl = document.getElementById('compChar');
+  scene.insertBefore(div, charEl);
+}
+
+function removeCompCard(dir, name) {
+  const idx = COMP_STACKS[dir].findIndex(s => s.name === name);
+  if (idx >= 0) {
+    COMP_STACKS[dir].splice(idx, 1);
+    buildCompPool(dir);
+    buildCompStack(dir);
+    updateCompStatus();
+  }
+}
+
+function updateCompStatus() {
+  const cntR = COMP_STACKS.right.length;
+  const cntL = COMP_STACKS.left.length;
+  const cntT = COMP_STACKS.top.length;
+  const cntB = COMP_STACKS.bottom.length;
+  document.getElementById('compCntR').textContent = cntR;
+  document.getElementById('compCntL').textContent = cntL;
+  document.getElementById('compCntT').textContent = cntT;
+  document.getElementById('compCntB').textContent = cntB;
+  document.getElementById('compStatus').innerHTML =
+    '复合堆叠：右<b style="color:var(--color-counter-glow)">' + cntR + '</b> · ' +
+    '左<b style="color:var(--color-whisper-glow)">' + cntL + '</b> · ' +
+    '上<b style="color:#e74c3c">' + cntT + '</b> · ' +
+    '下<b style="color:var(--color-supply-glow)">' + cntB + '</b>' +
+    (cntR+cntL+cntT+cntB > 0 ? ' · <span style="color:var(--text-muted)">点击场景内卡片可移除</span>' : '');
+}
+
+// 响应窗口缩放
+window.addEventListener('resize', function() {
+  if (document.getElementById('panel-composite').classList.contains('active')) {
+    initComposite();
+  }
+});
+</script>

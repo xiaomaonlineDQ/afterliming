@@ -1,0 +1,3071 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>市民面板 — 黎明之后</title>
+<link rel="stylesheet" href="css/main.css?v=2026071110">
+<script src="js/data.js?v=2026071107"></script>
+<script src="js/app.js?v=2026071107"></script>
+<script src="js/rule-board.js?v=2026071107"></script>
+<style>
+.citizen-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部状态栏 */
+.citizen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.citizen-header .home-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.82rem;
+  padding: 4px 0;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.citizen-header .home-link:hover { color: var(--text-primary); }
+
+.citizen-header .user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.citizen-header .avatar-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.citizen-header .avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.citizen-header .name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.citizen-header .status-badge {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(46,134,193,0.15);
+  color: var(--color-counter-glow);
+}
+.citizen-header .status-badge.ghost {
+  background: rgba(192,57,43,0.15);
+  color: var(--color-whisper-glow);
+}
+.citizen-header .status-badge.evil {
+  background: rgba(192,57,43,0.2);
+  color: #ff4444;
+}
+.citizen-header .logout-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.citizen-header .logout-btn:hover {
+  border-color: var(--color-whisper);
+  color: var(--color-whisper-glow);
+}
+
+/* ====== 公开规则板 (Tab 4) ====== */
+:root {
+  --rb-zone-all: #e74c3c;
+  --rb-zone-human: #3498db;
+  --rb-zone-ghost: #9b59b6;
+  --rb-zone-erased: #7f8c8d;
+}
+#panel-ruleboard {
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.rb-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex-shrink: 0;
+  min-height: 44px;
+}
+.rb-header h2 {
+  font-size: 1rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rb-header .rb-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.rb-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* 主体布局 */
+.rb-main {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 左侧卡池面板 */
+.rb-pool {
+  width: 300px;
+  min-width: 260px;
+  max-width: 340px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.rb-pool-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.rb-pool-header h3 {
+  font-size: 0.85rem;
+  margin: 0 0 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rb-pool-count {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+.rb-pool-tabs {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.rb-pool-tab {
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  border: 1px solid var(--border-medium);
+  border-radius: 3px;
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.rb-pool-tab:hover { background: var(--bg-hover); }
+.rb-pool-tab.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.rb-pool-cards {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 卡池中规则卡缩略图 */
+.rb-card {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-elevated);
+  border: 2px solid var(--border-medium);
+  border-radius: 5px;
+  padding: 3px;
+  cursor: grab;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+}
+.rb-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.rb-card:active { cursor: grabbing; }
+.rb-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+.rb-card.selected {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(52,152,219,0.3);
+  background: rgba(52,152,219,0.08);
+}
+
+.rb-card-img {
+  width: 110px;
+  height: 39px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.rb-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rb-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.rb-card-name {
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.rb-card-text {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rb-card-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-top: 2px;
+  font-weight: 500;
+}
+.rb-badge-t1 { background: #27ae60; color: #fff; }
+.rb-badge-t2 { background: #f39c12; color: #fff; }
+.rb-badge-t3 { background: #e74c3c; color: #fff; }
+.rb-badge-s  { background: #8e44ad; color: #fff; }
+
+/* 分区内的规则卡：横版全宽 */
+.rb-card.in-zone {
+  display: block;
+  padding: 2px;
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  border-radius: 5px;
+  cursor: grab;
+  position: relative;
+}
+.rb-card.in-zone .rb-card-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2640 / 930;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.rb-card.in-zone .rb-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.rb-card.in-zone .rb-card-info { display: none; }
+
+.rb-card-return {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.62rem;
+  color: #fff;
+  background: rgba(231,76,60,0.85);
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: none;
+  z-index: 5;
+}
+.rb-card.in-zone .rb-card-return { display: inline-block; }
+.rb-card-return:hover { background: rgba(192,57,43,0.95); }
+
+/* 右侧四分区 */
+.rb-board {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.rb-zone {
+  background: var(--bg-surface);
+  border: 2px dashed var(--border-medium);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+.rb-zone.drag-over {
+  border-color: var(--color-primary);
+  background: rgba(52,152,219,0.05);
+  border-style: solid;
+}
+.rb-zone-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.rb-zone-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rb-zone-dot.all    { background: var(--rb-zone-all); }
+.rb-zone-dot.human  { background: var(--rb-zone-human); }
+.rb-zone-dot.ghost  { background: var(--rb-zone-ghost); }
+.rb-zone-dot.erased { background: var(--rb-zone-erased); }
+
+.rb-zone h4 {
+  font-size: 0.78rem;
+  margin: 0;
+  flex: 1;
+}
+.rb-zone-count {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.rb-zone-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rb-zone-empty {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  text-align: center;
+  padding: var(--space-md);
+  font-style: italic;
+}
+
+/* 移动端 */
+@media (max-width: 820px) {
+  .rb-main { flex-direction: column; }
+  .rb-pool {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    max-height: 35vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .rb-pool-header { padding: 6px 8px; }
+  .rb-pool-header h3 { font-size: 0.8rem; margin-bottom: 3px; }
+  .rb-pool-cards { padding: 3px; gap: 3px; }
+  .rb-board { gap: 5px; padding: 5px; }
+  .rb-zone { padding: 5px 7px; border-radius: 6px; }
+  .rb-zone h4 { font-size: 0.7rem; }
+  .rb-zone-header { margin-bottom: 3px; padding-bottom: 3px; }
+  .rb-card { padding: 2px; gap: 4px; }
+  .rb-card-img { width: 64px; height: 23px; }
+  .rb-card-name { font-size: 0.66rem; }
+  .rb-card-text { font-size: 0.58rem; }
+  .rb-zone-empty { font-size: 0.68rem; padding: 5px; }
+  .rb-pool-tab { font-size: 0.63rem; padding: 2px 6px; }
+  .rb-card.in-zone .rb-card-img { width: 100%; }
+  .rb-card-return { font-size: 0.55rem; padding: 2px 5px; top: 3px; right: 3px; }
+}
+@media (max-width: 420px) {
+  .rb-board { gap: 3px; padding: 3px; }
+  .rb-zone { padding: 3px 5px; }
+  .rb-zone h4 { font-size: 0.63rem; }
+  .rb-zone-dot { width: 7px; height: 7px; }
+  .rb-card-img { width: 54px; height: 19px; }
+  .rb-card-name { font-size: 0.6rem; }
+  .rb-card-badge { font-size: 0.55rem; padding: 0 4px; }
+  .rb-header h2 { font-size: 0.85rem; }
+  .rb-header { padding: 4px 8px; min-height: 40px; }
+}
+
+/* ====== 测试区通用 ====== */
+.test-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.test-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.test-tab {
+  flex: 1;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-sans);
+}
+.test-tab.active {
+  color: var(--color-counter-glow);
+  border-bottom-color: var(--color-counter-glow);
+  background: rgba(46,134,193,0.06);
+}
+.test-panel { display: none; flex-direction: column; padding: 16px; gap: 16px; flex: 1; align-items: center; }
+.test-panel.active { display: flex; }
+.test-hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 8px 0;
+}
+.test-status {
+  margin-top: auto;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-align: center;
+  border: 1px solid var(--border-subtle);
+}
+
+/* ====== 反击卡操作台 (Tab 1) ====== */
+/* 搜索栏 */
+.cz-search-bar {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.cz-search-input {
+  width: 100%;
+  padding: 10px 40px 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.cz-search-input:focus {
+  border-color: var(--color-counter-glow);
+  box-shadow: 0 0 0 2px rgba(46,134,193,0.15);
+}
+.cz-search-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+.cz-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  display: none;
+  padding: 2px 6px;
+  line-height: 1;
+}
+.cz-search-clear:hover { color: var(--text-primary); }
+.cz-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0; right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 50;
+  display: none;
+  margin-top: -1px;
+}
+.cz-search-results.show { display: block; }
+.cz-sr-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.cz-sr-item:last-child { border-bottom: none; }
+.cz-sr-item:hover, .cz-sr-item.focused { background: rgba(46,134,193,0.1); }
+.cz-sr-name { color: var(--text-primary); font-size: 0.82rem; flex: 1; }
+.cz-sr-level { color: var(--color-counter-glow); font-size: 0.7rem; }
+
+/* 三行区域 */
+.cz-zone-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cz-zone-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 4px 4px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.cz-zone-icon { font-size: 0.9rem; }
+.cz-zone-count {
+  background: var(--bg-elevated);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.cz-zone-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 4px 8px 4px;
+  min-height: 118px;
+  align-items: center;
+  scroll-behavior: smooth;
+  background: var(--bg-deep);
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(255,255,255,0.06);
+}
+.cz-zone-strip::-webkit-scrollbar { height: 4px; }
+.cz-zone-strip::-webkit-scrollbar-track { background: transparent; }
+.cz-zone-strip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.cz-zone-empty {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  opacity: 0.5;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+/* ====== 操作台左右分栏 ====== */
+.op-workspace {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 860px;
+  align-items: flex-start;
+}
+/* 左侧：物资卡手牌（竖条） */
+.op-hand-col {
+  flex: 0 0 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.op-hand-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding: 6px;
+  max-height: calc(100vh - 280px);
+  min-height: 200px;
+  background: var(--bg-deep);
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(255,255,255,0.06);
+}
+.op-hand-strip::-webkit-scrollbar { width: 4px; }
+.op-hand-strip::-webkit-scrollbar-track { background: transparent; }
+.op-hand-strip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.op-hand-strip .supply-hand-card {
+  width: 100%;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+.op-hand-strip .cz-zone-empty {
+  white-space: normal;
+  text-align: center;
+}
+/* 右侧：四向牌池 */
+.op-pools-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+  .op-workspace { flex-direction: column; }
+  .op-hand-col { flex: 0 0 auto; width: 100%; }
+  .op-hand-strip {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: 140px;
+    min-height: 100px;
+  }
+  .op-hand-strip .supply-hand-card { width: 72px; height: 101px; flex-shrink: 0; }
+}
+
+.cz-card-item {
+  flex-shrink: 0;
+  width: 85px;
+  height: 119px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.cz-card-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.cz-card-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cz-card-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: var(--color-counter-glow);
+  font-size: 0.65rem;
+}
+
+/* 弹窗 */
+.cz-popup-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.cz-popup-overlay.show { display: flex; }
+.cz-popup {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 440px;
+  width: 92%;
+  box-shadow: var(--shadow-lg);
+  animation: czFadeIn 0.2s ease;
+}
+@keyframes czFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.cz-popup-card {
+  width: 100%;
+  aspect-ratio: 630 / 880;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.cz-popup-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cz-popup-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 16px;
+  text-align: center;
+}
+.cz-popup-fb-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+.cz-popup-fb-level { font-size: 0.75rem; color: var(--color-counter-glow); }
+.cz-popup-fb-effect { font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; }
+.cz-popup-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.cz-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+.cz-btn:hover { background: var(--bg-card); border-color: var(--color-counter-glow); }
+.cz-btn:active { transform: scale(0.96); }
+.cz-btn-activate { background: rgba(46,134,193,0.15); border-color: var(--color-counter-glow); color: var(--color-counter-glow); font-weight: 600; }
+.cz-btn-activate:hover { background: rgba(46,134,193,0.25); }
+.cz-btn-persist { background: rgba(46,204,113,0.12); border-color: #2ecc71; color: #2ecc71; font-weight: 600; }
+.cz-btn-persist:hover { background: rgba(46,204,113,0.2); }
+.cz-btn-stack { background: rgba(155,89,182,0.12); border-color: #9b59b6; color: #9b59b6; font-weight: 600; }
+.cz-btn-stack:hover { background: rgba(155,89,182,0.2); }
+.cz-btn-confirm { background: rgba(241,196,15,0.1); border-color: rgba(241,196,15,0.4); color: #f1c40f; }
+.cz-btn-confirm:hover { background: rgba(241,196,15,0.18); }
+
+/* ====== 可视化场景 ====== */
+/*
+  四方向堆叠公式（仅露数值栏/状态区，以角色卡左上角(charLeft,charTop)为锚点）：
+  - 右(反击卡 step=CW*0.25): card[i].left=charLeft+step*(i+1), z=N-i, 遮挡75%卡面只露25%状态栏
+  - 左(怪谈卡 step=CW*0.25): card[i].left=charLeft-step*(i+1), z=N-i, 遮挡75%卡面只露25%状态栏
+  - 上(伤害卡 step=DH*0.38): card[i].top=charTop-step*(i+1), z=N-i, 只露38%上方状态区
+  - 下(物资卡 step=CH*0.25): card[i].top=charTop+step*(i+1), z=N-i, 只露25%底部数值栏
+*/
+.comp-scene-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+.comp-scene {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 120px);
+  min-height: 500px;
+  margin: 0 auto;
+  background: radial-gradient(ellipse at center, rgba(46,134,193,0.04) 0%, transparent 70%);
+  border: 1px dashed rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+/* 角色卡（锚点） */
+.comp-char {
+  position: absolute;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(255,255,255,0.1), var(--shadow-lg);
+  border: 2px solid var(--color-character);
+  z-index: 100;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: box-shadow 0.3s;
+}
+.comp-char:hover { box-shadow: 0 0 24px rgba(142,68,173,0.2), var(--shadow-lg); }
+.comp-char canvas { width: 100%; height: 100%; display: block; pointer-events: none; }
+
+/* 方向标签（场景内小标注） */
+.comp-dir-label {
+  position: absolute;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 5;
+  letter-spacing: 0.05em;
+}
+
+/* 基础堆叠卡片样式（四个方向共用） */
+.comp-card {
+  position: absolute;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  background: var(--bg-card);
+  transition: left 0.35s ease, right 0.35s ease, top 0.35s ease, bottom 0.35s ease, opacity 0.25s;
+  cursor: pointer;
+}
+.comp-card img { width: 100%; height: 100%; object-fit: cover; }
+.comp-card .comp-card-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 2px 4px;
+  background: rgba(0,0,0,0.75);
+  color: var(--text-muted);
+  font-size: 0.52rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.comp-card:hover .comp-card-label { opacity: 1; }
+.comp-card.removing { transform: scale(0.9); opacity: 0.5; }
+
+/* 各方向颜色提示 */
+.comp-right { box-shadow: 0 2px 8px rgba(46,134,193,0.25); }
+.comp-left  { box-shadow: 0 2px 8px rgba(192,57,43,0.25); }
+.comp-top    { box-shadow: 0 2px 8px rgba(231,76,60,0.25); }
+.comp-bottom { box-shadow: 0 2px 8px rgba(39,174,96,0.25); }
+.comp-right  .comp-card-label  { color: var(--color-counter-glow); }
+.comp-left   .comp-card-label  { color: var(--color-whisper-glow); }
+.comp-top    .comp-card-label  { color: #e74c3c; }
+.comp-bottom .comp-card-label  { color: var(--color-supply-glow); }
+
+/* 四个卡片池（场景下方） */
+.comp-pools {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comp-pool-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.comp-pool-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+.comp-pool-label.l-right  { color: var(--color-counter-glow); }
+.comp-pool-label.l-left   { color: var(--color-whisper-glow); }
+.comp-pool-label.l-top    { color: #e74c3c; }
+.comp-pool-label.l-bottom { color: var(--color-supply-glow); }
+.comp-pool-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.comp-pool-card {
+  width: 72px;
+  height: 101px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.2s;
+  border: 2px solid transparent;
+  background: var(--bg-card);
+  position: relative;
+}
+.comp-pool-card:active { transform: scale(0.95); }
+.comp-pool-card.stacked {
+  border-color: var(--color-counter);
+  filter: brightness(0.7);
+}
+.comp-pool-card img { width: 100%; height: 100%; object-fit: cover; }
+
+.comp-legend-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 4px;
+}
+.comp-legend-bar span { display: flex; align-items: center; gap: 3px; }
+.comp-legend-bar .cldot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+
+/* 复合场景移动端 */
+@media (max-width: 600px) {
+  .comp-scene {
+    height: calc(100vh - 140px);
+    min-height: 400px;
+  }
+  .comp-pool-card {
+    width: 56px; height: 78px;
+  }
+  .comp-pool-label {
+    font-size: 0.65rem;
+    min-width: 56px;
+  }
+}
+
+
+
+/* ============================================================ */
+
+/* -- 回合计数器 + 按钮 -- */
+.round-counter-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+.round-counter-num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-counter-glow);
+  line-height: 1;
+  min-width: 40px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+.round-counter-num.pulse { animation: badgePulse 0.35s ease-out; }
+.round-counter-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.round-btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-xl);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.round-btn.dawn-btn {
+  background: rgba(212,160,23,0.12);
+  color: var(--color-rule-glow);
+  border-color: rgba(212,160,23,0.25);
+}
+.round-btn.dawn-btn:hover { background: rgba(212,160,23,0.2); }
+.round-btn.end-btn {
+  background: rgba(192,57,43,0.1);
+  color: var(--color-whisper-glow);
+  border-color: rgba(192,57,43,0.2);
+}
+.round-btn.end-btn:hover { background: rgba(192,57,43,0.18); }
+
+/* -- 三组搜索栏（横向排列） -- */
+.search-bars-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 660px;
+  flex-wrap: wrap;
+}
+.search-bar-col {
+  flex: 1;
+  min-width: 170px;
+  position: relative;
+}
+.search-bar-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+.search-bar-label.l-whisper { color: var(--color-whisper-glow); }
+.search-bar-label.l-counter { color: var(--color-counter-glow); }
+.search-bar-label.l-supply { color: var(--color-supply-glow); }
+.search-bar-input-wrap {
+  position: relative;
+}
+.search-bar-input {
+  width: 100%;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 32px 8px 12px;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.search-bar-input:focus {
+  border-color: var(--color-counter);
+}
+.search-bar-input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+.search-bar-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: none;
+  padding: 2px 4px;
+}
+.search-bar-clear.visible { display: block; }
+.search-bar-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.search-bar-results.show { display: block; }
+.search-bar-result-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.search-bar-result-item:last-child { border-bottom: none; }
+.search-bar-result-item:hover,
+.search-bar-result-item.focused {
+  background: rgba(46,134,193,0.12);
+}
+.search-bar-result-item .sbr-name { flex: 1; }
+.search-bar-result-item .sbr-level {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* -- 结算栏（回合计分状态） -- */
+
+
+
+
+/* -- 抽屉（弃牌堆 + 赠与他人，内联可折叠） -- */
+.drawer-inline {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+.drawer-inline + .drawer-inline { margin-top: 6px; }
+.drawer-inline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--bg-card);
+  transition: background 0.15s;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.drawer-inline-header:hover { background: rgba(255,255,255,0.03); }
+.drawer-inline-count {
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  min-width: 18px;
+  text-align: center;
+}
+.drawer-inline-count.has-cards {
+  color: var(--color-counter-glow);
+}
+.drawer-inline-arrow {
+  margin-left: auto;
+  font-size: 0.65rem;
+  transition: transform 0.2s;
+  color: var(--text-muted);
+}
+.drawer-inline.open .drawer-inline-arrow {
+  transform: rotate(90deg);
+}
+.drawer-inline-body {
+  display: none;
+  padding: 8px;
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(0,0,0,0.08);
+  max-height: 180px;
+  overflow-y: auto;
+}
+.drawer-inline.open .drawer-inline-body { display: block; }
+.drawer-inline-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-start;
+}
+.drawer-inline-empty {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  padding: 12px;
+  text-align: center;
+  width: 100%;
+  opacity: 0.45;
+}
+
+/* -- 卡牌详情弹窗 -- */
+.card-detail-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 600;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+.card-detail-overlay.open { display: flex; }
+.card-detail-dialog {
+  background: var(--bg-surface);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 480px;
+  width: 92%;
+  border: 1px solid var(--border-subtle);
+  text-align: center;
+  animation: menuPopIn 0.2s ease-out;
+}
+.card-detail-dialog img {
+  max-width: 100%;
+  max-height: 55vh;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.card-detail-dialog img:hover { transform: scale(1.02); }
+.card-detail-enlarge-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: -8px;
+  margin-bottom: 10px;
+}
+.card-detail-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.card-detail-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.card-detail-effect {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--bg-deep);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  text-align: left;
+  line-height: 1.5;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.card-detail-close {
+  padding: 8px 28px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: background 0.15s;
+}
+.card-detail-close:hover { background: var(--bg-surface); }
+
+/* -- 全屏大图查看器 -- */
+.full-image-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.94);
+  z-index: 3000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.full-image-overlay.open { display: flex; }
+.full-image-overlay .fi-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.full-image-overlay img {
+  max-width: 95vw;
+  max-height: 88vh;
+  border-radius: 10px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  object-fit: contain;
+}
+.full-image-overlay .fi-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3001;
+  transition: background 0.2s;
+}
+.full-image-overlay .fi-close:hover { background: rgba(255,255,255,0.25); }
+.full-image-overlay .fi-hint {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+/* CZ弹窗中的卡面放大提示 */
+.cz-popup-card {
+  position: relative;
+  cursor: pointer;
+}
+.cz-popup-card::after {
+  content: '🔍 点击放大';
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.65);
+  color: rgba(255,255,255,0.75);
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* -- 回合结束确认 -- */
+.confirm-mini-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 400;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+.confirm-mini-overlay.open { display: flex; }
+.confirm-mini-dialog {
+  background: var(--bg-surface);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid var(--border-subtle);
+  min-width: 260px;
+  animation: menuPopIn 0.2s ease-out;
+}
+.confirm-mini-dialog .cmd-title { font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+.confirm-mini-dialog .cmd-body { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; }
+.confirm-mini-actions { display: flex; gap: 10px; justify-content: center; }
+.confirm-mini-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  border: 1px solid var(--border-subtle);
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+.confirm-mini-btn.cancel { background: transparent; color: var(--text-muted); }
+.confirm-mini-btn.ok { background: var(--color-counter); color: #fff; border-color: var(--color-counter); }
+
+/* -- 战术面板 -- */
+#panel-tactical {
+  align-items: stretch;
+  padding: 16px;
+  gap: 0;
+  overflow-y: auto;
+}
+.tac-map-wrap {
+  max-width: 900px;
+  margin: 0 auto 12px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-surface);
+}
+.tac-map-wrap img { width: 100%; max-height: 260px; object-fit: contain; display: block; background: #0a0f1a; }
+
+.tac-goal-section {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.tac-goal-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-goal-glow, #27ae60);
+  margin-bottom: 12px;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tac-goal-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  min-height: 100px;
+  align-items: center;
+}
+.tac-goal-card img {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  object-fit: contain;
+}
+.tac-goal-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+.tac-goal-name {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  text-align: center;
+}
+
+.tac-notes-section {
+  width: 100%;
+  max-width: none;
+  margin: 24px 0 0;
+}
+.tac-notes-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-goal-glow, #27ae60);
+  margin-bottom: 12px;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tac-notes-textarea {
+  width: 100%;
+  min-height: 200px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.tac-notes-textarea:focus {
+  outline: none;
+  border-color: var(--color-goal-glow, #27ae60);
+  box-shadow: 0 0 0 2px rgba(39,174,96,0.15);
+}
+.tac-notes-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* -- 响应式 -- */
+@media (max-width: 600px) {
+  .search-bars-row { flex-direction: column; gap: 6px; }
+  .search-bar-col { min-width: 0; }
+  .supply-hand-card { width: 66px; height: 92px; }
+  .round-counter-num { font-size: 1.6rem; min-width: 32px; }
+  .round-btn { padding: 6px 12px; font-size: 0.75rem; }
+}
+
+</style>
+</head>
+<body class="citizen-page">
+
+<!-- 顶部 -->
+<div class="citizen-header">
+  <a href="index.html" class="home-link" title="返回首页">← 首页</a>
+  <div class="user-info">
+    <div class="avatar-small" id="headerAvatar">
+      <span style="font-size:1.2rem;">👤</span>
+    </div>
+    <span class="name" id="headerName">市民</span>
+  </div>
+  <span class="status-badge" id="statusBadge" onclick="toggleStatus()" title="点击切换状态">市民</span>
+  <button class="logout-btn" onclick="logout()">退出</button>
+</div>
+
+<!-- ====== 翻面+堆叠 原型测试区 ====== -->
+<div class="test-container">
+
+  <!-- Tab 切换 -->
+  <div class="test-tabs">
+    <button class="test-tab active" data-tab="flip" onclick="switchTab('flip')">🃏 反击系统</button>
+    <button class="test-tab" data-tab="supply" onclick="switchTab('supply')">🎛️ 操作台</button>
+    <button class="test-tab" data-tab="composite" onclick="switchTab('composite')">🔀 可视化</button>
+    <button class="test-tab" data-tab="ruleboard" onclick="switchTab('ruleboard')">📋 公开规则板</button>
+    <button class="test-tab" data-tab="tactical" onclick="switchTab('tactical')">🎯 战术面板</button>
+  </div>
+
+  <!-- ========== Tab 1: 反击卡操作台 ========== -->
+  <div class="test-panel active" id="panel-flip">
+    <!-- 搜索栏 -->
+    <div class="cz-search-bar">
+      <input type="text" class="cz-search-input" id="czSearch" placeholder="搜索反击卡..." oninput="czOnSearch(this.value)" autocomplete="off">
+      <button class="cz-search-clear" id="czClear" onclick="czClearSearch()">✕</button>
+      <div class="cz-search-results" id="czResults"></div>
+    </div>
+
+    <!-- 持续适用区 -->
+    <div class="cz-zone-row">
+      <div class="cz-zone-label">
+        <span class="cz-zone-icon">🔄</span>
+        <span>持续适用区</span>
+        <span class="cz-zone-count" id="czCntPersistent">0</span>
+      </div>
+      <div class="cz-zone-strip" id="czStripPersistent"></div>
+    </div>
+
+    <!-- 未激活区 -->
+    <div class="cz-zone-row">
+      <div class="cz-zone-label">
+        <span class="cz-zone-icon">🃏</span>
+        <span>未激活区</span>
+        <span class="cz-zone-count" id="czCntInactive">0</span>
+      </div>
+      <div class="cz-zone-strip" id="czStripInactive"></div>
+    </div>
+
+    <!-- 已激活区 -->
+    <div class="cz-zone-row">
+      <div class="cz-zone-label">
+        <span class="cz-zone-icon">✨</span>
+        <span>已激活区</span>
+        <span class="cz-zone-count" id="czCntActive">0</span>
+      </div>
+      <div class="cz-zone-strip" id="czStripActive"></div>
+    </div>
+
+    <!-- 未激活弹窗（2按钮：激活/放回原样） -->
+    <div class="cz-popup-overlay" id="czPopupInactive" onclick="czClosePopup('inactive')">
+      <div class="cz-popup" onclick="event.stopPropagation()">
+        <div class="cz-popup-card" id="czPopupCardInactive"></div>
+        <div class="cz-popup-btns">
+          <button class="cz-btn cz-btn-activate" onclick="czActivate()">⚡ 激活</button>
+          <button class="cz-btn cz-btn-return" onclick="czReturn()">↩ 放回原样</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 已激活弹窗（4按钮：持续适用/使用/弃牌堆/赠与） -->
+    <div class="cz-popup-overlay" id="czPopupActive" onclick="czClosePopup('active')">
+      <div class="cz-popup" onclick="event.stopPropagation()">
+        <div class="cz-popup-card" id="czPopupCardActive"></div>
+        <div class="cz-popup-btns">
+          <button class="cz-btn cz-btn-persist" onclick="czPersist()">🔄 持续适用</button>
+          <button class="cz-btn cz-btn-stack" onclick="czUse()">✅ 使用</button>
+          <button class="cz-btn cz-btn-discard" onclick="czDiscard()">🗑 弃牌堆</button>
+          <button class="cz-btn cz-btn-gift" onclick="czGift()">🎁 赠与</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 持续适用弹窗（1按钮：取消适用） -->
+    <div class="cz-popup-overlay" id="czPopupPersistent" onclick="czClosePopup('persistent')">
+      <div class="cz-popup" onclick="event.stopPropagation()">
+        <div class="cz-popup-card" id="czPopupCardPersistent"></div>
+        <div class="cz-popup-btns">
+          <button class="cz-btn cz-btn-unpersist" onclick="czUnpersist()">↩ 取消适用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Tab 2: 可视化测试 ========== -->
+  <div class="test-panel" id="panel-composite">
+    <div class="test-hint">💡 四向可视化：左(怪谈) 右(反击) 上(伤害) 下(物资) · 各自独立牌池 · 点击卡片添加/移除</div>
+
+    <div class="comp-scene-wrap">
+      <!-- 场景容器：角色卡 + 四方向堆叠 -->
+      <div class="comp-scene" id="compScene">
+        <!-- 方向标签 -->
+        <div class="comp-dir-label" style="top:4px;left:50%;transform:translateX(-50%);">⬆ 伤害指示卡 (露出顶部38%)</div>
+        <div class="comp-dir-label" style="top:50%;left:4px;transform:translateY(-50%);">怪谈卡 ⬅</div>
+        <div class="comp-dir-label" style="top:50%;right:4px;transform:translateY(-50%);">➡ 反击卡</div>
+        <div class="comp-dir-label" style="bottom:4px;left:50%;transform:translateX(-50%);">⬇ 物资卡 (露出底部25%)</div>
+
+        <!-- 角色卡（锚点，JS动态设置位置） -->
+        <div class="comp-char" id="compChar" onclick="showCharDetail()" title="点击查看角色详情">
+          <canvas id="compCharImg" width="400" height="560" style="width:100%;height:100%"></canvas>
+          <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#2d1b3d,#1a1a2e);color:var(--color-character-glow);font-size:0.85rem;font-weight:600;" id="compCharFallback">角色卡</div>
+        </div>
+
+        <!-- 四方向堆叠卡片由JS动态生成 -->
+      </div>
+    </div>
+  </div>
+
+
+
+<!-- 9. 隐藏卡牌详情弹窗（全局，不受面板切换影响） -->
+  <div class="card-detail-overlay" id="cardDetailOverlay" onclick="closeCardDetail()">
+    <div class="card-detail-dialog" id="cardDetailDialog" onclick="event.stopPropagation()">
+      <img id="cardDetailImg" src="" alt="" onclick="showFullImage()" title="点击放大查看大图">
+      <div class="card-detail-enlarge-hint">🖱 点击卡面查看大图</div>
+      <div class="card-detail-name" id="cardDetailName"></div>
+      <div class="card-detail-meta" id="cardDetailMeta"></div>
+      <div class="card-detail-effect" id="cardDetailEffect"></div>
+      <button class="card-detail-close" onclick="closeCardDetail()">关闭</button>
+    </div>
+  </div>
+
+  <!-- 11. 全屏大图查看器（全局，不受面板切换影响） -->
+  <div class="full-image-overlay" id="fullImageOverlay" onclick="closeFullImage()">
+    <button class="fi-close" onclick="closeFullImage()">✕</button>
+    <div class="fi-container" onclick="event.stopPropagation()">
+      <img id="fullImageZoom" src="" alt="">
+      <div class="fi-hint">点击任意位置关闭</div>
+    </div>
+  </div>
+
+  <!-- ========== Tab 3: 操作台 ========== -->
+  <div class="test-panel" id="panel-supply">
+
+    <!-- 0. 回合计数器 -->
+    <div class="round-counter-wrap" id="roundCounter">
+      <button class="round-btn dawn-btn" onclick="playDawnAction()" title="推进至下一回合黎明">🌅 迎接黎明</button>
+      <div class="round-counter-num" id="roundNum">0</div>
+      <div class="round-counter-label" id="roundLabel">白天 / 12</div>
+      <button class="round-btn end-btn" onclick="playEndRound()" title="结束当前回合">🌙 回合结束</button>
+    </div>
+
+    <div class="test-hint">🎛️ 操作台 · 回合管理 · 卡牌调度 · 可视化</div>
+
+    <!-- 双栏搜索 -->
+    <div class="search-bars-row">
+      <!-- 怪谈卡搜索 -->
+      <div class="search-bar-col" id="searchColWhisper">
+        <div class="search-bar-label l-whisper">👻 怪谈卡</div>
+        <div class="search-bar-input-wrap">
+          <input class="search-bar-input" id="searchWhisper" type="text"
+                 placeholder="搜索怪谈卡名称…" autocomplete="off"
+                 oninput="onSearchBar('whisper',this.value)"
+                 onfocus="onSearchBar('whisper',this.value)">
+          <button class="search-bar-clear" id="clearWhisper" onclick="clearSearchBar('whisper')">✕</button>
+        </div>
+        <div class="search-bar-results" id="resultsWhisper"></div>
+      </div>
+      <!-- 物资卡搜索 -->
+      <div class="search-bar-col" id="searchColSupply">
+        <div class="search-bar-label l-supply">🎒 物资卡</div>
+        <div class="search-bar-input-wrap">
+          <input class="search-bar-input" id="searchSupply" type="text"
+                 placeholder="搜索物资卡名称…" autocomplete="off"
+                 oninput="onSearchBar('supply',this.value)"
+                 onfocus="onSearchBar('supply',this.value)">
+          <button class="search-bar-clear" id="clearSupply" onclick="clearSearchBar('supply')">✕</button>
+        </div>
+        <div class="search-bar-results" id="resultsSupply"></div>
+      </div>
+    </div>
+
+    <!-- 左右工作区 -->
+    <div class="op-workspace" style="margin-top:12px;">
+      <!-- 左：物资卡手牌（竖条） -->
+      <div class="op-hand-col">
+        <div class="cz-zone-label">
+          <span class="cz-zone-icon">🎒</span>
+          <span>物资卡手牌</span>
+          <span class="cz-zone-count" id="supplyHandCountNew">0</span>
+        </div>
+        <div class="op-hand-strip" id="supplyHandStripNew">
+          <div class="cz-zone-empty">搜索物资卡加入手牌</div>
+        </div>
+      </div>
+
+      <!-- 右：四向牌池 + 图例 + 状态 -->
+      <div class="op-pools-col">
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-right">➡ 反击卡</span>
+          <div class="comp-pool-grid" id="compPoolRight"></div>
+        </div>
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-left">⬅ 怪谈卡</span>
+          <div class="comp-pool-grid" id="compPoolLeft"></div>
+        </div>
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-top">⬆ 伤害卡</span>
+          <div class="comp-pool-grid" id="compPoolTop"></div>
+        </div>
+        <div class="comp-pool-row">
+          <span class="comp-pool-label l-bottom">⬇ 物资卡</span>
+          <div class="comp-pool-grid" id="compPoolBottom"></div>
+        </div>
+
+        <div class="comp-legend-bar" style="margin-top:8px;">
+          <span><span class="cldot" style="background:var(--color-counter-glow)"></span> 反击</span>
+          <span><span class="cldot" style="background:var(--color-whisper-glow)"></span> 怪谈</span>
+          <span><span class="cldot" style="background:#e74c3c"></span> 伤害</span>
+          <span><span class="cldot" style="background:var(--color-supply-glow)"></span> 物资</span>
+        </div>
+
+        <div class="test-status" id="compStatus" style="margin-top:0;">
+          可视化：右<b style="color:var(--color-counter-glow)" id="compCntR">0</b> · 左<b style="color:var(--color-whisper-glow)" id="compCntL">0</b> · 上<b style="color:#e74c3c" id="compCntT">0</b> · 下<b style="color:var(--color-supply-glow)" id="compCntB">0</b>
+        </div>
+
+        <!-- 弃牌堆 内联抽屉 -->
+        <div class="drawer-inline" id="drawerInlineDiscard">
+          <div class="drawer-inline-header" onclick="toggleInlineDrawer('discard')">
+            <span>🗑️ 弃牌堆</span>
+            <span class="drawer-inline-count" id="drawerInlineDiscardCnt">0</span>
+            <span class="drawer-inline-arrow">▶</span>
+          </div>
+          <div class="drawer-inline-body">
+            <div class="drawer-inline-cards" id="drawerInlineDiscardCards">
+              <div class="drawer-inline-empty">弃牌堆为空</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 赠与 内联抽屉 -->
+        <div class="drawer-inline" id="drawerInlineGift">
+          <div class="drawer-inline-header" onclick="toggleInlineDrawer('gift')">
+            <span>🎁 赠与</span>
+            <span class="drawer-inline-count" id="drawerInlineGiftCnt">0</span>
+            <span class="drawer-inline-arrow">▶</span>
+          </div>
+          <div class="drawer-inline-body">
+            <div class="drawer-inline-cards" id="drawerInlineGiftCards">
+              <div class="drawer-inline-empty">暂无待赠与的卡牌</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 确认/使用弹窗 -->
+    <div class="cz-popup-overlay" id="supplyPopup" onclick="supplyClosePopup()">
+      <div class="cz-popup" onclick="event.stopPropagation()">
+        <div class="cz-popup-card" id="supplyPopupCard"></div>
+        <div class="cz-popup-btns">
+          <button class="cz-btn cz-btn-activate" onclick="supplyConfirm()">✅ 确认</button>
+          <button class="cz-btn cz-btn-stack" onclick="supplyUse()">🔀 使用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Tab 4: 公开规则板 ========== -->
+  <div class="test-panel" id="panel-ruleboard">
+    <!-- 顶部栏 -->
+    <div class="rb-header">
+      <h2>📋 公开规则板 <span class="rb-status" id="rbSaveStatus"></span></h2>
+      <div class="rb-actions">
+        <button class="btn btn-sm" onclick="rbResetBoard()" title="清空所有分区，全部规则返回卡池">🔄 重置</button>
+      </div>
+    </div>
+    <!-- 主体 -->
+    <div class="rb-main">
+      <!-- 左侧：规则卡池 -->
+      <aside class="rb-pool" id="rbPoolPanel">
+        <div class="rb-pool-header">
+          <h3>📦 规则卡池 <span class="rb-pool-count" id="rbPoolCount"></span></h3>
+          <div class="rb-pool-tabs" id="rbPoolTabs"></div>
+        </div>
+        <div class="rb-pool-cards" id="rbPoolCards"></div>
+      </aside>
+      <!-- 右侧：四分区板 -->
+      <main class="rb-board" id="rbRuleBoard">
+        <div class="rb-zone" data-zone="1" id="rbZone1">
+          <div class="rb-zone-header">
+            <span class="rb-zone-dot all"></span>
+            <h4>影响全体的公开规则</h4>
+            <span class="rb-zone-count" id="rbZone1Count">0</span>
+          </div>
+          <div class="rb-zone-body" id="rbZone1Body">
+            <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+          </div>
+        </div>
+        <div class="rb-zone" data-zone="2" id="rbZone2">
+          <div class="rb-zone-header">
+            <span class="rb-zone-dot human"></span>
+            <h4>只影响人的公开规则</h4>
+            <span class="rb-zone-count" id="rbZone2Count">0</span>
+          </div>
+          <div class="rb-zone-body" id="rbZone2Body">
+            <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+          </div>
+        </div>
+        <div class="rb-zone" data-zone="3" id="rbZone3">
+          <div class="rb-zone-header">
+            <span class="rb-zone-dot ghost"></span>
+            <h4>只影响鬼的公开规则</h4>
+            <span class="rb-zone-count" id="rbZone3Count">0</span>
+          </div>
+          <div class="rb-zone-body" id="rbZone3Body">
+            <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+          </div>
+        </div>
+        <div class="rb-zone" data-zone="4" id="rbZone4">
+          <div class="rb-zone-header">
+            <span class="rb-zone-dot erased"></span>
+            <h4>被抹除规则</h4>
+            <span class="rb-zone-count" id="rbZone4Count">0</span>
+          </div>
+          <div class="rb-zone-body" id="rbZone4Body">
+            <div class="rb-zone-empty">宣言成功抹除的规则置于此处</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========== Tab 5: 战术面板 ========== -->
+  <div class="test-panel" id="panel-tactical">
+    <!-- 地图 -->
+    <div class="tac-map-wrap">
+      <img src="images/map.png" alt="A市地图">
+    </div>
+
+    <!-- 个人目的卡 -->
+    <div class="tac-goal-section">
+      <div class="tac-goal-title">🎯 我的个人目的</div>
+      <div class="tac-goal-card">
+        <div class="tac-goal-empty" id="tacGoalEmpty">加载中...</div>
+        <img id="tacGoalImg" src="" alt="" style="display:none;">
+      </div>
+      <div class="tac-goal-name" id="tacGoalName"></div>
+    </div>
+
+    <!-- 思路整理 -->
+    <div class="tac-notes-section">
+      <div class="tac-notes-title">📝 思路整理</div>
+      <textarea class="tac-notes-textarea" id="tacNotesArea" placeholder="在这里记录你的推理、策略和发现的线索..."></textarea>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== 角色数据（12名幸存者）=====
+var CHARACTERS = [
+  { id:'ch_001', name:'乐天派幸存者', category:'命运操控者', health:7, sanity:7, img:'角色卡_命运操控者_乐天派幸存者.png' },
+  { id:'ch_002', name:'天生幸运儿', category:'命运操控者', health:6, sanity:6, img:'角色卡_命运操控者_天生幸运儿.png' },
+  { id:'ch_003', name:'倒霉体质者', category:'命运操控者', health:6, sanity:6, img:'角色卡_命运操控者_倒霉体质者.png' },
+  { id:'ch_004', name:'逻辑严谨理科生', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_逻辑严谨理科生.png' },
+  { id:'ch_005', name:'内向社恐大学生', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_内向社恐大学生.png' },
+  { id:'ch_006', name:'街道社区主任', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_街道社区主任.png' },
+  { id:'ch_007', name:'灵异研究者', category:'情报型', health:6, sanity:6, img:'角色卡_情报型_灵异研究者.png' },
+  { id:'ch_008', name:'法医侦探', category:'情报型', health:6, sanity:7, img:'角色卡_情报型_法医侦探.png' },
+  { id:'ch_009', name:'沉寂的上班族', category:'自保型', health:6, sanity:6, img:'角色卡_自保型_沉寂的上班族.png' },
+  { id:'ch_010', name:'整顿末世零零后', category:'自保型', health:6, sanity:6, img:'角色卡_自保型_整顿末世零零后.png' },
+  { id:'ch_011', name:'豪门之后', category:'资源型', health:3, sanity:3, img:'角色卡_资源型_豪门之后.png' },
+  { id:'ch_012', name:'外卖单王', category:'资源型', health:5, sanity:6, img:'角色卡_资源型_外卖单王.png' }
+];
+
+function loadMyCharacter() {
+  try {
+    var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+    if (session.character && session.character.id) return session.character;
+  } catch(e) {}
+  return CHARACTERS[0]; // 兜底：乐天派幸存者
+}
+
+var MY_CHARACTER = loadMyCharacter();
+var CHAR_IMG_PATH = 'images/cards/角色卡/' + MY_CHARACTER.img;
+var CHAR_DISPLAY_NAME = MY_CHARACTER.name;
+var CHAR_CATEGORY = MY_CHARACTER.category;
+
+// ===== 加载会话 =====
+let currentStatus = 'citizen';
+
+(function() {
+  let session = localStorage.getItem('dawn_session');
+  // 无会话时自动创建测试会话（便于原型预览）
+  if (!session) {
+    const testSession = { role:'citizen', status:'citizen', username:'测试市民', avatar:'', loginTime:Date.now(), character:CHARACTERS[0] };
+    localStorage.setItem('dawn_session', JSON.stringify(testSession));
+    session = JSON.stringify(testSession);
+  }
+  try {
+    const data = JSON.parse(session);
+    if (data.role !== 'citizen') { window.location.href = 'toolbox/dashboard.html'; return; }
+    document.getElementById('headerName').textContent = data.username || '市民';
+    if (data.character && data.character.name) {
+      document.getElementById('headerName').textContent = data.username + ' · ' + data.character.category;
+      document.getElementById('headerName').title = '角色：' + data.character.name;
+    }
+    if (data.avatar) {
+      const img = document.createElement('img');
+      img.src = data.avatar;
+      document.getElementById('headerAvatar').innerHTML = '';
+      document.getElementById('headerAvatar').appendChild(img);
+    }
+    currentStatus = data.status || 'citizen';
+    updateStatusUI();
+  } catch(e) { window.location.href = 'login.html'; }
+})();
+
+// ===== 状态切换：市民 → 煞鬼 → 恶鬼 → 市民 =====
+function toggleStatus() {
+  const cycle = ['citizen', 'ghost', 'evil'];
+  const idx = cycle.indexOf(currentStatus);
+  currentStatus = cycle[(idx + 1) % 3];
+  // 持久化
+  const session = JSON.parse(localStorage.getItem('dawn_session'));
+  session.status = currentStatus;
+  localStorage.setItem('dawn_session', JSON.stringify(session));
+  updateStatusUI();
+}
+
+function updateStatusUI() {
+  const badge = document.getElementById('statusBadge');
+  const map = {
+    citizen: { label: '市民', cls: '', color: 'var(--color-counter-glow)', bg: 'rgba(46,134,193,0.15)' },
+    ghost:    { label: '煞鬼', cls: 'ghost', color: 'var(--color-whisper-glow)', bg: 'rgba(192,57,43,0.15)' },
+    evil:     { label: '恶鬼', cls: 'evil', color: '#ff4444', bg: 'rgba(192,57,43,0.2)' }
+  };
+  const s = map[currentStatus];
+  badge.textContent = s.label;
+  badge.className = 'status-badge ' + s.cls;
+  badge.style.color = s.color;
+  badge.style.background = s.bg;
+}
+
+function logout() {
+  localStorage.removeItem('dawn_session');
+  window.location.href = 'login.html';
+}
+
+// ====== Tab 1: 反击卡操作台 ======
+const CARD_BACK = 'images/card-back.png';
+
+// CZ 数据模型（独立于 PLAY，等最终统一反击卡管理时整合）
+let CZ = {
+  inactive: [],      // 未激活区 [{name, level, img, effect, id}]
+  active: [],        // 已激活区
+  persistent: [],    // 持续适用区
+  currentCard: null, // 当前弹窗选中的卡片
+  currentZone: null, // 'inactive' | 'active'
+  searchResults: [], // 当前搜索结果缓存
+};
+
+// ─── 搜索 ───
+function czOnSearch(value) {
+  var q = value.trim().toLowerCase();
+  var resultsEl = document.getElementById('czResults');
+  var clearEl = document.getElementById('czClear');
+  var pool = SEARCH_IDX.counter || [];
+
+  if (q.length === 0) {
+    resultsEl.classList.remove('show');
+    resultsEl.innerHTML = '';
+    clearEl.style.display = 'none';
+    CZ.searchResults = [];
+    return;
+  }
+
+  clearEl.style.display = 'block';
+
+  var results = pool.filter(function(c) {
+    return c.name.toLowerCase().indexOf(q) !== -1 ||
+      (c.effect && c.effect.toLowerCase().indexOf(q) !== -1);
+  }).slice(0, 12);
+
+  CZ.searchResults = results;
+
+  resultsEl.innerHTML = results.length === 0
+    ? '<div class="cz-sr-item" style="color:var(--text-muted);cursor:default;">没有找到匹配的反击卡</div>'
+    : results.map(function(c, i) {
+        return '<div class="cz-sr-item" onclick="czSelect(' + i + ')" onmouseenter="czFocusResult(' + i + ')">' +
+          '<span class="cz-sr-name">' + c.name + '</span>' +
+          (c.level ? '<span class="cz-sr-level">' + c.level + '</span>' : '') +
+        '</div>';
+      }).join('');
+  resultsEl.classList.add('show');
+}
+
+function czFocusResult(idx) {
+  var items = document.getElementById('czResults').querySelectorAll('.cz-sr-item');
+  for (var i = 0; i < items.length; i++) { items[i].classList.remove('focused'); }
+  if (items[idx]) items[idx].classList.add('focused');
+}
+
+function czSelect(idx) {
+  var card = CZ.searchResults[idx];
+  if (!card) return;
+
+  // 查物理数量上限
+  var maxCopies = 1;
+  if (typeof CARD_DB !== 'undefined' && CARD_DB.countermeasures) {
+    var db = CARD_DB.countermeasures;
+    for (var j = 0; j < db.length; j++) {
+      if (db[j].id === card.id) { maxCopies = db[j].copies || 1; break; }
+    }
+  }
+
+  // 统计已加入的数量（跨三区）
+  var allCards = CZ.inactive.concat(CZ.active).concat(CZ.persistent);
+  var already = 0;
+  for (var k = 0; k < allCards.length; k++) {
+    if (allCards[k].id === card.id) already++;
+  }
+
+  if (already >= maxCopies) {
+    alert(card.name + ' 牌库仅有 ' + maxCopies + ' 张，已全部加入');
+    return;
+  }
+
+  var newCard = { name: card.name, level: card.level, img: card.img, effect: card.effect, id: card.id };
+  CZ.inactive.push(newCard);
+  PLAY.scene.inactive.push(newCard);
+
+  czClearSearch();
+  czRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+}
+
+function czClearSearch() {
+  document.getElementById('czSearch').value = '';
+  document.getElementById('czClear').style.display = 'none';
+  var resultsEl = document.getElementById('czResults');
+  resultsEl.classList.remove('show');
+  resultsEl.innerHTML = '';
+  CZ.searchResults = [];
+}
+
+// ─── 渲染 ───
+function czRefreshAll() {
+  czRenderZone('persistent', 'czStripPersistent', 'czCntPersistent');
+  czRenderZone('inactive', 'czStripInactive', 'czCntInactive');
+  czRenderZone('active', 'czStripActive', 'czCntActive');
+}
+
+function czRenderZone(zone, stripId, cntId) {
+  var strip = document.getElementById(stripId);
+  var cards = CZ[zone];
+
+  document.getElementById(cntId).textContent = cards.length;
+
+  if (cards.length === 0) {
+    strip.innerHTML = '<div class="cz-zone-empty">暂无卡片</div>';
+    return;
+  }
+
+  var self = this;
+  strip.innerHTML = cards.map(function(c, i) {
+    if (zone === 'inactive') {
+      // 卡背
+      return '<div class="cz-card-item" onclick="czOpenPopup(\'inactive\',' + i + ')" title="点击翻开">' +
+        '<img src="' + CARD_BACK + '" alt="卡背" ' +
+        'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+        '<div class="cz-card-fallback" style="display:none;"><span>🃏</span><span>反击卡</span></div>' +
+      '</div>';
+    } else {
+      // 正面
+      return '<div class="cz-card-item" onclick="czOpenPopup(\'' + zone + '\',' + i + ')" title="' + c.name + '">' +
+        '<img src="' + c.img + '" alt="' + c.name + '" ' +
+        'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+        '<div class="cz-card-fallback" style="display:none;"><span>' + c.name.charAt(0) + '</span><span>' + (c.level || '') + '</span></div>' +
+      '</div>';
+    }
+  }).join('');
+}
+
+// ─── 弹窗 ───
+function czOpenPopup(zone, idx) {
+  CZ.currentCard = CZ[zone][idx];
+  CZ.currentZone = zone;
+
+  var overlayId, cardContainerId;
+  if (zone === 'inactive') {
+    overlayId = 'czPopupInactive';
+    cardContainerId = 'czPopupCardInactive';
+  } else if (zone === 'persistent') {
+    overlayId = 'czPopupPersistent';
+    cardContainerId = 'czPopupCardPersistent';
+  } else {
+    overlayId = 'czPopupActive';
+    cardContainerId = 'czPopupCardActive';
+  }
+
+  var cardContainer = document.getElementById(cardContainerId);
+
+  cardContainer.innerHTML = '<img src="' + CZ.currentCard.img + '" alt="' + CZ.currentCard.name + '" ' +
+    'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+    '<div class="cz-popup-fallback" style="display:none;">' +
+      '<div class="cz-popup-fb-name">' + CZ.currentCard.name + '</div>' +
+      '<div class="cz-popup-fb-level">' + (CZ.currentCard.level || '') + ' · 反击卡</div>' +
+      '<div class="cz-popup-fb-effect">' + (CZ.currentCard.effect || '') + '</div>' +
+    '</div>';
+  cardContainer.onclick = function(e) { e.stopPropagation(); showFullImage(CZ.currentCard); };
+
+  document.getElementById(overlayId).classList.add('show');
+}
+
+function czClosePopup(zone) {
+  document.getElementById('czPopupInactive').classList.remove('show');
+  document.getElementById('czPopupActive').classList.remove('show');
+  document.getElementById('czPopupPersistent').classList.remove('show');
+}
+
+// ─── 操作 ───
+function czActivate() {
+  // 从未激活区移除
+  CZ.inactive = CZ.inactive.filter(function(c) { return c !== CZ.currentCard; });
+  PLAY.scene.inactive = PLAY.scene.inactive.filter(function(c) { return c !== CZ.currentCard; });
+  // 加入已激活区
+  CZ.active.push(CZ.currentCard);
+  PLAY.scene.active.push(CZ.currentCard);
+  czRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  czClosePopup('inactive');
+}
+
+function czReturn() {
+  // 放回原样：不激活，关闭弹窗
+  czClosePopup('inactive');
+}
+
+function czPersist() {
+  // 已激活 → 持续适用区
+  CZ.active = CZ.active.filter(function(c) { return c !== CZ.currentCard; });
+  PLAY.scene.active = PLAY.scene.active.filter(function(c) { return c !== CZ.currentCard; });
+  CZ.persistent.push(CZ.currentCard);
+  PLAY.scene.persistent.push(CZ.currentCard);
+  czRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  czClosePopup('active');
+}
+
+function czUnpersist() {
+  // 持续适用 → 回到已激活区
+  CZ.persistent = CZ.persistent.filter(function(c) { return c !== CZ.currentCard; });
+  PLAY.scene.persistent = PLAY.scene.persistent.filter(function(c) { return c !== CZ.currentCard; });
+  CZ.active.push(CZ.currentCard);
+  PLAY.scene.active.push(CZ.currentCard);
+  czRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  czClosePopup('persistent');
+}
+
+function czUse() {
+  // 使用：反击卡从已激活区 → 可视化右侧反击卡栏目
+  var card = { name: CZ.currentCard.name, level: CZ.currentCard.level, img: CZ.currentCard.img, effect: CZ.currentCard.effect };
+
+  // 加入可视化右侧反击卡池（去重）
+  var poolExists = COMP_POOLS.right.find(function(c) { return c.name === card.name; });
+  if (!poolExists) {
+    COMP_POOLS.right.push(card);
+  }
+
+  // 加入右侧堆叠
+  var stackExists = COMP_STACKS.right.find(function(s) { return s.name === card.name; });
+  if (!stackExists) {
+    COMP_STACKS.right.push(card);
+  }
+
+  // 从已激活区移除
+  CZ.active = CZ.active.filter(function(c) { return c !== CZ.currentCard; });
+  PLAY.scene.active = PLAY.scene.active.filter(function(c) { return c !== CZ.currentCard; });
+
+  czRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+
+  // 刷新可视化右侧
+  if (typeof buildCompPool === 'function') buildCompPool('right');
+  if (typeof buildCompStack === 'function') buildCompStack('right');
+  if (typeof updateCompStatus === 'function') updateCompStatus();
+
+  czClosePopup('active');
+}
+
+function czDiscard() {
+  // 进入弃牌堆
+  PLAY.discard.push({ name: CZ.currentCard.name, level: CZ.currentCard.level, img: CZ.currentCard.img, effect: CZ.currentCard.effect });
+  CZ.active = CZ.active.filter(function(c) { return c !== CZ.currentCard; });
+  PLAY.scene.active = PLAY.scene.active.filter(function(c) { return c !== CZ.currentCard; });
+  czRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  refreshAllInlineDrawers();
+  czClosePopup('active');
+}
+
+function czGift() {
+  // 进入赠与队列
+  PLAY.useOthers.push({ name: CZ.currentCard.name, level: CZ.currentCard.level, img: CZ.currentCard.img, effect: CZ.currentCard.effect });
+  CZ.active = CZ.active.filter(function(c) { return c !== CZ.currentCard; });
+  PLAY.scene.active = PLAY.scene.active.filter(function(c) { return c !== CZ.currentCard; });
+  czRefreshAll();
+  if (typeof refreshAllPlay === 'function') refreshAllPlay();
+  refreshAllInlineDrawers();
+  czClosePopup('active');
+}
+
+// ─── 初始化 ───
+function initCounterZone() {
+  if (SEARCH_IDX.counter.length === 0 && typeof CARD_DB !== 'undefined') {
+    if (typeof buildSearchIndex === 'function') buildSearchIndex();
+  }
+  czRefreshAll();
+}
+
+
+// ====== Tab切换 ======
+function switchTab(tabId) {
+  document.querySelectorAll('.test-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.test-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.test-tab[data-tab="' + tabId + '"]').classList.add('active');
+  document.getElementById('panel-' + tabId).classList.add('active');
+
+  // 可视化激活时重新计算
+  if (tabId === 'composite') {
+    initComposite();
+  }
+  // 操作台激活时初始化
+  if (tabId === 'supply') {
+    initSupplyPanel();
+    initCompositePools();
+    refreshAllInlineDrawers();
+  }
+  // 公开规则板激活时初始化
+  if (tabId === 'ruleboard') {
+    rbInit();
+  }
+  // 战术面板激活时初始化
+  if (tabId === 'tactical') {
+    initTacticalPanel();
+  }
+}
+
+// ====== 可视化 ======
+// 基础参数（1x缩放参考值）
+const COMP_CHAR_W = 200;
+const COMP_CHAR_H = 280;
+const COMP_DAMAGE_H = 140;
+const COMP_STEP_R = 50;
+const COMP_STEP_L = 50;
+const COMP_STEP_T = 50;
+const COMP_STEP_B = 70;
+
+// 运行时布局（initComposite 动态计算）
+let _compLayout = { scale: 1, charLeft: 170, charTop: 170, charW: 200, charH: 280 };
+
+// 四个方向的卡牌池（所有卡牌由操作台和反击系统等动态填充）
+const COMP_POOLS = {
+  right: [],
+  left: [],
+  top: [
+    { name:'健康值-1', img:'images/damage/伤害指示卡_健康值-1.png', h:COMP_DAMAGE_H },
+    { name:'理智值-1', img:'images/damage/伤害指示卡_理智值-1.png', h:COMP_DAMAGE_H },
+    { name:'健康值-2', img:'images/damage/伤害指示卡_健康值-2.png', h:COMP_DAMAGE_H },
+    { name:'理智值-2', img:'images/damage/伤害指示卡_理智值-2.png', h:COMP_DAMAGE_H },
+    { name:'回合变动', img:'images/damage/伤害指示卡_回合变动.png', h:COMP_DAMAGE_H }
+  ],
+  bottom: []
+};
+
+// 当前堆叠状态：{ right:[], left:[], top:[], bottom:[] }
+let COMP_STACKS = { right:[], left:[], top:[], bottom:[] };
+
+function getCompScale() {
+  return _compLayout.scale;
+}
+
+// Tab 2: 展示用（动态全屏定位 + 渲染堆叠）
+function initComposite() {
+  const scene = document.getElementById('compScene');
+  if (!scene) return;
+
+  const sceneW = scene.clientWidth;
+  const sceneH = scene.clientHeight;
+
+  // 以场景尺寸为基准，按比例缩放（上限2倍）
+  const scaleW = sceneW / 800;
+  const scaleH = sceneH / 700;
+  const scale = Math.min(scaleW, scaleH, 2.0);
+
+  _compLayout.scale = scale;
+  _compLayout.charW = COMP_CHAR_W * scale;
+  _compLayout.charH = COMP_CHAR_H * scale;
+  _compLayout.charLeft = (sceneW - _compLayout.charW) / 2;
+  _compLayout.charTop = (sceneH - _compLayout.charH) / 2;
+
+  const charEl = document.getElementById('compChar');
+  charEl.style.left = _compLayout.charLeft + 'px';
+  charEl.style.top = _compLayout.charTop + 'px';
+  charEl.style.width = _compLayout.charW + 'px';
+  charEl.style.height = _compLayout.charH + 'px';
+
+  if (!charEl._compCharBound) {
+    charEl._compCharBound = true;
+    charEl.addEventListener('click', function() { showCharDetail(); });
+  }
+  buildAllCompStacks();
+}
+
+// Tab 3: 牌池渲染（牌池在操作台面板内）
+function initCompositePools() {
+  buildAllCompPools();
+  buildAllCompStacks();
+  updateCompStatus();
+}
+
+function buildAllCompPools() {
+  ['right','left','top','bottom'].forEach(dir => {
+    buildCompPool(dir);
+  });
+}
+
+function buildCompPool(dir) {
+  const grid = document.getElementById('compPool' + dir.charAt(0).toUpperCase() + dir.slice(1));
+  const pool = COMP_POOLS[dir];
+  grid.innerHTML = pool.map((c, i) => {
+    return '<div class="comp-pool-card" id="compPool_' + dir + '_' + i + '"' +
+      ' onclick="toggleCompCard(\'' + dir + '\',' + i + ')" title="点击添加「' + c.name + '」">' +
+      '<img src="' + c.img + '" alt="' + c.name + '" onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + c.name + '\';">' +
+      '</div>';
+  }).join('');
+}
+
+function toggleCompCard(dir, idx) {
+  const card = COMP_POOLS[dir][idx];
+  // 始终添加（允许重复堆叠同名牌）
+  COMP_STACKS[dir].push(card);
+
+  buildCompPool(dir);
+  buildCompStack(dir);
+  updateCompStatus();
+}
+
+function buildAllCompStacks() {
+  ['right','left','top','bottom'].forEach(dir => buildCompStack(dir));
+}
+
+function buildCompStack(dir) {
+  const scene = document.getElementById('compScene');
+  if (!scene) return;
+  const s = _compLayout.scale;
+  const charW = _compLayout.charW;
+  const charH = _compLayout.charH;
+  const charLeft = _compLayout.charLeft;
+  const charTop = _compLayout.charTop;
+  const stack = COMP_STACKS[dir];
+  const N = stack.length;
+
+  // 移除旧卡片
+  scene.querySelectorAll('.comp-card-' + dir).forEach(el => el.remove());
+
+  if (N === 0) return;
+
+  let step, cardH;
+  const cardW = charW;
+
+  if (dir === 'right') {
+    step = COMP_STEP_R * s;
+    cardH = charH;
+    // 公式: card[i].left = charLeft + step*(i+1)
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const left = charLeft + step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: left + 'px',
+        top: charTop + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'left') {
+    step = COMP_STEP_L * s;
+    cardH = charH;
+    // 公式: card[i] fills [charLeft-step*(i+1), charLeft+charW-step*(i+1)]
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const left = charLeft - step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: left + 'px',
+        top: charTop + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'top') {
+    step = COMP_STEP_T * s;
+    cardH = COMP_DAMAGE_H * s;
+    // 公式: card[i] top = charTop - step*(i+1), bottom = charTop + damageH - step*(i+1)
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const top = charTop - step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: charLeft + 'px',
+        top: top + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  } else if (dir === 'bottom') {
+    step = COMP_STEP_B * s;
+    cardH = charH;
+    // 公式: card[i] top = charTop + step*(i+1)
+    for (let i = 0; i < N; i++) {
+      const card = stack[i];
+      const top = charTop + step * (i + 1);
+      const z = N - i;
+      createCompCard(scene, dir, card, i, N, {
+        left: charLeft + 'px',
+        top: top + 'px',
+        width: cardW + 'px',
+        height: cardH + 'px',
+        zIndex: z
+      });
+    }
+  }
+}
+
+function createCompCard(scene, dir, card, idx, N, style) {
+  const div = document.createElement('div');
+  div.className = 'comp-card comp-' + dir + ' comp-card-' + dir;
+  Object.assign(div.style, style);
+  div.title = '点击移除「' + card.name + '」（' + dir + ' 图层-' + (N-idx) + '）';
+  div.onclick = function(e) {
+    e.stopPropagation();
+    removeCompCard(dir, card.name);
+  };
+  div.innerHTML = '<img src="' + card.img + '" alt="' + card.name + '"' +
+    ' onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + card.name + '\';">' +
+    '<div class="comp-card-label">' + card.name + ' · L-' + (N-idx) + '</div>';
+  // 插入到角色卡之前（角色卡 z=100，始终在最上层）
+  const charEl = document.getElementById('compChar');
+  scene.insertBefore(div, charEl);
+}
+
+function removeCompCard(dir, name) {
+  // 移除最后一个同名实例（堆叠从上到下，删最后加的）
+  const idx = COMP_STACKS[dir].map((s,i) => s.name === name ? i : -1).filter(i => i >= 0).pop();
+  if (idx !== undefined) {
+    COMP_STACKS[dir].splice(idx, 1);
+    buildCompPool(dir);
+    buildCompStack(dir);
+    updateCompStatus();
+  }
+}
+
+function updateCompStatus() {
+  const cntR = COMP_STACKS.right.length;
+  const cntL = COMP_STACKS.left.length;
+  const cntT = COMP_STACKS.top.length;
+  const cntB = COMP_STACKS.bottom.length;
+  var el;
+
+  el = document.getElementById('compCntR'); if (el) el.textContent = cntR;
+  el = document.getElementById('compCntL'); if (el) el.textContent = cntL;
+  el = document.getElementById('compCntT'); if (el) el.textContent = cntT;
+  el = document.getElementById('compCntB'); if (el) el.textContent = cntB;
+
+  el = document.getElementById('compStatus');
+  if (el) {
+    el.innerHTML =
+      '可视化：右<b style="color:var(--color-counter-glow)">' + cntR + '</b> · ' +
+      '左<b style="color:var(--color-whisper-glow)">' + cntL + '</b> · ' +
+      '上<b style="color:#e74c3c">' + cntT + '</b> · ' +
+      '下<b style="color:var(--color-supply-glow)">' + cntB + '</b>' +
+      (cntR+cntL+cntT+cntB > 0 ? ' · <span style="color:var(--text-muted)">点击场景内卡片可移除</span>' : '');
+  }
+}
+
+// 响应窗口缩放 — Tab 2 展示区
+window.addEventListener('resize', function() {
+  if (document.getElementById('panel-composite').classList.contains('active')) {
+    initComposite();
+  }
+});
+
+// ====== 操作台 ======
+// 手牌数据模型
+let SUPPLY_HAND = []; // [{ name, level, img, effect, id }]
+let SUPPLY_POPUP_CARD = null; // 当前弹窗选中的卡
+
+function refreshSupplyHand() {
+  var strip = document.getElementById('supplyHandStripNew');
+  var count = document.getElementById('supplyHandCountNew');
+  if (!strip || !count) return;
+  count.textContent = SUPPLY_HAND.length + ' 张';
+
+  if (SUPPLY_HAND.length === 0) {
+    strip.innerHTML = '<div class="cz-zone-empty">搜索物资卡加入手牌 · 点击卡牌确认或使用</div>';
+    return;
+  }
+
+  strip.innerHTML = SUPPLY_HAND.map(function(c, i) {
+    return '<div class="supply-hand-card" onclick="supplyOpenPopup(' + i + ')" title="' + c.name + '">' +
+      '<img src="' + c.img + '" alt="' + c.name + '" onerror="this.style.background=\'#1a1a2e\';this.alt=\'' + c.name + '\';">' +
+      '<div class="shc-name">' + c.name + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ─── 弹窗 ───
+function supplyOpenPopup(idx) {
+  SUPPLY_POPUP_CARD = SUPPLY_HAND[idx];
+  if (!SUPPLY_POPUP_CARD) return;
+
+  var cardContainer = document.getElementById('supplyPopupCard');
+  cardContainer.innerHTML = '<img src="' + SUPPLY_POPUP_CARD.img + '" alt="' + SUPPLY_POPUP_CARD.name + '" ' +
+    'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+    '<div class="cz-popup-fallback" style="display:none;">' +
+      '<div class="cz-popup-fb-name">' + SUPPLY_POPUP_CARD.name + '</div>' +
+      '<div class="cz-popup-fb-level">' + (SUPPLY_POPUP_CARD.level || '') + ' · 物资卡</div>' +
+      '<div class="cz-popup-fb-effect">' + (SUPPLY_POPUP_CARD.effect || '') + '</div>' +
+    '</div>';
+  cardContainer.onclick = function(e) { e.stopPropagation(); showFullImage(SUPPLY_POPUP_CARD); };
+
+  document.getElementById('supplyPopup').classList.add('show');
+}
+
+function supplyClosePopup() {
+  document.getElementById('supplyPopup').classList.remove('show');
+}
+
+// ─── 确认：参考反击系统确认，显示详情+可点击大图 ───
+function supplyConfirm() {
+  if (!SUPPLY_POPUP_CARD) return;
+  // 确认：关闭弹窗（卡片留在手牌中），点击手牌卡可再次弹窗查看详情/大图
+  supplyClosePopup();
+}
+
+// ─── 使用：跨Tab去到可视化底部物资卡栏目 ───
+function supplyUse() {
+  if (!SUPPLY_POPUP_CARD) return;
+
+  // 添加到可视化底部
+  var idx = SUPPLY_HAND.indexOf(SUPPLY_POPUP_CARD);
+  if (idx >= 0) {
+    SUPPLY_HAND.splice(idx, 1);
+  }
+
+  // 加入可视化物资卡池 + 直接堆叠
+  var card = { name: SUPPLY_POPUP_CARD.name, img: SUPPLY_POPUP_CARD.img,
+               level: SUPPLY_POPUP_CARD.level, effect: SUPPLY_POPUP_CARD.effect };
+  
+  // 如果卡池中已有同名卡则跳过
+  var poolExists = COMP_POOLS.bottom.find(function(c) { return c.name === card.name; });
+  if (!poolExists) {
+    COMP_POOLS.bottom.push(card);
+  }
+
+  // 加入堆叠
+  var stackExists = COMP_STACKS.bottom.find(function(s) { return s.name === card.name; });
+  if (!stackExists) {
+    COMP_STACKS.bottom.push(card);
+  }
+
+  supplyClosePopup();
+  refreshSupplyHand();
+  buildCompPool('bottom');
+  buildCompStack('bottom');
+  updateCompStatus();
+}
+
+// ─── 初始化操作台 ───
+function initSupplyPanel() {
+  buildSearchIndex();
+  refreshSupplyHand();
+}
+
+// ─── 角色卡照片区叠加头像 ───
+// 美术Skill第5节：角色卡1920×2685px，照片实际区域(1152,183)→(1737,963)即585×780
+// Canvas为显示尺寸3x(390×546=130×3, 182×3)，比例因子=390/1920=0.203125
+var _charCardDataUrl = ''; // 缓存canvas合成图，供全屏查看使用
+
+function drawCharCardWithAvatar(canvas, imgPath, fallbackId) {
+  var ctx = canvas.getContext('2d');
+  var cw = canvas.width;   // Tab3:400
+  var ch = canvas.height;  // Tab3:560
+  var srcW = 1920, srcH = 2685;
+  var scale = cw / srcW;
+
+  // 照片区在源图中的坐标
+  var photoX = 1152, photoY = 183, photoW = 585, photoH = 780;
+  // 映射到canvas
+  var px = photoX * scale, py = photoY * scale;
+  var pw = photoW * scale, ph = photoH * scale;
+
+  // 先用占位色填充（防止加载中白屏）
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, cw, ch);
+
+  var cardImg = new Image();
+  cardImg.onload = function() {
+    // 1. 绘制角色卡全图
+    ctx.drawImage(cardImg, 0, 0, cw, ch);
+
+    // 2. 读取localStorage中的头像
+    try {
+      var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+      if (session.avatar) {
+        var avatar = new Image();
+        avatar.onload = function() {
+          // 头像缩放填满照片区域
+          ctx.save();
+          // 圆角裁剪（可选：模拟相纸嵌入感）
+          ctx.beginPath();
+          ctx.rect(px, py, pw, ph);
+          ctx.clip();
+          // 绘制头像（等比缩放填满，cover模式）
+          var avW = avatar.width, avH = avatar.height;
+          var avScale = Math.max(pw / avW, ph / avH);
+          var drawW = avW * avScale, drawH = avH * avScale;
+          var dx = px - (drawW - pw) / 2;
+          var dy = py - (drawH - ph) / 2;
+          ctx.drawImage(avatar, dx, dy, drawW, drawH);
+          ctx.restore();
+
+          _charCardDataUrl = canvas.toDataURL();
+          canvas.style.display = '';
+          var fb = document.getElementById(fallbackId);
+          if (fb) fb.style.display = 'none';
+        };
+        avatar.onerror = function() {
+          // 头像加载失败，只显示角色卡
+          _charCardDataUrl = canvas.toDataURL();
+          canvas.style.display = '';
+          var fb = document.getElementById(fallbackId);
+          if (fb) fb.style.display = 'none';
+        };
+        avatar.src = session.avatar;
+        return; // 等avatar onload完成
+      }
+    } catch(e) {}
+
+    // 无头像：直接用角色卡图
+    _charCardDataUrl = canvas.toDataURL();
+    canvas.style.display = '';
+    var fb = document.getElementById(fallbackId);
+    if (fb) fb.style.display = 'none';
+  };
+  cardImg.onerror = function() {
+    // 角色卡图加载失败：显示fallback
+    canvas.style.display = 'none';
+    var fb = document.getElementById(fallbackId);
+    if (fb) fb.style.display = 'flex';
+  };
+  cardImg.src = imgPath;
+}
+
+// ─── 角色卡详情弹窗 ───
+function showCharDetail() {
+  var overlay = document.getElementById('cardDetailOverlay');
+  var img = document.getElementById('cardDetailImg');
+  var nameEl = document.getElementById('cardDetailName');
+  var metaEl = document.getElementById('cardDetailMeta');
+  var effectEl = document.getElementById('cardDetailEffect');
+  if (!overlay) return;
+  img.src = CHAR_IMG_PATH;
+  nameEl.textContent = CHAR_DISPLAY_NAME;
+  metaEl.textContent = '';
+  effectEl.textContent = '';
+  overlay.classList.add('open');
+}
+
+function closeCardDetail() {
+  var overlay = document.getElementById('cardDetailOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+// ─── 全屏大图查看器 ───
+function showFullImage() {
+  var fiOverlay = document.getElementById('fullImageOverlay');
+  var fiImg = document.getElementById('fullImageZoom');
+  if (!fiOverlay || !fiImg) return;
+  fiImg.src = CHAR_IMG_PATH;
+  fiOverlay.classList.add('open');
+}
+
+function closeFullImage() {
+  var overlay = document.getElementById('fullImageOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+// ─── 角色卡显示初始化（动态替换所有硬编码）───
+function initCharacterDisplay() {
+  var imgPath = CHAR_IMG_PATH;
+  var displayName = CHAR_DISPLAY_NAME;
+
+  function setImg(id, src, alt) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.src = src;
+    el.alt = alt || displayName;
+    el.style.display = '';
+    var fb = el.nextElementSibling;
+    if (fb) fb.style.display = 'none';
+  }
+
+  function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  // 可视化角色卡（canvas+头像叠加）
+  var compCanvas = document.getElementById('compCharImg');
+  if (compCanvas) {
+    drawCharCardWithAvatar(compCanvas, imgPath, 'compCharFallback');
+  }
+  setText('compCharFallback', displayName);
+}
+
+// ====== 初始化 ======
+initComposite();
+initCharacterDisplay();
+
+// ====== 个人目的卡机制 ======
+let PERSONAL_GOAL_POOL = [];
+
+function buildGoalPool() {
+  if (typeof CARD_DB === 'undefined' || !CARD_DB.personal_goals) return;
+  PERSONAL_GOAL_POOL = CARD_DB.personal_goals.map(function(c) {
+    return {
+      id: c.id,
+      name: c.name,
+      goal_text: c.goal_text || '',
+      condition: c.condition || '',
+      img: (typeof getCardImagePath === 'function')
+        ? getCardImagePath({ type: 'personal_goals', id: c.id, name: c.name })
+        : ('images/cards/个人目的卡/个人目的卡_' + String(parseInt(c.id.replace('pg_',''))).padStart(2,'0') + '_' + c.name + '.png')
+    };
+  });
+}
+
+// 初始化战术面板：检查是否有已抽取的个人目的卡，没有则自动抽取
+function initTacticalPanel() {
+  buildGoalPool();
+  try {
+    var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+    if (!session.personalGoal && PERSONAL_GOAL_POOL.length > 0) {
+      var idx = Math.floor(Math.random() * PERSONAL_GOAL_POOL.length);
+      session.personalGoal = PERSONAL_GOAL_POOL[idx];
+      localStorage.setItem('dawn_session', JSON.stringify(session));
+    }
+  } catch(e) {}
+  renderGoalCard();
+  // 恢复思路整理笔记
+  var notesArea = document.getElementById('tacNotesArea');
+  if (notesArea) {
+    try {
+      var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+      notesArea.value = session.tacNotes || '';
+    } catch(e) {}
+    // 自动保存：每次输入都会持久化
+    notesArea.addEventListener('input', function() {
+      try {
+        var s = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+        s.tacNotes = notesArea.value;
+        localStorage.setItem('dawn_session', JSON.stringify(s));
+      } catch(e) {}
+    });
+  }
+}
+
+function renderGoalCard() {
+  var emptyEl = document.getElementById('tacGoalEmpty');
+  var imgEl = document.getElementById('tacGoalImg');
+  var nameEl = document.getElementById('tacGoalName');
+  try {
+    var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+    var goal = session.personalGoal;
+    if (goal && goal.img) {
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (imgEl) { imgEl.src = goal.img; imgEl.alt = goal.name || ''; imgEl.style.display = ''; }
+      if (nameEl) nameEl.textContent = goal.name || '';
+    } else {
+      if (emptyEl) { emptyEl.textContent = '暂无个人目的卡'; emptyEl.style.display = ''; }
+      if (imgEl) imgEl.style.display = 'none';
+      if (nameEl) nameEl.textContent = '';
+    }
+  } catch(e) {
+    if (emptyEl) { emptyEl.textContent = '加载失败'; emptyEl.style.display = ''; }
+  }
+}
+
+// 页面加载时自动构建卡池（用于新登录自动抽取）
+buildGoalPool();
+
+// 新登录自动抽取个人目的卡（若无已有目的卡）
+(function autoDrawGoal() {
+  try {
+    var session = JSON.parse(localStorage.getItem('dawn_session') || '{}');
+    if (!session.personalGoal && PERSONAL_GOAL_POOL.length > 0) {
+      var idx = Math.floor(Math.random() * PERSONAL_GOAL_POOL.length);
+      session.personalGoal = PERSONAL_GOAL_POOL[idx];
+      localStorage.setItem('dawn_session', JSON.stringify(session));
+    }
+  } catch(e) {}
+})();
+
+
+
+// ====== 共享游戏状态（原实战面板数据模型）======
+
+// ─── 主游戏状态 ───
+// 5区布局：角色卡区域(中间全尺寸) + 4个外围区(缩小55%)
+// 角色卡区域：左怪谈/右反击堆叠/上伤害/下物资（只露状态栏）
+// 外围：左(未激活·卡背) 右(已激活·公开) 上(持续公开) 下(物资手牌)
+let PLAY = {
+  round: 0,
+  phase: 'day',     // 'day' | 'dawn' — 白天/黎明双阶段
+  discard: [],       // 弃牌堆
+  useOthers: [],     // 赠与（对他人使用）
+  scene: {
+    whisper: [],      // 怪谈卡（角色卡左侧数值堆叠·全尺寸）
+    inactive: [],     // 未激活反击卡（左边外围·缩小卡背）
+    active: [],       // 已激活反击卡（右边外围·缩小公开）
+    counterStack: [], // 反击卡数值堆叠（角色卡右侧·全尺寸·只露25%）
+    damage: [],       // 伤害指示卡（角色卡上方数值堆叠·全尺寸）
+    supply: [],       // 已使用物资卡（角色卡下方数值堆叠·全尺寸）
+    persistent: [],   // 持续公开区（上方外围·缩小公开）
+  },
+};
+
+
+// ─── 兼容层（Tab 1 使用的 refreshAllPlay 函数）───
+function refreshAllPlay() { updatePlayStatus(); }
+
+// ─── 搜索索引 ───
+let SEARCH_IDX = { whisper: [], counter: [], supply: [] };
+
+function buildSearchIndex() {
+  if (typeof CARD_DB === 'undefined') return;
+
+  // 怪谈卡：仅名称
+  SEARCH_IDX.whisper = (CARD_DB.whispers || []).map(c => ({
+    id: c.id, name: c.name, level: c.level || '',
+    effect: c.effect || c.description || '',
+    img: (typeof getCardImagePath === 'function')
+      ? getCardImagePath({ type: 'whispers', level: c.level, name: c.name })
+      : ''
+  }));
+
+  // 反击卡：名称+等级
+  SEARCH_IDX.counter = (CARD_DB.countermeasures || []).map(c => ({
+    id: c.id, name: c.name, level: c.level || '',
+    effect: c.effect || c.description || '',
+    img: (typeof getCardImagePath === 'function')
+      ? getCardImagePath({ type: 'countermeasures', level: c.level, name: c.name })
+      : ''
+  }));
+
+  // 物资卡：名称+等级
+  SEARCH_IDX.supply = (CARD_DB.supplies || []).map(c => ({
+    id: c.id, name: c.name, level: c.level || '',
+    effect: c.effect || c.description || '',
+    img: (typeof getCardImagePath === 'function')
+      ? getCardImagePath({ type: 'supplies', level: c.level, name: c.name })
+      : ''
+  }));
+}
+
+// ─── 反击卡操作台初始化（必须在 SEARCH_IDX + buildSearchIndex 之后）───
+initCounterZone();
+
+
+function updatePlayStatus() {
+  var numEl = document.getElementById('roundNum');
+  var labelEl = document.getElementById('roundLabel');
+  if (PLAY.phase === 'dawn') {
+    if (numEl) numEl.textContent = PLAY.round + '.5';
+    if (labelEl) labelEl.textContent = '黎明 / 12';
+  } else {
+    if (numEl) numEl.textContent = PLAY.round;
+    if (labelEl) labelEl.textContent = '白天 / 12';
+  }
+}
+
+
+
+function onSearchBar(type, value) {
+  const q = value.trim().toLowerCase();
+  const resultsEl = document.getElementById('results' + type.charAt(0).toUpperCase() + type.slice(1));
+  const clearEl = document.getElementById('clear' + type.charAt(0).toUpperCase() + type.slice(1));
+  const pool = SEARCH_IDX[type] || [];
+
+  if (q.length === 0) {
+    resultsEl.classList.remove('show');
+    resultsEl.innerHTML = '';
+    clearEl.classList.remove('visible');
+    return;
+  }
+
+  clearEl.classList.add('visible');
+
+  // 怪谈卡：仅名称匹配；反击卡/物资卡：名称+效果匹配
+  let results;
+  if (type === 'whisper') {
+    results = pool.filter(c => c.name.toLowerCase().includes(q)).slice(0, 12);
+  } else {
+    results = pool.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.effect && c.effect.toLowerCase().includes(q))
+    ).slice(0, 12);
+  }
+
+  resultsEl.innerHTML = results.length === 0
+    ? '<div class="search-bar-result-item" style="color:var(--text-muted);cursor:default;">没有找到匹配的卡牌</div>'
+    : results.map((c, i) =>
+        '<div class="search-bar-result-item" onclick="selectSearchResult(\'' + type + '\',' + i + ')" onmouseenter="focusSearchResult(\'' + type + '\',' + i + ')">' +
+          '<span class="sbr-name">' + c.name + '</span>' +
+          (c.level ? '<span class="sbr-level">' + c.level + '</span>' : '') +
+        '</div>'
+      ).join('');
+  resultsEl.classList.add('show');
+}
+
+function focusSearchResult(type, idx) {
+  const el = document.getElementById('results' + type.charAt(0).toUpperCase() + type.slice(1));
+  const items = el.querySelectorAll('.search-bar-result-item');
+  items.forEach(item => item.classList.remove('focused'));
+  if (items[idx]) items[idx].classList.add('focused');
+}
+
+function selectSearchResult(type, idx) {
+  const pool = SEARCH_IDX[type] || [];
+  const q = document.getElementById('search' + type.charAt(0).toUpperCase() + type.slice(1)).value.trim().toLowerCase();
+  let results;
+  if (type === 'whisper') {
+    results = pool.filter(c => c.name.toLowerCase().includes(q)).slice(0, 12);
+  } else {
+    results = pool.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.effect && c.effect.toLowerCase().includes(q))
+    ).slice(0, 12);
+  }
+
+  const card = results[idx];
+  if (!card) return;
+
+  // 根据类型执行不同操作
+  if (type === 'whisper') {
+    // 怪谈卡 → 直接堆叠到场景左侧
+    const exists = PLAY.scene.whisper.find(c => c.name === card.name);
+    if (!exists) {
+      PLAY.scene.whisper.push({ name: card.name, level: card.level, img: card.img, effect: card.effect });
+    }
+  } else if (type === 'counter') {
+    // 反击卡 → 加入未激活区域（卡背）
+    const allCounters = [...PLAY.scene.inactive, ...PLAY.scene.active, ...PLAY.scene.counterStack, ...PLAY.scene.persistent];
+    const exists = allCounters.find(c => c.name === card.name);
+    if (!exists) {
+      PLAY.scene.inactive.push({ name: card.name, level: card.level, img: card.img, effect: card.effect });
+    }
+  } else if (type === 'supply') {
+    // 物资卡 → 加入操作台手牌
+    const exists = SUPPLY_HAND.find(c => c.name === card.name);
+    if (!exists) {
+      SUPPLY_HAND.push({ name: card.name, level: card.level, img: card.img, effect: card.effect, id: card.id });
+    }
+  }
+
+  clearSearchBar(type);
+  if (type === 'supply') {
+    refreshSupplyHand();
+  } else {
+    updatePlayStatus();
+  }
+}
+
+function clearSearchBar(type) {
+  document.getElementById('search' + type.charAt(0).toUpperCase() + type.slice(1)).value = '';
+  document.getElementById('clear' + type.charAt(0).toUpperCase() + type.slice(1)).classList.remove('visible');
+  const resultsEl = document.getElementById('results' + type.charAt(0).toUpperCase() + type.slice(1));
+  resultsEl.classList.remove('show');
+  resultsEl.innerHTML = '';
+}
+
+// 点击其他区域关闭搜索建议
+document.addEventListener('click', function(e) {
+  ['whisper','supply'].forEach(function(type) {
+    const col = document.getElementById('searchCol' + type.charAt(0).toUpperCase() + type.slice(1));
+    if (col && !col.contains(e.target)) {
+      const resultsEl = document.getElementById('results' + type.charAt(0).toUpperCase() + type.slice(1));
+      resultsEl.classList.remove('show');
+    }
+  });
+});
+
+// ─── 回合计数器按钮 ───
+function playDawnAction() {
+  if (PLAY.phase !== 'dawn') {
+    showConfirmMini('⚠️ 尚在白天', '当前是白天阶段，请先点击"回合结束"进入黎明。', null);
+    return;
+  }
+  showConfirmMini(
+    '🌅 迎接黎明',
+    '黎明结束，推进至第' + (PLAY.round + 1) + '回合白天。确定继续吗？',
+    function() { advanceRound(); }
+  );
+}
+
+function playEndRound() {
+  if (PLAY.phase !== 'day') {
+    showConfirmMini('⚠️ 已是黎明', '当前已经是黎明阶段，请点击"迎接黎明"推进至下一回合。', null);
+    return;
+  }
+  showConfirmMini(
+    '🌙 回合结束',
+    '第' + PLAY.round + '回合白天结束，进入黎明阶段。确定继续吗？',
+    function() { endCurrentRound(); }
+  );
+}
+
+function advanceRound() {
+  if (PLAY.phase !== 'dawn') return;
+  if (PLAY.round >= 12) {
+    showConfirmMini('⚠️ 已达上限', '已到达第12回合（游戏结束）。无法继续推进。', null);
+    return;
+  }
+  PLAY.round++;
+  PLAY.phase = 'day';
+
+  const numEl = document.getElementById('roundNum');
+  const labelEl = document.getElementById('roundLabel');
+  if (numEl) numEl.textContent = PLAY.round;
+  if (labelEl) labelEl.textContent = '白天 / 12';
+  if (numEl) { numEl.classList.add('pulse'); setTimeout(function() { numEl.classList.remove('pulse'); }, 350); }
+
+  updatePlayStatus();
+}
+
+function endCurrentRound() {
+  if (PLAY.phase !== 'day') return;
+  PLAY.phase = 'dawn';
+
+  const numEl2 = document.getElementById('roundNum');
+  const labelEl2 = document.getElementById('roundLabel');
+  if (numEl2) numEl2.textContent = PLAY.round + '.5';
+  if (labelEl2) labelEl2.textContent = '黎明 / 12';
+  if (numEl2) { numEl2.classList.add('pulse'); setTimeout(function() { numEl2.classList.remove('pulse'); }, 350); }
+
+  updatePlayStatus();
+}
+
+// ─── 确认对话框 ───
+function showConfirmMini(title, body, onOk) {
+  var overlay = document.getElementById('confirmMiniOverlay');
+  if (!overlay) {
+    // 兜底：DOM 不存在时用原生 confirm
+    if (onOk && confirm(title + '\n\n' + body)) { onOk(); }
+    return;
+  }
+  document.getElementById('confirmMiniTitle').textContent = title;
+  document.getElementById('confirmMiniBody').textContent = body;
+  var okBtn = document.getElementById('confirmMiniOk');
+  okBtn.onclick = function() {
+    closeConfirmMini();
+    if (onOk) onOk();
+  };
+  okBtn.style.display = onOk ? '' : 'none';
+  overlay.classList.add('open');
+}
+
+function closeConfirmMini() {
+  var overlay = document.getElementById('confirmMiniOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+
+
+
+</script>
+
+<!-- 回合确认弹窗（body直接子级，完全不受面板切换影响） -->
+<div class="confirm-mini-overlay" id="confirmMiniOverlay" onclick="closeConfirmMini()">
+  <div class="confirm-mini-dialog" id="confirmMiniDialog" onclick="event.stopPropagation()">
+    <div class="cmd-title" id="confirmMiniTitle">确认操作</div>
+    <div class="cmd-body" id="confirmMiniBody"></div>
+    <div class="confirm-mini-actions">
+      <button class="confirm-mini-btn cancel" onclick="closeConfirmMini()">取消</button>
+      <button class="confirm-mini-btn ok" id="confirmMiniOk">确认</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

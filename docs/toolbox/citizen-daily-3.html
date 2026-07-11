@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>A市户籍管理系统 · 黎明之后</title>
+<link rel="stylesheet" href="../css/main.css?v=2026071116">
+<style>
+/* ========== A市户籍管理系统 ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'SimSun','FangSong','Microsoft YaHei',serif; }
+
+/* ── Global ── */
+:root {
+  --gov-blue: #1a3355;
+  --gov-blue-dark: #0f1f35;
+  --gov-blue-light: #2a4a75;
+  --gov-red: #a8202a;
+  --gov-red-bright: #cc2222;
+  --gov-gold: #b8943e;
+  --gov-gold-light: #d4b45e;
+  --gov-cream: #f8f4e8;
+  --gov-paper: #fdfaf0;
+  --gov-border: #3a3a3a;
+  --gov-border-light: #c8c0a8;
+  --gov-text: #1a1a1a;
+  --gov-text-muted: #5a5040;
+  --gov-row-stripe: #f0ebe0;
+  --gov-row-hover: #e8dfcc;
+}
+
+.gov-bg {
+  height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #e8e0d0 0%, #d5ccb8 30%, #c8bfa8 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Watermark ── */
+.gov-watermark {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.03;
+}
+.gov-watermark svg { width: 520px; height: 520px; }
+.gov-watermark-text {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8rem; font-weight: 900; color: #000;
+  opacity: 0.02; transform: rotate(-25deg); letter-spacing: 0.5em;
+  white-space: nowrap; font-family: 'SimHei',sans-serif;
+}
+
+/* ── Container ── */
+.gov-container {
+  position: relative; z-index: 1;
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  max-width: 1200px; width: 100%; margin: 0 auto;
+  box-shadow: 0 0 40px rgba(0,0,0,0.15);
+}
+
+/* ── Header ── */
+.gov-header {
+  background: linear-gradient(180deg, var(--gov-blue) 0%, var(--gov-blue-dark) 100%);
+  padding: 14px 24px 10px;
+  display: flex; align-items: center; gap: 16px;
+  flex-shrink: 0; position: relative;
+  border-bottom: 3px solid var(--gov-gold);
+}
+.gov-header::after {
+  content: ''; position: absolute; bottom: -3px; left: 0; right: 0;
+  height: 1px; background: var(--gov-gold-light);
+}
+.gov-emblem {
+  width: 52px; height: 52px; border-radius: 50%; background: var(--gov-gold);
+  position: relative; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 12px rgba(184,148,62,0.4);
+}
+.gov-emblem-inner {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--gov-blue-dark);
+  display: flex; align-items: center; justify-content: center;
+}
+.gov-emblem-star {
+  font-size: 1.4rem; color: var(--gov-gold); line-height: 1;
+}
+.gov-header-text { flex: 1; }
+.gov-header-text h1 {
+  font-size: 1.3rem; color: #fff; font-weight: 700; letter-spacing: 0.15em;
+  font-family: 'SimHei','Microsoft YaHei',sans-serif;
+}
+.gov-header-text .gov-subtitle {
+  font-size: 0.7rem; color: rgba(255,255,255,0.6); margin-top: 2px;
+  letter-spacing: 0.1em;
+}
+.gov-header-actions {
+  display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+}
+.gov-header-actions .gov-btn {
+  font-size: 0.7rem; padding: 6px 14px; border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.8); cursor: pointer; font-family: inherit;
+  text-decoration: none; white-space: nowrap; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.gov-header-actions .gov-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+/* ── Info Bar ── */
+.gov-info-bar {
+  background: var(--gov-cream);
+  padding: 6px 24px; display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.68rem; color: var(--gov-text-muted);
+  border-bottom: 1px solid var(--gov-border-light);
+  flex-shrink: 0;
+}
+.gov-info-bar span { display: flex; align-items: center; gap: 6px; }
+.gov-info-dot { width: 6px; height: 6px; border-radius: 50%; }
+.gov-info-dot.online { background: #3a8; box-shadow: 0 0 4px rgba(34,153,84,0.5); }
+
+/* ── Setup Panel ── */
+.gov-setup {
+  flex: 1; overflow-y: auto; padding: 32px 24px;
+  background: var(--gov-paper);
+  display: flex; flex-direction: column; align-items: center;
+}
+.gov-setup-card {
+  background: #fff; border: 1px solid var(--gov-border-light);
+  padding: 32px 36px; max-width: 580px; width: 100%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.gov-setup-card h2 {
+  font-size: 1.1rem; text-align: center; color: var(--gov-blue);
+  margin-bottom: 4px; font-family: 'SimHei','Microsoft YaHei',sans-serif;
+}
+.gov-setup-card .setup-subtitle {
+  text-align: center; font-size: 0.7rem; color: var(--gov-text-muted); margin-bottom: 24px;
+}
+.gov-form-row { margin-bottom: 20px; }
+.gov-form-row label {
+  display: block; font-size: 0.78rem; font-weight: 700; color: var(--gov-text);
+  margin-bottom: 8px;
+}
+.gov-count-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+.gov-count-btn {
+  width: 44px; height: 44px; border: 2px solid var(--gov-border-light);
+  background: #fff; color: var(--gov-text); cursor: pointer;
+  font-size: 1rem; font-weight: 700; font-family: inherit; transition: all 0.15s;
+}
+.gov-count-btn:hover { border-color: var(--gov-gold); }
+.gov-count-btn.selected {
+  border-color: var(--gov-blue); background: var(--gov-blue);
+  color: #fff; box-shadow: 0 2px 6px rgba(26,51,85,0.3);
+}
+.gov-char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.gov-char-card {
+  padding: 10px 8px; border: 2px solid var(--gov-border-light);
+  background: #fff; cursor: pointer; text-align: center; transition: all 0.15s;
+  position: relative;
+}
+.gov-char-card:hover { border-color: var(--gov-gold); }
+.gov-char-card.selected {
+  border-color: var(--gov-red); background: #fef5f5;
+  box-shadow: 0 0 8px rgba(168,32,42,0.15);
+}
+.gov-char-card .char-emoji { font-size: 1.5rem; margin-bottom: 4px; }
+.gov-char-card .char-name { font-size: 0.7rem; font-weight: 700; line-height: 1.3; }
+.gov-char-card .char-level {
+  font-size: 0.6rem; color: var(--gov-text-muted); margin-top: 2px;
+  padding: 1px 6px; background: #f0ebe0; display: inline-block;
+}
+.gov-setup-actions { display: flex; gap: 10px; align-items: center; margin-top: 24px; }
+.gov-btn-primary {
+  padding: 10px 28px; border: none; border-radius: 3px;
+  background: var(--gov-blue); color: #fff; cursor: pointer;
+  font-size: 0.85rem; font-weight: 700; font-family: inherit; transition: all 0.15s;
+}
+.gov-btn-primary:hover { background: var(--gov-blue-light); }
+.gov-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.gov-btn-secondary {
+  padding: 10px 20px; border: 1px solid var(--gov-border-light); border-radius: 3px;
+  background: #fff; color: var(--gov-text-muted); cursor: pointer;
+  font-size: 0.85rem; font-family: inherit; transition: all 0.15s;
+}
+.gov-btn-secondary:hover { border-color: var(--gov-gold); }
+.gov-setup-count {
+  margin-left: auto; font-size: 0.72rem; color: var(--gov-text-muted);
+}
+.gov-setup-count strong { color: var(--gov-blue); font-size: 1rem; }
+
+/* ── Registry View ── */
+.gov-registry {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  background: #fff;
+}
+.gov-registry-toolbar {
+  padding: 10px 20px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--gov-border-light);
+  background: var(--gov-cream); flex-shrink: 0; flex-wrap: wrap;
+}
+.gov-search-wrap {
+  position: relative; flex: 1; min-width: 180px; max-width: 360px;
+}
+.gov-search-wrap input {
+  width: 100%; padding: 7px 12px 7px 32px; border: 1px solid var(--gov-border-light);
+  background: #fff; font-size: 0.75rem; color: var(--gov-text);
+  font-family: inherit; outline: none; border-radius: 3px;
+}
+.gov-search-wrap input:focus { border-color: var(--gov-blue); }
+.gov-search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 0.8rem; color: var(--gov-text-muted); pointer-events: none;
+}
+.gov-toolbar-stats {
+  font-size: 0.7rem; color: var(--gov-text-muted); white-space: nowrap;
+  display: flex; align-items: center; gap: 12px;
+}
+.gov-toolbar-stats strong { color: var(--gov-blue); }
+.gov-filter-group {
+  display: flex; gap: 4px;
+}
+.gov-filter-btn {
+  padding: 5px 10px; border: 1px solid var(--gov-border-light); border-radius: 3px;
+  background: #fff; font-size: 0.68rem; color: var(--gov-text-muted); cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+}
+.gov-filter-btn:hover { border-color: var(--gov-gold); }
+.gov-filter-btn.active { background: var(--gov-blue); color: #fff; border-color: var(--gov-blue); }
+.gov-btn-day-nav {
+  padding: 6px 12px; border: 1px solid var(--gov-border-light); border-radius: 3px;
+  background: #fff; font-size: 0.7rem; color: var(--gov-text); cursor: pointer;
+  font-family: inherit; transition: all 0.15s; white-space: nowrap;
+}
+.gov-btn-day-nav:hover { border-color: var(--gov-gold); }
+.gov-day-indicator {
+  font-size: 0.75rem; font-weight: 700; color: var(--gov-blue);
+  padding: 0 4px; min-width: 50px; text-align: center;
+}
+
+/* ── Table ── */
+.gov-table-wrap {
+  flex: 1; overflow: auto; position: relative;
+}
+.gov-table {
+  width: 100%; border-collapse: collapse; font-size: 0.73rem;
+  table-layout: fixed; min-width: 800px;
+}
+.gov-table thead { position: sticky; top: 0; z-index: 5; }
+.gov-table thead th {
+  background: var(--gov-blue); color: #fff; padding: 10px 8px;
+  font-weight: 600; font-size: 0.7rem; text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  letter-spacing: 0.05em; font-family: 'SimHei','Microsoft YaHei',sans-serif;
+}
+.gov-table thead th:last-child { border-right: none; }
+.gov-table tbody td {
+  padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--gov-border-light);
+  color: var(--gov-text); vertical-align: middle;
+}
+.gov-table tbody tr:nth-child(even) { background: var(--gov-row-stripe); }
+.gov-table tbody tr:hover { background: var(--gov-row-hover); }
+.gov-table .td-id { font-family: 'Courier New',monospace; font-size: 0.68rem; color: var(--gov-text-muted); letter-spacing: 0.05em; }
+.gov-table .td-name { font-weight: 700; font-size: 0.78rem; }
+.gov-table .td-level {
+  font-size: 0.65rem; padding: 2px 8px; border-radius: 3px; display: inline-block;
+  font-weight: 600;
+}
+.gov-table .td-status {
+  font-size: 0.65rem; padding: 3px 10px; border-radius: 3px; display: inline-block;
+  font-weight: 700; letter-spacing: 0.08em;
+}
+.td-status-active { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.td-status-ghost { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
+.td-status-transferred { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.td-level-legend { background: #fff3e0; color: #e65100; }
+.td-level-master { background: #f3e5f5; color: #7b1fa2; }
+.td-action-btn {
+  font-size: 0.62rem; padding: 4px 10px; border-radius: 3px;
+  border: 1px solid var(--gov-blue); background: #fff; color: var(--gov-blue);
+  cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap;
+}
+.td-action-btn:hover { background: var(--gov-blue); color: #fff; }
+
+/* ── Empty State ── */
+.gov-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 48px; color: var(--gov-text-muted);
+  background: #fff;
+}
+.gov-empty-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.4; }
+.gov-empty-text { font-size: 0.85rem; margin-bottom: 16px; }
+
+/* ── Pagination ── */
+.gov-pagination {
+  padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--gov-border-light); background: var(--gov-cream);
+  font-size: 0.68rem; color: var(--gov-text-muted); flex-shrink: 0;
+}
+.gov-pagination .page-info { display: flex; align-items: center; gap: 8px; }
+.gov-pagination .page-btn {
+  padding: 4px 10px; border: 1px solid var(--gov-border-light); border-radius: 3px;
+  background: #fff; cursor: pointer; font-size: 0.68rem; font-family: inherit;
+  color: var(--gov-text);
+}
+.gov-pagination .page-btn:hover { border-color: var(--gov-blue); }
+.gov-pagination .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Dossier Overlay ── */
+.dossier-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.65); display: none;
+  justify-content: center; align-items: center;
+  backdrop-filter: blur(2px);
+}
+.dossier-overlay.show { display: flex; }
+.dossier-doc {
+  background: var(--gov-paper); width: 92%; max-width: 700px;
+  max-height: 90vh; overflow-y: auto; position: relative;
+  border: 2px solid var(--gov-border);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3), 0 0 0 12px rgba(255,255,255,0.02);
+  padding: 0;
+}
+.dossier-close {
+  position: absolute; top: 12px; right: 16px; z-index: 10;
+  width: 32px; height: 32px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,0.4); color: #fff; cursor: pointer;
+  font-size: 1rem; display: flex; align-items: center; justify-content: center;
+}
+.dossier-close:hover { background: rgba(0,0,0,0.6); }
+
+/* ── Dossier Header ── */
+.dossier-hd {
+  background: linear-gradient(180deg, var(--gov-blue) 0%, var(--gov-blue-dark) 100%);
+  padding: 24px 36px 18px; text-align: center; position: relative;
+  border-bottom: 2px solid var(--gov-gold);
+}
+.dossier-hd .dossier-emblem {
+  width: 42px; height: 42px; border-radius: 50%; background: var(--gov-gold);
+  margin: 0 auto 8px; display: flex; align-items: center; justify-content: center;
+}
+.dossier-hd .dossier-emblem-inner {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--gov-blue-dark);
+  display: flex; align-items: center; justify-content: center;
+}
+.dossier-hd .dossier-emblem-star { font-size: 1rem; color: var(--gov-gold); }
+.dossier-hd h2 {
+  font-size: 1.2rem; color: #fff; letter-spacing: 0.2em;
+  font-family: 'SimHei','Microsoft YaHei',sans-serif; font-weight: 700;
+}
+.dossier-hd .dossier-no {
+  font-size: 0.7rem; color: rgba(255,255,255,0.55); margin-top: 4px;
+  font-family: 'Courier New',monospace; letter-spacing: 0.05em;
+}
+
+/* ── Dossier Body ── */
+.dossier-body { padding: 28px 36px; }
+.dossier-section-title {
+  font-size: 0.82rem; font-weight: 700; color: var(--gov-blue);
+  margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--gov-border-light);
+  font-family: 'SimHei','Microsoft YaHei',sans-serif;
+  display: flex; align-items: center; gap: 6px;
+}
+.dossier-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px;
+  margin-bottom: 20px;
+}
+.dossier-info-item {
+  display: flex; align-items: baseline; padding: 5px 0;
+  border-bottom: 1px dotted var(--gov-border-light); font-size: 0.73rem;
+}
+.dossier-info-label {
+  color: var(--gov-text-muted); min-width: 70px; flex-shrink: 0; font-weight: 600;
+}
+.dossier-info-value { color: var(--gov-text); font-weight: 400; }
+
+/* ── Records Table ── */
+.dossier-records-table {
+  width: 100%; border-collapse: collapse; font-size: 0.68rem; margin-bottom: 20px;
+}
+.dossier-records-table thead th {
+  background: #f0ebe0; padding: 6px 8px; text-align: center;
+  font-weight: 600; font-size: 0.65rem; border: 1px solid var(--gov-border-light);
+  color: var(--gov-text-muted);
+}
+.dossier-records-table tbody td {
+  padding: 5px 8px; text-align: center; border: 1px solid var(--gov-border-light);
+  color: var(--gov-text);
+}
+.dossier-records-table tbody tr:nth-child(even) { background: #faf6ec; }
+.dossier-record-empty {
+  text-align: center; padding: 20px; color: var(--gov-text-muted); font-size: 0.72rem;
+}
+
+/* ── Dossier Seals ── */
+.dossier-seals {
+  display: flex; justify-content: flex-end; align-items: center;
+  gap: 40px; padding: 20px 36px 28px; position: relative;
+}
+.dossier-seal {
+  width: 80px; height: 80px; border-radius: 50%;
+  border: 3px solid var(--gov-red); position: relative; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+  transform: rotate(-8deg); opacity: 0.85;
+}
+.dossier-seal::after {
+  content: '★'; position: absolute; font-size: 1.2rem; color: var(--gov-red);
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+}
+.dossier-seal .seal-text {
+  font-size: 0.55rem; color: var(--gov-red); font-weight: 900;
+  letter-spacing: 0.15em; text-align: center; line-height: 1.2;
+  transform: rotate(0deg);
+}
+.dossier-seal.small { width: 64px; height: 64px; border-width: 2px; }
+.dossier-seal.small::after { font-size: 0.9rem; }
+.dossier-seal.small .seal-text { font-size: 0.48rem; }
+
+/* ── Dossier Footer ── */
+.dossier-footer {
+  padding: 16px 36px; border-top: 1px dashed var(--gov-border-light);
+  display: flex; justify-content: space-between; font-size: 0.65rem;
+  color: var(--gov-text-muted);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .gov-header { padding: 10px 14px; gap: 10px; }
+  .gov-header-text h1 { font-size: 1rem; }
+  .gov-emblem { width: 40px; height: 40px; }
+  .gov-emblem-inner { width: 28px; height: 28px; }
+  .gov-emblem-star { font-size: 1.1rem; }
+  .gov-table { font-size: 0.65rem; min-width: 680px; }
+  .gov-table thead th { font-size: 0.6rem; padding: 8px 4px; }
+  .gov-table tbody td { font-size: 0.62rem; padding: 8px 4px; }
+  .gov-registry-toolbar { flex-wrap: wrap; gap: 8px; }
+  .dossier-doc { width: 96%; }
+  .dossier-body { padding: 16px 20px; }
+  .dossier-hd { padding: 16px 20px 12px; }
+  .dossier-info-grid { grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .dossier-seals { gap: 20px; padding: 12px 20px 20px; }
+  .dossier-seal { width: 60px; height: 60px; }
+  .dossier-seal .seal-text { font-size: 0.48rem; }
+}
+
+/* ── Toast ── */
+.gov-toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 300;
+  padding: 10px 24px; border-radius: 4px; font-size: 0.78rem; font-weight: 700;
+  pointer-events: none; opacity: 0; transition: opacity 0.3s;
+  font-family: inherit; color: #fff;
+}
+.gov-toast.show { opacity: 1; }
+.gov-toast.success { background: var(--gov-blue); }
+.gov-toast.error { background: var(--gov-red); }
+
+.gov-day-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 4px; vertical-align: middle;
+}
+.gov-day-dot.today { background: var(--gov-red-bright); box-shadow: 0 0 6px rgba(204,34,34,0.5); }
+.gov-day-dot.past { background: var(--gov-blue); }
+.gov-day-dot.future { background: #ccc; }
+
+/* ── Locked day stamp in dossier ── */
+.dossier-locked-stamp {
+  display: inline-block; padding: 2px 8px; border-radius: 3px;
+  font-size: 0.6rem; font-weight: 700; margin-right: 4px;
+}
+.dossier-locked-stamp.locked { background: var(--gov-blue); color: #fff; }
+.dossier-locked-stamp.current { background: var(--gov-red); color: #fff; }
+
+/* ── Edit Overlay (户籍变更登记) ── */
+.edit-overlay {
+  position: fixed; inset: 0; z-index: 200; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.55);
+}
+.edit-overlay.show { display: flex; }
+.edit-doc {
+  background: var(--gov-paper);
+  width: 92vw; max-width: 720px; max-height: 90vh;
+  overflow-y: auto; border-radius: 4px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  position: relative;
+  border: 1px solid var(--gov-border);
+}
+.edit-doc-hd {
+  background: linear-gradient(180deg, #8b1a1a 0%, #6b1010 100%);
+  padding: 16px 24px; text-align: center;
+  border-bottom: 2px solid var(--gov-gold);
+}
+.edit-doc-hd h3 {
+  color: #fff; font-size: 1rem; letter-spacing: 0.15em;
+  font-family: 'SimHei','Microsoft YaHei',sans-serif; margin: 0;
+}
+.edit-doc-hd .edit-subtitle {
+  color: rgba(255,255,255,0.55); font-size: 0.65rem; margin-top: 3px;
+}
+.edit-doc-close {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; color: rgba(255,255,255,0.7);
+  font-size: 1.3rem; cursor: pointer; line-height: 1;
+  z-index: 5; padding: 4px 8px;
+}
+.edit-doc-close:hover { color: #fff; }
+.edit-doc-body { padding: 20px 24px; }
+.edit-citizen-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; background: #fff;
+  border: 1px solid var(--gov-border-light);
+  border-radius: 3px; margin-bottom: 20px;
+}
+.edit-citizen-bar .ecb-emoji { font-size: 1.6rem; }
+.edit-citizen-bar .ecb-info { flex: 1; }
+.edit-citizen-bar .ecb-name { font-weight: 700; font-size: 0.85rem; }
+.edit-citizen-bar .ecb-reg { font-size: 0.62rem; color: var(--gov-text-muted); }
+.edit-citizen-bar .ecb-day {
+  font-size: 0.75rem; font-weight: 700; color: var(--gov-red);
+  padding: 4px 12px; border: 1px dashed var(--gov-red);
+  border-radius: 3px; white-space: nowrap;
+}
+
+/* ── Edit Section ── */
+.edit-section { margin-bottom: 22px; }
+.edit-section-title {
+  font-size: 0.8rem; font-weight: 700; color: var(--gov-blue);
+  border-bottom: 2px solid var(--gov-blue);
+  padding-bottom: 6px; margin-bottom: 12px;
+  font-family: 'SimHei','Microsoft YaHei',sans-serif;
+  display: flex; align-items: center; gap: 6px;
+}
+.edit-decl-table {
+  width: 100%; border-collapse: collapse; font-size: 0.7rem;
+  margin-bottom: 10px;
+}
+.edit-decl-table th {
+  background: var(--gov-blue); color: #fff; padding: 7px 8px;
+  font-size: 0.65rem; font-weight: 600; text-align: center;
+}
+.edit-decl-table td {
+  padding: 7px 8px; text-align: center; border-bottom: 1px solid var(--gov-border-light);
+}
+.edit-decl-table tbody tr:nth-child(even) { background: var(--gov-row-stripe); }
+.edit-decl-table tbody tr:hover { background: var(--gov-row-hover); }
+.edit-decl-empty {
+  text-align: center; padding: 16px; color: var(--gov-text-muted);
+  font-size: 0.72rem;
+}
+.edit-btn-del {
+  font-size: 0.6rem; padding: 3px 8px; border-radius: 2px;
+  border: 1px solid var(--gov-red); background: #fff; color: var(--gov-red);
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.edit-btn-del:hover { background: var(--gov-red); color: #fff; }
+
+/* ── Add Declaration Form ── */
+.edit-add-form {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 12px; background: #fff;
+  border: 1px dashed var(--gov-border-light);
+  border-radius: 3px;
+}
+.edit-field { display: flex; flex-direction: column; gap: 3px; }
+.edit-field label {
+  font-size: 0.65rem; font-weight: 700; color: var(--gov-text-muted);
+}
+.edit-field input, .edit-field select, .edit-field textarea {
+  padding: 7px 10px; border: 1px solid var(--gov-border-light);
+  border-radius: 3px; font-size: 0.72rem; font-family: inherit;
+  color: var(--gov-text); background: #fff; outline: none;
+}
+.edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus {
+  border-color: var(--gov-blue);
+}
+.edit-field textarea { resize: vertical; min-height: 60px; font-size:0.68rem; }
+.edit-add-btn {
+  grid-column: 1 / -1;
+  padding: 8px 16px; border: 1px solid var(--gov-blue);
+  background: var(--gov-blue); color: #fff;
+  border-radius: 3px; cursor: pointer; font-size: 0.72rem;
+  font-family: inherit; font-weight: 600; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.edit-add-btn:hover { background: var(--gov-blue-light); }
+
+/* ── Notes ── */
+.edit-notes-wrap { margin-top: 4px; }
+.edit-notes-wrap textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--gov-border-light);
+  border-radius: 3px; font-size: 0.72rem; font-family: inherit; resize: vertical;
+  min-height: 70px; color: var(--gov-text); background: #fff; outline: none;
+}
+.edit-notes-wrap textarea:focus { border-color: var(--gov-blue); }
+.edit-notes-hint {
+  font-size: 0.6rem; color: var(--gov-text-muted); margin-top: 3px;
+  text-align: right;
+}
+
+/* ── Edit Footer ── */
+.edit-doc-ft {
+  display: flex; gap: 10px; padding: 16px 24px;
+  border-top: 1px solid var(--gov-border-light);
+  background: var(--gov-cream); justify-content: center;
+  position: sticky; bottom: 0;
+}
+.edit-btn-save {
+  padding: 10px 32px; border: none; border-radius: 3px;
+  background: var(--gov-blue); color: #fff; cursor: pointer;
+  font-size: 0.85rem; font-weight: 700; font-family: inherit;
+  transition: all 0.15s;
+}
+.edit-btn-save:hover { background: var(--gov-blue-light); }
+.edit-btn-cancel {
+  padding: 10px 20px; border: 1px solid var(--gov-border-light); border-radius: 3px;
+  background: #fff; color: var(--gov-text-muted); cursor: pointer;
+  font-size: 0.85rem; font-family: inherit; transition: all 0.15s;
+}
+.edit-btn-cancel:hover { border-color: var(--gov-gold); }
+
+@media (max-width: 600px) {
+  .edit-add-form { grid-template-columns: 1fr; }
+  .edit-doc { width: 96vw; max-height: 95vh; }
+}
+
+/* ── HP/SAN Edit Fields ── */
+.edit-status-row {
+  display: flex; gap: 12px; margin-bottom: 20px;
+}
+.edit-status-field {
+  flex: 1; display: flex; flex-direction: column; gap: 3px;
+  padding: 8px 12px; background: #fff; border: 1px solid var(--gov-border-light);
+  border-radius: 3px;
+}
+.edit-status-field label {
+  font-size: 0.65rem; font-weight: 700; color: var(--gov-text-muted);
+}
+.edit-status-field input {
+  padding: 6px 10px; border: 1px solid var(--gov-border-light);
+  border-radius: 3px; font-size: 0.8rem; font-weight: 700; font-family: inherit;
+  color: var(--gov-text); background: #fff; outline: none; width: 80px;
+}
+.edit-status-field input:focus { border-color: var(--gov-blue); }
+.edit-status-field.hp-field { border-left: 3px solid #e74c3c; }
+.edit-status-field.san-field { border-left: 3px solid #3498db; }
+.edit-status-field.ghost-field { border-left: 3px solid #8e44ad; }
+
+/* ── Round Advance Dialog ── */
+.round-dialog-overlay {
+  position: fixed; inset: 0; z-index: 300; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+}
+.round-dialog-overlay.show { display: flex; }
+.round-dialog {
+  background: var(--gov-paper); width: 92%; max-width: 520px;
+  border: 2px solid var(--gov-border);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+}
+.round-dialog-hd {
+  background: linear-gradient(180deg, #8b1a1a 0%, #6b1010 100%);
+  padding: 14px 24px; text-align: center; border-bottom: 2px solid var(--gov-gold);
+}
+.round-dialog-hd h3 { color: #fff; font-size: 1rem; letter-spacing: 0.1em; margin: 0; font-family: 'SimHei','Microsoft YaHei',sans-serif; }
+.round-dialog-body { padding: 20px 24px; font-size: 0.78rem; color: var(--gov-text); }
+.round-dialog-body .rd-item {
+  display: flex; align-items: flex-start; gap: 10px; padding: 8px 0;
+  border-bottom: 1px dotted var(--gov-border-light);
+}
+.round-dialog-body .rd-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.round-dialog-body .rd-text strong { color: var(--gov-red); }
+.round-dialog-ft {
+  display: flex; gap: 10px; padding: 14px 24px; border-top: 1px solid var(--gov-border-light);
+  background: var(--gov-cream); justify-content: center;
+}
+.round-dialog-ft .btn-confirm-advance {
+  padding: 10px 32px; border: none; border-radius: 3px;
+  background: var(--gov-blue); color: #fff; cursor: pointer;
+  font-size: 0.85rem; font-weight: 700; font-family: inherit;
+}
+.round-dialog-ft .btn-confirm-advance:hover { background: var(--gov-blue-light); }
+.round-dialog-ft .btn-cancel-advance {
+  padding: 10px 20px; border: 1px solid var(--gov-border-light); border-radius: 3px;
+  background: #fff; color: var(--gov-text-muted); cursor: pointer;
+  font-size: 0.85rem; font-family: inherit;
+}
+
+/* ── Timeline Overlay (政府档案查阅) ── */
+.timeline-overlay {
+  position: fixed; inset: 0; z-index: 200; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(2px);
+}
+.timeline-overlay.show { display: flex; }
+.timeline-doc {
+  background: var(--gov-paper); width: 92%; max-width: 680px;
+  max-height: 90vh; overflow-y: auto;
+  border: 2px solid var(--gov-border);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+}
+.timeline-hd {
+  background: linear-gradient(180deg, var(--gov-blue) 0%, var(--gov-blue-dark) 100%);
+  padding: 16px 24px; text-align: center; border-bottom: 2px solid var(--gov-gold);
+  position: sticky; top: 0; z-index: 5;
+}
+.timeline-hd h3 { color: #fff; font-size: 1rem; letter-spacing: 0.15em; margin: 0; font-family: 'SimHei','Microsoft YaHei',sans-serif; }
+.timeline-hd .tl-subtitle { color: rgba(255,255,255,0.5); font-size: 0.65rem; margin-top: 2px; }
+.timeline-close {
+  position: absolute; top: 10px; right: 16px; background: none; border: none;
+  color: rgba(255,255,255,0.7); font-size: 1.3rem; cursor: pointer;
+}
+.timeline-close:hover { color: #fff; }
+.timeline-body { padding: 20px 24px; }
+.timeline-body .tl-day-block {
+  margin-bottom: 16px; border: 1px solid var(--gov-border-light);
+  border-radius: 3px; overflow: hidden;
+}
+.timeline-body .tl-day-header {
+  background: #f0ebe0; padding: 8px 14px; font-weight: 700; font-size: 0.78rem;
+  color: var(--gov-blue); display: flex; align-items: center; gap: 8px;
+}
+.timeline-body .tl-day-header .tl-badge {
+  font-size: 0.6rem; padding: 2px 8px; border-radius: 3px; font-weight: 700;
+}
+.timeline-body .tl-day-header .tl-badge.current { background: var(--gov-red); color: #fff; }
+.timeline-body .tl-day-header .tl-badge.past { background: var(--gov-blue); color: #fff; }
+.timeline-body .tl-citizen-row {
+  padding: 6px 14px; font-size: 0.7rem; border-top: 1px dotted var(--gov-border-light);
+  display: flex; align-items: center; gap: 8px;
+}
+.timeline-body .tl-citizen-row .tl-citizen-name {
+  font-weight: 700; min-width: 80px; color: var(--gov-text);
+}
+.timeline-body .tl-citizen-row .tl-decls {
+  flex: 1; color: var(--gov-text-muted); font-size: 0.65rem;
+}
+.timeline-body .tl-empty { text-align: center; padding: 30px; color: var(--gov-text-muted); }
+
+/* ── Settlement Report in Timeline ── */
+.timeline-body .tl-settlement-block {
+  margin-bottom: 16px; border: 1px solid var(--gov-gold); border-radius: 3px; overflow: hidden;
+}
+.timeline-body .tl-settlement-header {
+  background: rgba(184,148,62,0.12); padding: 8px 14px; font-weight: 700; font-size: 0.75rem;
+  color: #8b6914; display: flex; align-items: center; gap: 6px;
+}
+.timeline-body .tl-settlement-body { padding: 8px 14px; font-size: 0.68rem; color: var(--gov-text-muted); }
+</style>
+</head>
+<body class="gov-bg">
+
+<!-- ── Watermark ── -->
+<div class="gov-watermark">
+  <svg viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="48" fill="none" stroke="#1a3355" stroke-width="2"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#1a3355" stroke-width="1"/>
+    <polygon points="50,12 56,35 81,35 61,48 69,72 50,58 31,72 39,48 19,35 44,35" fill="#1a3355"/>
+    <text x="50" y="90" text-anchor="middle" font-size="6" fill="#1a3355" font-family="serif">A市公安局</text>
+  </svg>
+</div>
+<div class="gov-watermark-text">内部资料</div>
+
+<!-- ═══════════ CONTAINER ═══════════ -->
+<div class="gov-container">
+
+<!-- ── Header ── -->
+<header class="gov-header">
+  <div class="gov-emblem">
+    <div class="gov-emblem-inner">
+      <span class="gov-emblem-star">★</span>
+    </div>
+  </div>
+  <div class="gov-header-text">
+    <h1>A市户籍管理系统</h1>
+    <div class="gov-subtitle">A市公安局户政科 · Household Registration System</div>
+  </div>
+  <div class="gov-header-actions">
+    <button class="gov-btn" onclick="toggleGhostMode()" id="btnGhostMode" title="鬼魂模式">
+      👻 <span id="ghostLabel">鬼魂模式</span>
+    </button>
+    <button class="gov-btn" onclick="resetGame()" id="btnReset" style="display:none;">
+      📋 注销档案
+    </button>
+    <a href="../index.html" class="gov-btn" style="text-decoration:none;">← 返回</a>
+  </div>
+</header>
+
+<!-- ── Info Bar ── -->
+<div class="gov-info-bar">
+  <span>🖥️ 操作员：系统管理员（市长）</span>
+  <span><span class="gov-info-dot online"></span> 系统运行中</span>
+  <span id="sysTime">--</span>
+</div>
+
+<!-- ── Setup Panel ── -->
+<section class="gov-setup" id="panelSetup">
+  <div class="gov-setup-card">
+    <h2>建立户籍档案</h2>
+    <div class="setup-subtitle">请选择本局市民并录入户籍系统</div>
+    <div class="gov-form-row">
+      <label>第一步 · 选择在册人数</label>
+      <div class="gov-count-grid" id="countGrid"></div>
+    </div>
+    <div class="gov-form-row" id="stepChars" style="display:none;">
+      <label>第二步 · 选择市民</label>
+      <div class="gov-char-grid" id="charGrid"></div>
+    </div>
+    <div class="gov-setup-actions">
+      <button class="gov-btn-secondary" onclick="cancelSetup()">取消</button>
+      <span class="gov-setup-count">已选 <strong id="selCount">0</strong> / <strong id="selNeed">6</strong> 人</span>
+      <button class="gov-btn-primary" id="btnConfirm" disabled onclick="confirmRegistry()">
+        📝 建立档案
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ── Registry Main ── -->
+<section class="gov-registry" id="panelRegistry" style="display:none;">
+
+  <!-- Toolbar -->
+  <div class="gov-registry-toolbar">
+    <div class="gov-search-wrap">
+      <span class="gov-search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="输入姓名或编号搜索…" autocomplete="off">
+    </div>
+    <div class="gov-filter-group" id="filterGroup">
+      <button class="gov-filter-btn active" data-filter="all">全部</button>
+      <button class="gov-filter-btn" data-filter="active">在册</button>
+      <button class="gov-filter-btn" data-filter="ghost">鬼魂</button>
+    </div>
+    <div class="gov-toolbar-stats">
+      <span>当前日期：</span>
+      <button class="gov-btn-day-nav" onclick="prevDay()" title="前一天">◀</button>
+      <span class="gov-day-indicator" id="dayIndicator">第0天</span>
+      <button class="gov-btn-day-nav" onclick="nextDay()" title="后一天">▶</button>
+      <button class="gov-btn-day-nav" onclick="openRoundDialog()" title="推进回合并结算" style="background:var(--gov-blue);color:#fff;border-color:var(--gov-blue);font-weight:700;">▶▶ 推进回合</button>
+      <button class="gov-btn-day-nav" onclick="showTimeline()" title="查看全时间线">📜 查阅</button>
+      <button class="gov-btn-day-nav" onclick="endGameManually()" title="手动结束本局" style="color:var(--gov-red);border-color:var(--gov-red);">🏁 结束对局</button>
+      <span>在册 <strong id="statTotal">0</strong> 人</span>
+      <span>活跃 <strong id="statActive">0</strong> 人</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="gov-table-wrap">
+    <table class="gov-table">
+      <thead>
+        <tr>
+          <th style="width:12%">户籍编号</th>
+          <th style="width:10%">姓名</th>
+          <th style="width:8%">性别</th>
+          <th style="width:12%">身份等级</th>
+          <th style="width:8%">健康</th>
+          <th style="width:8%">理智</th>
+          <th style="width:14%">特殊技能</th>
+          <th style="width:10%">档案状态</th>
+          <th style="width:18%">操作</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr><td colspan="9" style="padding:40px;text-align:center;color:var(--gov-text-muted);">数据加载中…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="gov-pagination">
+    <span>共 <strong id="pageTotal">0</strong> 条记录</span>
+    <div class="page-info">
+      <button class="page-btn" id="btnFirst" disabled>« 首页</button>
+      <button class="page-btn" id="btnPrev" disabled>‹ 上一页</button>
+      <span>第 <strong id="pageCur">1</strong> / <strong id="pageMax">1</strong> 页</span>
+      <button class="page-btn" id="btnNext" disabled>下一页 ›</button>
+      <button class="page-btn" id="btnLast" disabled>末页 »</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- ── Empty Fallback ── -->
+<section class="gov-empty" id="panelEmpty" style="display:none;">
+  <div class="gov-empty-icon">📂</div>
+  <div class="gov-empty-text">暂无户籍档案，请先建立档案。</div>
+  <button class="gov-btn-primary" onclick="resetGame()">建立新档案</button>
+</section>
+
+</div><!-- /gov-container -->
+
+<!-- ═══════════ EDIT OVERLAY (户籍变更登记) ═══════════ -->
+<div class="edit-overlay" id="editOverlay">
+  <div class="edit-doc" id="editDoc">
+    <div class="edit-doc-hd">
+      <button class="edit-doc-close" onclick="closeEditor()">✕</button>
+      <h3>📋 户籍变更登记表</h3>
+      <div class="edit-subtitle">A市公安局户政科 · 备案记录修改</div>
+    </div>
+    <div class="edit-doc-body" id="editDocBody"></div>
+    <div class="edit-doc-ft">
+      <button class="edit-btn-save" onclick="saveEdit()">💾 存档备案</button>
+      <button class="edit-btn-cancel" onclick="closeEditor()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ DOSSIER OVERLAY ═══════════ -->
+<div class="dossier-overlay" id="dossierOverlay">
+  <div class="dossier-doc" id="dossierDoc">
+    <button class="dossier-close" onclick="closeDossier()">✕</button>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="gov-toast" id="govToast"></div>
+
+<!-- ═══════════ ROUND ADVANCE DIALOG ═══════════ -->
+<div class="round-dialog-overlay" id="roundDialogOverlay">
+  <div class="round-dialog">
+    <div class="round-dialog-hd">
+      <h3>⚠️ 黎明结算确认</h3>
+    </div>
+    <div class="round-dialog-body" id="roundDialogBody"></div>
+    <div class="round-dialog-ft">
+      <button class="btn-confirm-advance" id="btnConfirmAdvance">✅ 确认推进</button>
+      <button class="btn-cancel-advance" onclick="closeRoundDialog()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TIMELINE OVERLAY (档案查阅) ═══════════ -->
+<div class="timeline-overlay" id="timelineOverlay">
+  <div class="timeline-doc">
+    <div class="timeline-hd">
+      <button class="timeline-close" onclick="closeTimeline()">✕</button>
+      <h3>📜 A市户籍档案 · 全时间线查阅</h3>
+      <div class="tl-subtitle">A市公安局户政科 · 历史备案记录</div>
+    </div>
+    <div class="timeline-body" id="timelineBody"></div>
+  </div>
+</div>
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script src="../js/data.js?v=2026070800"></script>
+<script>
+'use strict';
+
+// ============================================================
+// CONSTANTS & STATE
+// ============================================================
+const STORAGE_KEY = 'dawn_citizen_daily_v1';
+const SETTLEMENT_KEY = 'dawn_settlement_v1';
+
+function loadSettlement() {
+  try { const raw = localStorage.getItem(SETTLEMENT_KEY); return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+}
+function saveSettlement(s) { localStorage.setItem(SETTLEMENT_KEY, JSON.stringify(s)); }
+
+function getSettlement() {
+  let s = loadSettlement();
+  if (!s) s = { gameStarted: new Date().toISOString(), rounds: {}, gameEnded: false, endReason: null };
+  return s;
+}
+
+// Character demographics (not in game data, added for registry realism)
+const CHAR_DEMO = {
+  ch_001: { gender: '男', age: 28 },
+  ch_002: { gender: '女', age: 24 },
+  ch_003: { gender: '男', age: 35 },
+  ch_004: { gender: '女', age: 32 },
+  ch_005: { gender: '男', age: 19 },
+  ch_006: { gender: '男', age: 45 },
+  ch_007: { gender: '女', age: 27 },
+  ch_008: { gender: '男', age: 50 },
+  ch_009: { gender: '男', age: 22 },
+  ch_010: { gender: '女', age: 30 },
+  ch_011: { gender: '女', age: 38 },
+  ch_012: { gender: '男', age: 41 },
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
+
+let STATE = loadState() || {
+  gameStarted: false,
+  playerCount: 6,
+  citizens: [],
+  currentDay: 0
+};
+
+// ── Registry UI state ──
+let tempPlayerCount = 6;
+let tempSelectedChars = [];
+let ghostMode = false; // toggle: show unharmed == active
+let searchQuery = '';
+let filterStatus = 'all';
+let pageSize = 10;
+let currentPage = 1;
+let dossierCitizenIdx = -1;
+let dossierDayIdx = 0; // which day's records to show
+
+// Character emoji
+function getCharEmoji(id) {
+  const map = {
+    ch_001: '😄', ch_002: '🍀', ch_003: '🤕', ch_004: '🧠',
+    ch_005: '😶', ch_006: '💼', ch_007: '👁️', ch_008: '👑',
+    ch_009: '🛵', ch_010: '🔍', ch_011: '📋', ch_012: '✊'
+  };
+  return map[id] || '👤';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  if (STATE.gameStarted && STATE.citizens.length > 0) {
+    showRegistry();
+  } else {
+    showSetup();
+  }
+
+  // Search
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    currentPage = 1;
+    renderTable();
+  });
+
+  // Filter buttons
+  document.querySelectorAll('.gov-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.gov-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterStatus = btn.dataset.filter;
+      currentPage = 1;
+      renderTable();
+    });
+  });
+
+  // Dossier overlay close
+  document.getElementById('dossierOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeDossier();
+  });
+
+  // Edit overlay close
+  document.getElementById('editOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeEditor();
+  });
+
+  // Pagination buttons
+  document.getElementById('btnFirst').addEventListener('click', () => { currentPage = 1; renderTable(); });
+  document.getElementById('btnPrev').addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); } });
+  document.getElementById('btnNext').addEventListener('click', goNextPage);
+  document.getElementById('btnLast').addEventListener('click', goLastPage);
+
+  // Keyboard: ESC to close dossier
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDossier();
+  });
+});
+
+function goNextPage() {
+  const filtered = getFilteredCitizens();
+  const maxPage = Math.ceil(filtered.length / pageSize) || 1;
+  if (currentPage < maxPage) { currentPage++; renderTable(); }
+}
+function goLastPage() {
+  const filtered = getFilteredCitizens();
+  const maxPage = Math.ceil(filtered.length / pageSize) || 1;
+  currentPage = maxPage;
+  renderTable();
+}
+
+function updateClock() {
+  const now = new Date();
+  const s = now.toLocaleString('zh-CN', { hour12: false });
+  const el = document.getElementById('sysTime');
+  if (el) el.textContent = '🕐 ' + s;
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('govToast');
+  t.textContent = msg;
+  t.className = 'gov-toast ' + (type || 'success') + ' show';
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(() => { t.classList.remove('show'); }, 1800);
+}
+
+// ============================================================
+// SETUP
+// ============================================================
+function showSetup() {
+  document.getElementById('panelSetup').style.display = 'flex';
+  document.getElementById('panelRegistry').style.display = 'none';
+  document.getElementById('panelEmpty').style.display = 'none';
+  document.getElementById('btnReset').style.display = 'none';
+
+  tempPlayerCount = 6;
+  tempSelectedChars = [];
+  buildCountButtons();
+}
+
+function buildCountButtons() {
+  const grid = document.getElementById('countGrid');
+  grid.innerHTML = '';
+  for (let n = 6; n <= 12; n++) {
+    const btn = document.createElement('button');
+    btn.className = 'gov-count-btn' + (n === tempPlayerCount ? ' selected' : '');
+    btn.textContent = n;
+    btn.onclick = () => selectCount(n);
+    grid.appendChild(btn);
+  }
+}
+
+function selectCount(n) {
+  tempPlayerCount = n;
+  tempSelectedChars = [];
+  document.querySelectorAll('.gov-count-btn').forEach(b =>
+    b.classList.toggle('selected', parseInt(b.textContent) === n)
+  );
+  document.getElementById('stepChars').style.display = 'block';
+  document.getElementById('selNeed').textContent = n;
+  updateSetupCount();
+  buildCharGrid();
+}
+
+function buildCharGrid() {
+  const grid = document.getElementById('charGrid');
+  grid.innerHTML = '';
+  if (!CARD_DB.characters) {
+    grid.innerHTML = '<div style="padding:20px;color:#999;">角色数据加载失败</div>';
+    return;
+  }
+  CARD_DB.characters.forEach(ch => {
+    const card = document.createElement('div');
+    card.className = 'gov-char-card';
+    card.dataset.cid = ch.id;
+    card.innerHTML = `
+      <div class="char-emoji">${getCharEmoji(ch.id)}</div>
+      <div class="char-name">${ch.name}</div>
+      <div class="char-level">${ch.level || ''}</div>
+    `;
+    card.onclick = () => toggleChar(ch.id, card);
+    grid.appendChild(card);
+  });
+}
+
+function toggleChar(cid, el) {
+  const idx = tempSelectedChars.indexOf(cid);
+  if (idx >= 0) {
+    tempSelectedChars.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    if (tempSelectedChars.length >= tempPlayerCount) {
+      const removed = tempSelectedChars.shift();
+      const prev = document.querySelector(`.gov-char-card[data-cid="${removed}"]`);
+      if (prev) prev.classList.remove('selected');
+    }
+    tempSelectedChars.push(cid);
+    el.classList.add('selected');
+  }
+  updateSetupCount();
+}
+
+function updateSetupCount() {
+  document.getElementById('selCount').textContent = tempSelectedChars.length;
+  document.getElementById('selNeed').textContent = tempPlayerCount;
+  document.getElementById('btnConfirm').disabled = tempSelectedChars.length !== tempPlayerCount;
+}
+
+function cancelSetup() {
+  tempSelectedChars = [];
+  document.getElementById('stepChars').style.display = 'none';
+  document.querySelectorAll('.gov-char-card').forEach(el => el.classList.remove('selected'));
+  updateSetupCount();
+}
+
+function confirmRegistry() {
+  if (tempSelectedChars.length !== tempPlayerCount) return;
+
+  const citizens = tempSelectedChars.map((cid, i) => {
+    const ch = CARD_DB.characters.find(c => c.id === cid);
+    return {
+      id: ch.id,
+      name: ch.name,
+      level: ch.level || '',
+      health: ch.health || 6,
+      sanity: ch.sanity || 6,
+      status: 'alive',
+      skill: ch.skill_name || '',
+      skillEffect: ch.skill_effect || '',
+      regNo: 'A' + String(STATE.currentDay).padStart(2,'0') + String(i + 1).padStart(3,'0'),
+      days: {}
+    };
+  });
+
+  citizens.forEach(c => { c.days[0] = { declarations: [], notes: '' }; });
+
+  STATE = {
+    gameStarted: true,
+    playerCount: tempPlayerCount,
+    citizens: citizens,
+    currentDay: 0
+  };
+
+  saveState();
+  showToast('✅ 户籍档案建立成功，共录入 ' + citizens.length + ' 名市民', 'success');
+  showRegistry();
+}
+
+// ============================================================
+// REGISTRY VIEW
+// ============================================================
+function showRegistry() {
+  document.getElementById('panelSetup').style.display = 'none';
+  document.getElementById('panelEmpty').style.display = 'none';
+  document.getElementById('panelRegistry').style.display = 'flex';
+  document.getElementById('btnReset').style.display = 'inline-flex';
+  document.getElementById('dayIndicator').textContent = '第' + STATE.currentDay + '天';
+  updateStats();
+  currentPage = 1;
+  renderTable();
+}
+
+function updateStats() {
+  const activeCount = STATE.citizens.filter(c => !isGhost(c)).length;
+  document.getElementById('statTotal').textContent = STATE.citizens.length;
+  document.getElementById('statActive').textContent = activeCount;
+}
+
+function isGhost(c) { return c.status === 'ghost' || c.status === 'transferred' || c.health <= 0 || c.sanity <= 0; }
+function isTransferred(c) { return c.status === 'transferred'; }
+
+function getFilteredCitizens() {
+  let list = [...STATE.citizens];
+  if (filterStatus === 'active') list = list.filter(c => !isGhost(c));
+  if (filterStatus === 'ghost') list = list.filter(c => isGhost(c));
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    list = list.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.regNo.toLowerCase().includes(q) ||
+      c.level.toLowerCase().includes(q) ||
+      c.skill.toLowerCase().includes(q)
+    );
+  }
+  return list;
+}
+
+function getLevelClass(level) {
+  if (!level) return '';
+  const l = level.toLowerCase();
+  if (l.includes('传奇') || l.includes('传说')) return 'td-level-legend';
+  if (l.includes('领袖') || l.includes('主宰')) return 'td-level-master';
+  return '';
+}
+
+// ── Render Table ──
+function renderTable() {
+  const filtered = getFilteredCitizens();
+  const total = filtered.length;
+  const maxPage = Math.ceil(total / pageSize) || 1;
+  if (currentPage > maxPage) currentPage = maxPage;
+  const start = (currentPage - 1) * pageSize;
+  const page = filtered.slice(start, start + pageSize);
+
+  const tbody = document.getElementById('tableBody');
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:40px;text-align:center;color:var(--gov-text-muted);">未找到匹配的户籍记录</td></tr>';
+  } else {
+    tbody.innerHTML = page.map(c => {
+      const ghost = isGhost(c);
+      const demo = CHAR_DEMO[c.id] || { gender: '?', age: '?' };
+      const levelCls = getLevelClass(c.level);
+      return `
+        <tr>
+          <td class="td-id">${c.regNo || '————'}</td>
+          <td class="td-name">${getCharEmoji(c.id)} ${c.name}</td>
+          <td>${demo.gender} / ${demo.age}岁</td>
+          <td><span class="td-level ${levelCls}">${c.level || '—'}</span></td>
+          <td>${ghost ? '<span style="color:#c62828;font-weight:700;">💀 0</span>' : c.health}</td>
+          <td>${ghost ? '<span style="color:#c62828;font-weight:700;">💀 0</span>' : c.sanity}</td>
+          <td style="font-size:0.68rem;">${c.skill || '—'}</td>
+          <td><span class="td-status ${ghost ? (isTransferred(c) ? 'td-status-transferred' : 'td-status-ghost') : 'td-status-active'}">${isTransferred(c) ? '已转移' : ghost ? '已死亡' : '在 册'}</span></td>
+          <td style="white-space:nowrap;">
+            <button class="td-action-btn" onclick="openDossier(${STATE.citizens.indexOf(c)})">📄 查看</button>
+            <button class="td-action-btn" onclick="openEditor(${STATE.citizens.indexOf(c)})" style="margin-left:4px;">✎ 编辑</button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // Pagination
+  document.getElementById('pageTotal').textContent = total;
+  document.getElementById('pageCur').textContent = currentPage;
+  document.getElementById('pageMax').textContent = maxPage;
+  document.getElementById('btnFirst').disabled = currentPage <= 1;
+  document.getElementById('btnPrev').disabled = currentPage <= 1;
+  document.getElementById('btnNext').disabled = currentPage >= maxPage;
+  document.getElementById('btnLast').disabled = currentPage >= maxPage;
+}
+
+// ── Day Navigation ──
+function prevDay() {
+  if (STATE.currentDay <= 0) return;
+  STATE.currentDay--;
+  saveState();
+  document.getElementById('dayIndicator').textContent = '第' + STATE.currentDay + '天';
+  showToast('← 回溯至第' + STATE.currentDay + '天', 'success');
+}
+
+function nextDay() {
+  if (STATE.currentDay >= 12) {
+    showToast('⚠️ 已是最后一天（第12天）', 'error');
+    return;
+  }
+  STATE.currentDay++;
+  ensureAllDaysExist();
+  saveState();
+  document.getElementById('dayIndicator').textContent = '第' + STATE.currentDay + '天';
+  showToast('→ 进入第' + STATE.currentDay + '天', 'success');
+}
+
+function ensureAllDaysExist() {
+  STATE.citizens.forEach(c => {
+    if (!c.days[STATE.currentDay]) {
+      c.days[STATE.currentDay] = { declarations: [], notes: '' };
+    }
+  });
+}
+
+// ── Ghost Mode Toggle ──
+function toggleGhostMode() {
+  ghostMode = !ghostMode;
+  const label = document.getElementById('ghostLabel');
+  if (ghostMode) {
+    label.textContent = '鬼魂中';
+    document.getElementById('btnGhostMode').style.background = 'rgba(168,32,42,0.2)';
+    document.getElementById('btnGhostMode').style.borderColor = 'rgba(168,32,42,0.4)';
+    showToast('👻 鬼魂模式已开启 — 显示已死亡市民', 'success');
+  } else {
+    label.textContent = '鬼魂模式';
+    document.getElementById('btnGhostMode').style.background = '';
+    document.getElementById('btnGhostMode').style.borderColor = '';
+  }
+}
+
+// ============================================================
+// DOSSIER (档案)
+// ============================================================
+function openDossier(idx) {
+  dossierCitizenIdx = idx;
+  dossierDayIdx = STATE.currentDay;
+  const c = STATE.citizens[idx];
+  if (!c) return;
+
+  const demo = CHAR_DEMO[c.id] || { gender: '?', age: '?' };
+  const ghost = isGhost(c);
+  const regDate = '2026-07-11'; // placeholder
+
+  // Collect all day records
+  const dayRecords = [];
+  for (let d = 0; d <= 12; d++) {
+    if (c.days[d] && c.days[d].declarations && c.days[d].declarations.length > 0) {
+      dayRecords.push({ day: d, decls: c.days[d].declarations, notes: c.days[d].notes || '', isCurrent: d === STATE.currentDay });
+    }
+  }
+
+  const recordsHtml = dayRecords.length === 0
+    ? '<div class="dossier-record-empty">暂无备案记录 — 该市民尚未有任何宣言活动登记</div>'
+    : `<table class="dossier-records-table">
+        <thead>
+          <tr><th style="width:12%">日期</th><th style="width:14%">记录类型</th><th style="width:14%">卡牌名称</th><th style="width:13%">等级/来源</th><th>操作描述</th></tr>
+        </thead>
+        <tbody>
+          ${dayRecords.map(dr => dr.decls.map((decl, di) => `
+            <tr>
+              <td>${di === 0 ? '<strong style="color:' + (dr.isCurrent ? 'var(--gov-red)' : 'var(--gov-blue)') + '">第' + dr.day + '天</strong>' : ''}</td>
+              <td><span class="tag" style="font-size:0.6rem;padding:2px 6px;border-radius:2px;${getDeclTagStyle(decl)}">${decl.type || '宣言'}</span></td>
+              <td style="font-weight:600;">${decl.name || '—'}</td>
+              <td style="font-size:0.62rem;">${decl.level || '—'}</td>
+              <td style="font-size:0.65rem;">${decl.action || '—'}</td>
+            </tr>
+          `).join('')).join('')}
+        </tbody>
+      </table>`;
+
+  const doc = document.getElementById('dossierDoc');
+  doc.innerHTML = `
+    <button class="dossier-close" onclick="closeDossier()">✕</button>
+    <!-- Header -->
+    <div class="dossier-hd">
+      <div class="dossier-emblem">
+        <div class="dossier-emblem-inner">
+          <span class="dossier-emblem-star">★</span>
+        </div>
+      </div>
+      <h2>A市居民户籍档案</h2>
+      <div class="dossier-no">${c.regNo ? 'A公户字第 ' + c.regNo + ' 号' : 'A公户字第 ———— 号'}</div>
+    </div>
+
+    <!-- Body -->
+    <div class="dossier-body">
+      <div class="dossier-section-title">📋 基本信息</div>
+      <div class="dossier-info-grid">
+        <div class="dossier-info-item"><span class="dossier-info-label">姓名</span><span class="dossier-info-value">${c.name}</span></div>
+        <div class="dossier-info-item"><span class="dossier-info-label">性别</span><span class="dossier-info-value">${demo.gender}</span></div>
+        <div class="dossier-info-item"><span class="dossier-info-label">年龄</span><span class="dossier-info-value">${demo.age}岁</span></div>
+        <div class="dossier-info-item"><span class="dossier-info-label">身份等级</span><span class="dossier-info-value">${c.level || '普通市民'}</span></div>
+        <div class="dossier-info-item"><span class="dossier-info-label">健康状况</span><span class="dossier-info-value" style="color:${ghost ? '#c62828' : '#2e7d32'};font-weight:700;">${ghost ? '☠ 已死亡' : '❤️ ' + c.health + ' 生命值'}</span></div>
+        <div class="dossier-info-item"><span class="dossier-info-label">精神状况</span><span class="dossier-info-value" style="color:${ghost ? '#c62828' : '#1565c0'};font-weight:700;">${ghost ? '☠ 已崩溃' : '🧠 ' + c.sanity + ' 理智值'}</span></div>
+        <div class="dossier-info-item"><span class="dossier-info-label">特殊技能</span><span class="dossier-info-value">${c.skill || '无'}</span></div>
+        <div class="dossier-info-item"><span class="dossier-info-label">登记日期</span><span class="dossier-info-value">${regDate}</span></div>
+        <div class="dossier-info-item" style="grid-column:1/-1;"><span class="dossier-info-label">技能说明</span><span class="dossier-info-value" style="font-size:0.68rem;">${c.skillEffect || '无特殊说明'}</span></div>
+        <div class="dossier-info-item" style="grid-column:1/-1;"><span class="dossier-info-label">档案状态</span><span class="dossier-info-value" style="color:${ghost ? '#c62828' : '#2e7d32'};font-weight:700;">${ghost ? '⚠ 注　销（死亡/精神崩溃）' : '● 正　常　在　册'}</span></div>
+      </div>
+
+      <div class="dossier-section-title">📝 备案记录（宣言活动登记）</div>
+      <div style="text-align:right;margin-bottom:8px;font-size:0.65rem;color:var(--gov-text-muted);">
+        当前日期：<strong style="color:var(--gov-red);">第${STATE.currentDay}天</strong>
+        &nbsp;|&nbsp; 共 ${dayRecords.reduce((s,dr) => s + dr.decls.length, 0)} 条记录
+        &nbsp;|&nbsp; <button class="td-action-btn" onclick="closeDossier();openEditor(${idx})" style="font-size:0.65rem;">✎ 编辑备案</button>
+      </div>
+      ${recordsHtml}
+
+      ${c.days[STATE.currentDay] && c.days[STATE.currentDay].notes ? `
+      <div class="dossier-section-title">🗒️ 市长批注（第${STATE.currentDay}天）</div>
+      <div style="padding:10px;background:#faf6ec;border:1px solid var(--gov-border-light);font-size:0.72rem;border-radius:3px;white-space:pre-wrap;">${c.days[STATE.currentDay].notes}</div>
+      ` : ''}
+    </div>
+
+    <!-- Seals -->
+    <div class="dossier-seals">
+      <div class="dossier-seal small">
+        <span class="seal-text">A市公安<br>局户政科</span>
+      </div>
+      <div class="dossier-seal">
+        <span class="seal-text">档案<br>在册</span>
+      </div>
+      ${ghost ? `<div class="dossier-seal small" style="border-color:var(--gov-red);">
+        <span class="seal-text" style="color:var(--gov-red);">已<br>注销</span>
+      </div>` : ''}
+    </div>
+
+    <!-- Footer -->
+    <div class="dossier-footer">
+      <span>打印日期：${new Date().toLocaleDateString('zh-CN')}</span>
+      <span>操作员：系统管理员</span>
+      <span>A市公安局户政科 © 2026</span>
+    </div>
+  `;
+
+  document.getElementById('dossierOverlay').classList.add('show');
+}
+
+function closeDossier() {
+  document.getElementById('dossierOverlay').classList.remove('show');
+  dossierCitizenIdx = -1;
+}
+
+function getDeclTagStyle(decl) {
+  const t = (decl.type || '').toLowerCase();
+  if (t.includes('反击')) return 'background:rgba(46,134,193,0.12);color:#2980b9;border:1px solid rgba(46,134,193,0.25);';
+  if (t.includes('物资')) return 'background:rgba(200,146,62,0.12);color:#b8860b;border:1px solid rgba(200,146,62,0.25);';
+  if (t.includes('技能')) return 'background:rgba(142,68,173,0.12);color:#8e44ad;border:1px solid rgba(142,68,173,0.25);';
+  if (t.includes('怪谈')) return 'background:rgba(192,57,43,0.12);color:#c0392b;border:1px solid rgba(192,57,43,0.25);';
+  return 'background:#f0ebe0;color:#666;';
+}
+
+// ============================================================
+// EDITOR (户籍变更登记)
+// ============================================================
+let editCitizenIdx = -1;
+let editDecls = [];    // temp copy of declarations
+let editNotes = '';    // temp copy of notes
+let editDay = 0;       // which day we're editing
+
+function openEditor(idx) {
+  editCitizenIdx = idx;
+  const c = STATE.citizens[idx];
+  if (!c) return;
+
+  editDay = STATE.currentDay;
+  // Make deep copy of current day's declarations
+  const dayData = c.days[editDay] || { declarations: [], notes: '' };
+  editDecls = (dayData.declarations || []).map(d => ({...d}));
+  editNotes = dayData.notes || '';
+
+  renderEditor();
+  document.getElementById('editOverlay').classList.add('show');
+}
+
+function closeEditor() {
+  document.getElementById('editOverlay').classList.remove('show');
+  editCitizenIdx = -1;
+  editDecls = [];
+  editNotes = '';
+}
+
+function renderEditor() {
+  const c = STATE.citizens[editCitizenIdx];
+  if (!c) return;
+
+  const demo = CHAR_DEMO[c.id] || { gender: '?', age: '?' };
+  const ghost = isGhost(c);
+
+  const declRows = editDecls.length === 0
+    ? `<tr><td colspan="5" class="edit-decl-empty">暂无备案记录 — 请在下方添加宣言活动</td></tr>`
+    : editDecls.map((decl, di) => `
+      <tr>
+        <td><span class="tag" style="font-size:0.6rem;padding:2px 6px;border-radius:2px;${getDeclTagStyle(decl)}">${decl.type || '宣言'}</span></td>
+        <td style="font-weight:600;">${decl.name || '—'}</td>
+        <td style="font-size:0.65rem;">${decl.level || '—'}</td>
+        <td style="font-size:0.65rem;">${decl.action || '—'}</td>
+        <td><button class="edit-btn-del" onclick="removeDeclaration(${di})">✕ 删除</button></td>
+      </tr>`).join('');
+
+  document.getElementById('editDocBody').innerHTML = `
+    <!-- Citizen info -->
+    <div class="edit-citizen-bar">
+      <div class="ecb-emoji">${getCharEmoji(c.id)}</div>
+      <div class="ecb-info">
+        <div class="ecb-name">${c.name} · ${demo.gender} ${demo.age}岁 · ${c.level || '普通市民'}</div>
+        <div class="ecb-reg">户籍编号：${c.regNo || '————'} ｜ 状态：${ghost ? '☠ 已死亡' : '● 在册'}</div>
+      </div>
+      <div class="ecb-day">📅 第${editDay}天</div>
+    </div>
+
+    <!-- HP/SAN Status Edit -->
+    <div class="edit-status-row">
+      <div class="edit-status-field hp-field">
+        <label>❤️ 健康值 (Health)</label>
+        <input type="number" id="editHP" value="${c.health}" min="0" max="20" style="color:#c0392b;">
+      </div>
+      <div class="edit-status-field san-field">
+        <label>🧠 理智值 (Sanity)</label>
+        <input type="number" id="editSAN" value="${c.sanity}" min="0" max="20" style="color:#2980b9;">
+      </div>
+      <div class="edit-status-field ghost-field">
+        <label>👻 状态标记</label>
+        <select id="editStatus" style="padding:6px 10px;border:1px solid var(--gov-border-light);border-radius:3px;font-size:0.72rem;font-family:inherit;">
+          <option value="alive" ${!ghost ? 'selected' : ''}>● 在册（存活）</option>
+          <option value="ghost" ${ghost ? 'selected' : ''}>☠ 化鬼（死亡/崩溃）</option>
+          <option value="transferred" ${c.status === 'transferred' ? 'selected' : ''}>📤 转移（已离开A市）</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Existing declarations -->
+    <div class="edit-section">
+      <div class="edit-section-title">📜 已有备案记录 <span style="font-weight:400;font-size:0.65rem;color:var(--gov-text-muted);">（共 ${editDecls.length} 条）</span></div>
+      <table class="edit-decl-table">
+        <thead>
+          <tr><th style="width:14%">类型</th><th style="width:20%">卡牌名称</th><th style="width:14%">等级/来源</th><th>操作描述</th><th style="width:10%">操作</th></tr>
+        </thead>
+        <tbody>${declRows}</tbody>
+      </table>
+    </div>
+
+    <!-- Add new declaration -->
+    <div class="edit-section">
+      <div class="edit-section-title">➕ 新增备案记录</div>
+      <div class="edit-add-form">
+        <div class="edit-field">
+          <label>记录类型</label>
+          <select id="editDeclType">
+            <option value="宣言">宣言</option>
+            <option value="使用反击卡">使用反击卡</option>
+            <option value="获得物资卡">获得物资卡</option>
+            <option value="触发怪谈卡">触发怪谈卡</option>
+            <option value="技能发动">技能发动</option>
+            <option value="伤害记录">伤害记录</option>
+            <option value="其他活动">其他活动</option>
+          </select>
+        </div>
+        <div class="edit-field">
+          <label>卡牌名称</label>
+          <input type="text" id="editDeclName" placeholder="如：真理之剑、急救包…" list="cardSuggestList">
+          <datalist id="cardSuggestList">
+            <option value="真理之剑"><option value="反击之盾"><option value="急救包">
+            <option value="手电筒"><option value="怪谈之书"><option value="暗影侵袭">
+            <option value="觉悟一击"><option value="极致反击"><option value="未知来信">
+          </datalist>
+        </div>
+        <div class="edit-field">
+          <label>等级/来源</label>
+          <input type="text" id="editDeclLevel" placeholder="如：真理、觉醒、普通…">
+        </div>
+        <div class="edit-field">
+          <label>操作描述</label>
+          <input type="text" id="editDeclAction" placeholder="如：对鬼使用、获得…">
+        </div>
+        <button class="edit-add-btn" onclick="addDeclaration()">➕ 添加此记录</button>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="edit-section">
+      <div class="edit-section-title">🗒️ 市长批注</div>
+      <div class="edit-notes-wrap">
+        <textarea id="editNotesInput" placeholder="在此输入对${c.name}的批注意见…">${escapeHtml(editNotes)}</textarea>
+        <div class="edit-notes-hint">此批注将显示在档案中的"市长批注"栏</div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function addDeclaration() {
+  const type = document.getElementById('editDeclType').value.trim();
+  const name = document.getElementById('editDeclName').value.trim();
+  const level = document.getElementById('editDeclLevel').value.trim();
+  const action = document.getElementById('editDeclAction').value.trim();
+
+  if (!name && !action) {
+    showToast('⚠️ 请至少填写卡牌名称或操作描述', 'error');
+    return;
+  }
+
+  editDecls.push({ type: type || '宣言', name, level, action });
+  renderEditor();
+  showToast('✅ 记录已添加（需点击"存档备案"保存）', 'success');
+
+  // Scroll to top of edit body to see the updated table
+  document.getElementById('editDoc').scrollTop = 0;
+}
+
+function removeDeclaration(declIdx) {
+  if (!confirm('确定要删除此条备案记录吗？')) return;
+  editDecls.splice(declIdx, 1);
+  renderEditor();
+  showToast('🗑️ 记录已删除（需点击"存档备案"保存）', 'success');
+}
+
+function saveEdit() {
+  if (editCitizenIdx < 0) return;
+
+  // Read notes from textarea
+  const notesEl = document.getElementById('editNotesInput');
+  if (notesEl) editNotes = notesEl.value;
+
+  const c = STATE.citizens[editCitizenIdx];
+  if (!c.days[editDay]) c.days[editDay] = { declarations: [], notes: '' };
+  c.days[editDay].declarations = editDecls.map(d => ({...d}));
+  c.days[editDay].notes = editNotes;
+
+  // Save HP/SAN
+  const hpEl = document.getElementById('editHP');
+  const sanEl = document.getElementById('editSAN');
+  const statusEl = document.getElementById('editStatus');
+  if (hpEl) c.health = Math.max(0, parseInt(hpEl.value) || 0);
+  if (sanEl) c.sanity = Math.max(0, parseInt(sanEl.value) || 0);
+  if (statusEl) {
+    c.status = statusEl.value;
+    // If manually set to ghost, ensure health/sanity reflect it
+    if (statusEl.value === 'ghost' && c.health > 0 && c.sanity > 0) {
+      // Keep values as-is unless both are 0
+    }
+  }
+
+  saveState();
+  showToast('✅ 备案记录已存档 — ' + c.name + ' 第' + editDay + '天 共' + editDecls.length + '条记录', 'success');
+  closeEditor();
+
+  // Refresh registry view
+  if (STATE.gameStarted && STATE.citizens.length > 0) {
+    updateStats();
+    renderTable();
+  }
+}
+
+// ============================================================
+// ROUND ADVANCE & SETTLEMENT
+// ============================================================
+function openRoundDialog() {
+  if (STATE.currentDay >= 12) {
+    showToast('⚠️ 已是最后一天（第12天），无法继续推进', 'error');
+    return;
+  }
+  const nextDay = STATE.currentDay + 1;
+  const alive = STATE.citizens.filter(c => !isGhost(c));
+  const ghosts = STATE.citizens.filter(c => isGhost(c) && !isTransferred(c));
+  // F mechanism: survived >3 rounds
+  const survivalEligible = alive.filter(c => {
+    const firstDay = Object.keys(c.days).map(Number).sort((a,b)=>a-b)[0] || 0;
+    return (STATE.currentDay - firstDay) >= 3;
+  });
+
+  document.getElementById('roundDialogBody').innerHTML = `
+    <div style="text-align:center;font-size:0.9rem;font-weight:700;margin-bottom:12px;color:var(--gov-blue);">
+      第${STATE.currentDay}天 → <span style="color:var(--gov-red);">第${nextDay}天</span>
+    </div>
+    <div class="rd-item">
+      <span class="rd-icon">☀️</span>
+      <div class="rd-text">
+        <strong>黎明扣减：</strong>全员HP-1（已死亡/转移市民除外）
+        <div style="font-size:0.68rem;color:var(--gov-text-muted);margin-top:2px;">
+          影响：${alive.length} 位在册市民 | 当前HP值将整体-1
+        </div>
+      </div>
+    </div>
+    ${survivalEligible.length > 0 ? `
+    <div class="rd-item">
+      <span class="rd-icon">🎁</span>
+      <div class="rd-text">
+        <strong>生存奖励（F机制）：</strong>存活超3回合的市民获得物资卡×1
+        <div style="font-size:0.68rem;color:var(--gov-text-muted);margin-top:2px;">
+          符合条件：${survivalEligible.map(c=>c.name).join('、')}
+        </div>
+      </div>
+    </div>` : ''}
+    ${ghosts.length > 0 ? `
+    <div class="rd-item">
+      <span class="rd-icon">👻</span>
+      <div class="rd-text">
+        <strong>鬼魂消耗：</strong>鬼魂SAN-1
+        <div style="font-size:0.68rem;color:var(--gov-text-muted);margin-top:2px;">
+          影响：${ghosts.map(c=>c.name).join('、')} 共${ghosts.length}位鬼魂
+        </div>
+      </div>
+    </div>` : ''}
+    <div class="rd-item">
+      <span class="rd-icon">📋</span>
+      <div class="rd-text">
+        <strong>结算记录：</strong>以上变更将写入第${nextDay}天黎明结算报告
+      </div>
+    </div>
+    ${alive.length === 0 ? `
+    <div style="margin-top:12px;padding:10px;background:#fce4ec;border:1px solid #ef9a9a;border-radius:3px;text-align:center;font-weight:700;color:#c62828;">
+      ⚠️ 所有市民已全部死亡/转移！本次推进将触发游戏自动结束。
+    </div>` : ''}
+  `;
+
+  document.getElementById('btnConfirmAdvance').onclick = confirmAdvance;
+  document.getElementById('roundDialogOverlay').classList.add('show');
+}
+
+function closeRoundDialog() {
+  document.getElementById('roundDialogOverlay').classList.remove('show');
+}
+
+function confirmAdvance() {
+  closeRoundDialog();
+  const nextDay = STATE.currentDay + 1;
+  const alive = STATE.citizens.filter(c => !isGhost(c));
+  const ghosts = STATE.citizens.filter(c => isGhost(c) && !isTransferred(c));
+  const survivalEligible = alive.filter(c => {
+    const firstDay = Object.keys(c.days).map(Number).sort((a,b)=>a-b)[0] || 0;
+    return (STATE.currentDay - firstDay) >= 3;
+  });
+
+  // Apply dawn deduction
+  alive.forEach(c => { c.health = Math.max(0, c.health - 1); });
+
+  // Apply ghost sanity cost
+  ghosts.forEach(c => { c.sanity = Math.max(0, c.sanity - 1); });
+
+  // Generate settlement report
+  const settlement = getSettlement();
+  const summaryParts = [];
+  if (alive.length > 0) summaryParts.push(`全员HP-1（${alive.length}人）`);
+  if (survivalEligible.length > 0) summaryParts.push(`${survivalEligible.length}人获生存奖励`);
+  if (ghosts.length > 0) summaryParts.push(`${ghosts.length}位鬼魂SAN-1`);
+
+  settlement.rounds[nextDay] = {
+    day: nextDay,
+    timestamp: new Date().toISOString(),
+    dawnHpDeduction: alive.length > 0,
+    hpAffected: alive.map(c => ({ name: c.name, hp: c.health })),
+    survivalRewardEligible: survivalEligible.map(c => c.name),
+    ghostSanityCost: ghosts.length > 0,
+    ghostsAffected: ghosts.map(c => ({ name: c.name, san: c.sanity })),
+    summary: summaryParts.join('；') || '无特别结算事项'
+  };
+
+  // Check game end
+  const remainingAlive = STATE.citizens.filter(c => !isGhost(c));
+  if (remainingAlive.length === 0) {
+    settlement.gameEnded = true;
+    settlement.endReason = 'all_dead';
+    settlement.endedAt = new Date().toISOString();
+    saveSettlement(settlement);
+    STATE.currentDay = nextDay;
+    ensureAllDaysExist();
+    saveState();
+    updateAfterAdvance();
+    setTimeout(() => {
+      alert('🏁 游戏自动结束：所有市民已全部死亡或转移！\n\n请在"时间线查阅"中查看完整结算报告。');
+    }, 500);
+    return;
+  }
+
+  saveSettlement(settlement);
+  STATE.currentDay = nextDay;
+  ensureAllDaysExist();
+  saveState();
+  updateAfterAdvance();
+  showToast('✅ 第' + nextDay + '天黎明结算完成 — ' + summaryParts.join('；'), 'success');
+}
+
+function updateAfterAdvance() {
+  document.getElementById('dayIndicator').textContent = '第' + STATE.currentDay + '天';
+  updateStats();
+  currentPage = 1;
+  renderTable();
+}
+
+function endGameManually() {
+  if (!confirm('确定要手动结束本局游戏吗？\n\n这将标记游戏为"市长手动结束"，并生成最终结算报告。')) return;
+  const settlement = getSettlement();
+  settlement.gameEnded = true;
+  settlement.endReason = 'mayor_ended';
+  settlement.endedAt = new Date().toISOString();
+  saveSettlement(settlement);
+  showToast('🏁 游戏已手动结束。请在"时间线查阅"中查看完整结算报告。', 'success');
+  updateStats();
+}
+
+// ============================================================
+// TIMELINE (全时间线查阅)
+// ============================================================
+function showTimeline() {
+  const settlement = getSettlement();
+  const body = document.getElementById('timelineBody');
+  let html = '';
+
+  // Show game status
+  if (settlement.gameEnded) {
+    html += `<div style="padding:10px 14px;background:#fce4ec;border:1px solid #ef9a9a;border-radius:3px;margin-bottom:16px;text-align:center;font-weight:700;color:#c62828;">
+      🏁 游戏已结束（${settlement.endReason === 'all_dead' ? '全员死亡' : '市长手动结束'}）· ${settlement.endedAt ? new Date(settlement.endedAt).toLocaleString('zh-CN') : ''}
+    </div>`;
+  }
+
+  // Settlement rounds
+  const roundKeys = Object.keys(settlement.rounds).map(Number).sort((a,b)=>a-b);
+  if (roundKeys.length > 0) {
+    roundKeys.forEach(d => {
+      const r = settlement.rounds[d];
+      html += `<div class="tl-settlement-block">
+        <div class="tl-settlement-header">🌅 第${d}天 · 黎明结算</div>
+        <div class="tl-settlement-body">${r.summary}</div>
+      </div>`;
+    });
+  }
+
+  // Per-citizen per-day records
+  for (let d = 0; d <= STATE.currentDay; d++) {
+    const isCurrent = d === STATE.currentDay;
+    let hasContent = false;
+    let dayHtml = '';
+
+    STATE.citizens.forEach(c => {
+      const dayData = c.days[d];
+      if (!dayData) return;
+      const decls = dayData.declarations || [];
+      const notes = dayData.notes || '';
+      if (decls.length === 0 && !notes) return;
+      hasContent = true;
+
+      dayHtml += `<div class="tl-citizen-row">
+        <span class="tl-citizen-name">${getCharEmoji(c.id)} ${c.name}</span>
+        <span class="tl-decls">`;
+      if (decls.length > 0) {
+        dayHtml += decls.map(dl => `${dl.name || dl.cardName}(${dl.type || dl.cardType})`).join('、');
+      }
+      if (notes) {
+        dayHtml += ` <span style="color:var(--gov-blue);">📝${notes.substring(0,30)}</span>`;
+      }
+      dayHtml += `</span></div>`;
+    });
+
+    if (hasContent) {
+      html += `<div class="tl-day-block">
+        <div class="tl-day-header">
+          📅 第${d}天
+          <span class="tl-badge ${isCurrent ? 'current' : 'past'}">${isCurrent ? '当前' : '已封存'}</span>
+        </div>${dayHtml}
+      </div>`;
+    }
+  }
+
+  if (!html) {
+    html = '<div class="tl-empty">📂 暂无备案记录</div>';
+  }
+
+  // Game end summary
+  if (settlement.gameEnded) {
+    html += `<div style="margin-top:16px;padding:12px 14px;background:var(--gov-cream);border:1px solid var(--gov-border-light);border-radius:3px;">
+      <strong style="color:var(--gov-blue);">📊 终局统计</strong>
+      <div style="font-size:0.7rem;margin-top:4px;color:var(--gov-text-muted);">
+        共经历 ${roundKeys.length} 次黎明结算 | 
+        结束原因：${settlement.endReason === 'all_dead' ? '全员死亡' : '市长手动结束'}
+      </div>
+    </div>`;
+  }
+
+  body.innerHTML = html;
+  document.getElementById('timelineOverlay').classList.add('show');
+}
+
+function closeTimeline() {
+  document.getElementById('timelineOverlay').classList.remove('show');
+}
+function resetGame() {
+  if (!confirm('确定要注销全部户籍档案？此操作将清除所有市民记录。')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  STATE = { gameStarted: false, playerCount: 6, citizens: [], currentDay: 0 };
+  ghostMode = false;
+  searchQuery = '';
+  filterStatus = 'all';
+  document.getElementById('ghostLabel').textContent = '鬼魂模式';
+  document.getElementById('btnGhostMode').style.background = '';
+  document.getElementById('btnGhostMode').style.borderColor = '';
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.gov-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+  closeDossier();
+  showSetup();
+}
+</script>
+
+</body>
+</html>

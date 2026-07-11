@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>随机工具箱 — 黎明之后</title>
 <meta name="description" content="《黎明之后》随机工具箱：随机抽取卡牌、角色、规则，方便快速查阅和灵感激发。">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/main.css?v=2026071017">
 </head>
 <body>
 
@@ -16,10 +16,9 @@
     <ul class="nav-links">
       <li><a href="index.html">首页</a></li>
       <li><a href="cards.html">卡牌图鉴</a></li>
-      <li><a href="characters.html">角色</a></li>
       <li><a href="rules.html">规则</a></li>
-      <li><a href="flowcharts.html">流程图</a></li>
-      <li><a href="randomizer.html">工具箱</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
     </ul>
   </div>
 </nav>
@@ -153,6 +152,10 @@ function renderResult(card) {
   const levelInfo = LEVEL_MAP[level] || { cn: level, css: '' };
   const effect = card.effect || card.rule_text || card.skill_effect || card.goal_text || '';
 
+  const formattedEffect = (card._type === 'characters' || card.type === 'character')
+    ? formatSkillEffect(effect)
+    : effect;
+
   const result = document.getElementById('randomResult');
   result.innerHTML = `
     <div class="card-name" style="color:var(--color-${typeClass});">${card.name}</div>
@@ -160,7 +163,7 @@ function renderResult(card) {
       <span class="card-badge ${typeClass}">${typeName}</span>
       ${levelInfo.cn ? `<span class="badge-rarity ${levelInfo.css}">${levelInfo.cn}</span>` : ''}
     </div>
-    <div class="card-effect">${effect}</div>
+    <div class="card-effect" style="text-align:left;max-width:600px;">${formattedEffect}</div>
   `;
 
   // Update detail link
@@ -200,7 +203,10 @@ document.getElementById('randomBatchBtn').addEventListener('click', () => {
         const typeName = TYPE_MAP[card._type] || '';
         const level = card.level || card.difficulty || card.category || '';
         const levelInfo = LEVEL_MAP[level] || { cn: level, css: '' };
-        const effect = (card.effect || card.rule_text || card.skill_effect || card.goal_text || '').substring(0, 100);
+        const effect = (card.effect || card.rule_text || card.skill_effect || card.goal_text || '');
+        const shortEffect = (card._type === 'characters' || card.type === 'character')
+          ? effect.replace(/[;；]\s*/g, ' / ').replace(/\s*---\s*/g, ' | ').substring(0, 100)
+          : effect.substring(0, 100);
 
         return `
           <a href="card-detail.html?id=${card.id}&type=${card._type}" style="text-decoration:none;color:inherit;">
@@ -212,7 +218,7 @@ document.getElementById('randomBatchBtn').addEventListener('click', () => {
                 <span class="card-badge ${typeClass}">${typeName}</span>
                 ${levelInfo.cn ? `<span class="badge-rarity ${levelInfo.css}">${levelInfo.cn}</span>` : ''}
               </div>
-              <div style="color:var(--text-muted);font-size:0.85rem;line-height:1.5;">${effect}${effect.length >= 100 ? '...' : ''}</div>
+              <div style="color:var(--text-muted);font-size:0.85rem;line-height:1.5;">${shortEffect}${effect.length >= 100 ? '...' : ''}</div>
             </div>
           </a>
         `;

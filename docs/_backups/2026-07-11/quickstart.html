@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快速入门 — 黎明之后</title>
+<meta name="description" content="《黎明之后》3分钟快速入门。选你的角色——人类、鬼、市长，了解核心玩法。">
+<link rel="stylesheet" href="css/main.css?v=2026071017">
+<style>
+/* ========== 快速入门专属样式 ========== */
+
+.quickstart-hero {
+  text-align: center;
+  padding: var(--space-2xl) 0 var(--space-xl);
+}
+.quickstart-hero h1 {
+  font-size: 2.4rem;
+  margin-bottom: var(--space-xs);
+}
+.quickstart-hero .subtitle {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* 三张角色卡片 */
+.role-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+  max-width: 960px;
+  margin: 0 auto var(--space-2xl);
+  padding: 0 var(--space-md);
+}
+.role-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl) var(--space-lg);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+.role-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+}
+.role-card .emoji {
+  font-size: 3.2rem;
+  display: block;
+  margin-bottom: var(--space-sm);
+}
+.role-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: var(--space-xs);
+  color: var(--text-primary);
+}
+.role-card .tagline {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.role-card.human { border-top: 3px solid var(--color-human, #4a90d9); }
+.role-card.ghost { border-top: 3px solid var(--color-ghost, #c0392b); }
+.role-card.mayor { border-top: 3px solid var(--color-mayor, #8e6ab3); }
+
+/* 弹窗 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  animation: fadeIn 0.2s ease;
+  -webkit-overflow-scrolling: touch;
+}
+.modal-overlay.hidden { display: none; }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-card {
+  background: #1a1a24;
+  border-radius: var(--radius-xl);
+  max-width: 640px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  animation: slideUp 0.25s ease;
+  position: relative;
+}
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #1a1a24;
+  padding: var(--space-xl) var(--space-xl) var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.modal-header .header-emoji {
+  font-size: 2.4rem;
+  flex-shrink: 0;
+}
+.modal-header h2 {
+  font-size: 1.5rem;
+  margin: 0;
+  flex: 1;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0 0 0 var(--space-md);
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.modal-close:hover { color: var(--text-primary); }
+.modal-body {
+  padding: var(--space-lg) var(--space-xl) var(--space-2xl);
+}
+
+/* 弹窗内排版 */
+.modal-body .section {
+  margin-bottom: var(--space-lg);
+}
+.modal-body .section:last-child { margin-bottom: 0; }
+.modal-body .section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.modal-body p {
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin-bottom: var(--space-sm);
+  font-size: 0.95rem;
+}
+.modal-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-sm);
+}
+.modal-body ul li {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-size: 0.93rem;
+  padding: 2px 0 2px 1.2em;
+  position: relative;
+}
+.modal-body ul li::before {
+  content: "·";
+  position: absolute;
+  left: 0;
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+/* 关键词链接 */
+.term-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px dashed #3b82f6;
+  transition: color 0.15s, border-color 0.15s;
+}
+.term-link:hover {
+  color: #2563eb;
+  border-bottom-style: solid;
+}
+
+/* 高亮盒子 */
+.highlight-box {
+  background: rgba(59,130,246,0.06);
+  border-left: 3px solid #3b82f6;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--space-md);
+  margin: var(--space-md) 0;
+}
+.highlight-box.ghost-box {
+  background: rgba(192,57,43,0.06);
+  border-left-color: #c0392b;
+}
+.highlight-box.mayor-box {
+  background: rgba(142,106,179,0.06);
+  border-left-color: #8e6ab3;
+}
+.highlight-box p {
+  margin: 0;
+  font-size: 0.93rem;
+  color: var(--text-primary);
+}
+
+/* 流程小步骤 */
+.flow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: var(--space-sm) 0;
+}
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  font-size: 0.9rem;
+}
+.flow-step .step-num {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.flow-step .step-text {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  flex: 1;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .role-cards {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  .modal-card {
+    max-height: 90vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    margin-top: auto;
+  }
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-header {
+    padding: var(--space-lg) var(--space-lg) var(--space-md);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .modal-body {
+    padding: var(--space-md) var(--space-lg) var(--space-xl);
+  }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="quickstart-hero">
+    <h1>📖 快速入门</h1>
+    <p class="subtitle">选一个身份，3分钟了解你该做什么。</p>
+  </div>
+
+  <!-- 三张角色卡片 -->
+  <div class="role-cards">
+    <div class="role-card human" onclick="openModal('human')">
+      <span class="emoji">🧑</span>
+      <h3>作为一个人</h3>
+      <p class="tagline">推理隐藏规则，发动反击，活到黎明之后。</p>
+    </div>
+    <div class="role-card ghost" onclick="openModal('ghost')">
+      <span class="emoji">👻</span>
+      <h3>作为一个鬼</h3>
+      <p class="tagline">制定规则，释放怪谈，把人类全都拖入黑暗。</p>
+    </div>
+    <div class="role-card mayor" onclick="openModal('mayor')">
+      <span class="emoji">📋</span>
+      <h3>作为市长</h3>
+      <p class="tagline">主持游戏，讲述故事，记录每一次黎明与黄昏。</p>
+    </div>
+  </div>
+</main>
+
+<!-- ============ 弹窗：作为一个人 ============ -->
+<div class="modal-overlay hidden" id="modal-human">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="header-emoji">🧑</span>
+      <h2>作为一个人</h2>
+      <button class="modal-close" onclick="closeModal()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="section">
+        <div class="section-title">🎯 你的目标</div>
+        <p>推理出鬼的<a href="rules.html" class="term-link">隐藏规则</a>，一条一条把它们<a href="rules.html" class="term-link">宣言抹除</a>。在12天内消灭所有鬼——或者至少活到最后。</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🎒 你开局有什么</div>
+        <ul>
+          <li>1张<a href="cards.html" class="term-link">角色卡</a>——给你独特的被动技能</li>
+          <li><strong>6/6 理智值</strong> + <strong>6/6 健康值</strong>——两条命，两条都不能归零</li>
+          <li>3张<a href="cards.html" class="term-link">反击卡</a>——你的破局武器（1张自选 + 2张随机）</li>
+          <li>1张<a href="cards.html" class="term-link">物资卡</a>——官方保障餐A，恢复健康或理智</li>
+          <li>1张<a href="cards.html" class="term-link">个人目的卡</a>——秘密目标，完成即是成就</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🔄 每个回合做什么</div>
+        <div class="flow-steps">
+          <div class="flow-step"><span class="step-num">0</span><span class="step-text"><strong>黎明扣除</strong>——健康值自动减少（第1天-1，第2天-2，第3天起-3）。扛住！</span></div>
+          <div class="flow-step"><span class="step-num">1</span><span class="step-text"><strong>市长讲故事</strong>——<a href="ai-mayor.html" class="term-link">AI市长</a>讲述一段煞鬼的过往。仔细听，里面藏着规则的线索！你也可以打断一次，提出推理。</span></div>
+          <div class="flow-step"><span class="step-num">2</span><span class="step-text"><strong>补给或探索</strong>——二选一：领<a href="cards.html" class="term-link">官方物资</a>（稳定+健康）或<a href="map.html" class="term-link">地图探索</a>（高风险高回报，可能撞鬼！）。</span></div>
+          <div class="flow-step"><span class="step-num">3</span><span class="step-text"><strong>自由行动</strong>——这才是你的主舞台！可以<a href="rules.html" class="term-link">宣言抹除规则</a>、发动<a href="cards.html" class="term-link">反击卡</a>、<a href="rules.html" class="term-link">质询</a>鬼是否违规、与其他玩家<a href="rules.html" class="term-link">交易</a>物资。</span></div>
+          <div class="flow-step"><span class="step-num">4</span><span class="step-text"><strong>回合结算</strong>——市长检查理智值/健康值，判定死亡、化鬼或鬼被抹除。</span></div>
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <p>💡 <strong>核心玩法</strong>：通过观察自己和他人的行为，推理出鬼的隐藏规则到底是什么——比如"不能说'谢谢'"、"不能两个人单独待在一起"——然后用宣言把它公开抹除。每抹除一条，鬼就弱一分。</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">⚠️ 两件事会让你死</div>
+        <ul>
+          <li>🔵 <strong>理智值归零</strong> → 你被<strong>同化成鬼</strong>，变成鬼阵营。触犯隐藏规则是最常见的掉理智方式。</li>
+          <li>❤️ <strong>健康值归零</strong> → 你<strong>死亡</strong>，退出游戏。饿死、探索受伤、被怪谈打击都可能导致。</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🏆 怎么赢</div>
+        <ul>
+          <li>✅ <strong>人类胜利</strong>：在第12回合结束前，<strong>所有鬼被抹除</strong>（鬼的理智归零）。</li>
+          <li>🤝 <strong>共同胜利</strong>：撑到第12回合结束，仍有鬼存活——<strong>所有存活者</strong>（人和鬼）共同胜利。</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：作为一个鬼 ============ -->
+<div class="modal-overlay hidden" id="modal-ghost">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="header-emoji">👻</span>
+      <h2>作为一个鬼</h2>
+      <button class="modal-close" onclick="closeModal()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="section">
+        <div class="section-title">🎯 你的目标</div>
+        <p>用<a href="rules.html" class="term-link">规则</a>约束人类，用<a href="cards.html" class="term-link">怪谈</a>干扰他们。让人类理智崩溃、被同化成鬼——或者让他们弹尽粮绝、健康归零。同时，小心别被人类推理出你的规则。</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">👻 你是哪种鬼</div>
+        <ul>
+          <li>🩸 <strong><a href="rules.html" class="term-link">煞鬼</a></strong>（初始鬼）：第0天被闹鬼地点选中的玩家。理智 <strong>8/8</strong>，抽取 <strong>玩家总数+1 张</strong>隐藏规则卡。<strong>无代价</strong>——不需要每回合强制侵蚀人类。</li>
+          <li>💀 <strong><a href="rules.html" class="term-link">恶鬼</a></strong>（转化鬼）：人类理智归零后被同化。理智 <strong>5/5</strong>，抽取 <strong>存活人类数 张</strong>隐藏规则卡。<strong>有代价</strong>——每回合若未侵蚀人类，结算时-2理智。</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🃏 你的武器</div>
+        <ul>
+          <li>📜 <strong><a href="rules.html" class="term-link">规则卡</a></strong>：你的核心武器。每张规则卡定义一条人类不能触犯的禁忌（如"不能认可的表达"、"不能两人独处"）。规则卡分三类——<a href="toolbox/rule-board.html" class="term-link">公开规则</a>（开局即公开，人鬼都遵守）、<strong>隐藏规则</strong>（只有鬼知道，人类必须推理）、<strong>已抹除规则</strong>（被人类识破并废掉）。</li>
+          <li>🌪️ <strong><a href="cards.html" class="term-link">怪谈卡</a></strong>：鬼的事件卡，36张，所有鬼共享。分为流言/异常/怪诞/灾厄四个等级。满足条件即可激活发动——扣人类理智、制造混乱、保护你的规则。</li>
+        </ul>
+      </div>
+
+      <div class="highlight-box ghost-box">
+        <p>💡 <strong>核心玩法</strong>：你的隐藏规则是人类看不见的。他们只能通过观察"谁触犯了什么"来推理。你的工作——<strong>把规则伪装成日常</strong>，让人类在不知不觉中触犯。同时用怪谈卡制造烟雾弹，让他们猜错方向。</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🕹️ 你什么时候行动</div>
+        <ul>
+          <li>🔮 <strong>开局</strong>：第0天后浏览你的隐藏规则卡，开始构思策略。</li>
+          <li>📖 <strong>每回合</strong>：市长的故事是AI根据你的规则生成的，不要自己讲——但你可以根据故事内容调整策略。</li>
+          <li>⚡ <strong>任意时机</strong>：在人类自由行动阶段，可以打断并发动已激活的<a href="cards.html" class="term-link">怪谈卡</a>。怪谈卡全部已获得，只需满足条件即可激活。</li>
+          <li>🔄 <strong>鬼之间</strong>：不同的鬼可以互扣理智、继承规则。煞鬼和恶鬼有各自的生存策略。</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title">⚠️ 什么会让你失败</div>
+        <ul>
+          <li>📢 <strong>规则被宣言抹除</strong>：人类猜对你的隐藏规则 → 那张规则卡公开作废，你永远失去它。</li>
+          <li>🔍 <strong>被质询成功</strong>：人类发现你触犯了自己的规则（鬼也要遵守公开规则！）→ 受到惩罚。</li>
+          <li>💔 <strong>理智归零</strong>：煞鬼或恶鬼理智≤0 → 被<strong>抹除</strong>，退出游戏。</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🏆 怎么赢</div>
+        <ul>
+          <li>✅ <strong>鬼胜利</strong>：所有人类被同化为鬼或死亡。</li>
+          <li>🤝 <strong>共同胜利</strong>：撑到第12回合结束，仍有鬼存活——所有存活者共同胜利。</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹窗：作为市长 ============ -->
+<div class="modal-overlay hidden" id="modal-mayor">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="header-emoji">📋</span>
+      <h2>作为市长</h2>
+      <button class="modal-close" onclick="closeModal()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="section">
+        <div class="section-title">🎯 你的职责</div>
+        <p>你是中立的<strong>末日书记官</strong>。不站人，不站鬼。你的工作是让游戏流畅运转——管理流程、讲述故事、记录判决。<a href="ai-mayor.html" class="term-link">AI市长</a>可以为你代劳大部分叙事和记录工作。</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📋 六个步骤（整局视角）</div>
+        <div class="flow-steps">
+          <div class="flow-step"><span class="step-num">0</span><span class="step-text"><strong>确认玩家</strong>：记录每个人的编号和角色名。</span></div>
+          <div class="flow-step"><span class="step-num">1</span><span class="step-text"><strong>开局随机判定</strong>：扔硬币或AI随机——决定开放东区/西区/双区。<a href="map.html" class="term-link">地图</a>的12个地点只有被开放的区域可用。</span></div>
+          <div class="flow-step"><span class="step-num">2</span><span class="step-text"><strong>生成鬼的故事</strong>：第0天后，根据煞鬼持有的隐藏规则，AI市长为每条规则生成一段过往故事。每回合开始时按顺序讲述一段。鬼更改规则→追加新故事。</span></div>
+          <div class="flow-step"><span class="step-num">3</span><span class="step-text"><strong>黎明物资判定</strong>：第1天起，每天黎明在<a href="map.html" class="term-link">地图</a>上随机放置物资、事件和鬼的位置。</span></div>
+          <div class="flow-step"><span class="step-num">4</span><span class="step-text"><strong>每回合记录</strong>：记录玩家的<a href="rules.html" class="term-link">宣言抹除</a>（猜对/猜错）、<a href="rules.html" class="term-link">质询</a>结果、卡牌发动、规则变更。每回合开始时按顺序讲述一段故事。</span></div>
+          <div class="flow-step"><span class="step-num">5</span><span class="step-text"><strong>回合结算判定</strong>：检查恶鬼代价、健康值死亡、理智值化鬼、鬼被抹除。发放<a href="cards.html" class="term-link">反击卡</a>奖励。</span></div>
+          <div class="flow-step"><span class="step-num">6</span><span class="step-text"><strong>终局生存日记</strong>：游戏结束后，AI市长为每位玩家（无论生死胜负）生成一篇个人生存日记——叙事与复盘合一。</span></div>
+        </div>
+      </div>
+
+      <div class="highlight-box mayor-box">
+        <p>📌 <strong>核心原则："宣言即合法"</strong>。你只<strong>记录</strong>，不验证。玩家自己互相监督卡牌合法性。你不用检查激活条件、不用算cost、不用做法官、不用参与异议辩论。你唯一需要判定的——当人类宣言一条规则时，判断他们<strong>猜对了没有</strong>。</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🗣️ 故事怎么讲</div>
+        <p><a href="ai-mayor.html" class="term-link">AI市长</a>根据煞鬼的隐藏规则数量生成N段故事（N=规则数）。每回合按顺序讲一段。风格要求：</p>
+        <ul>
+          <li>🎭 <strong>身份</strong>：冷静的末世书记官——不是DM，不闲聊，零冗余。</li>
+          <li>📏 <strong>篇幅</strong>：每段50-100字，15-30秒讲完。</li>
+          <li>🔍 <strong>原则</strong>：用日常记忆折射规则，不讲因果链。人类听完要隐约感觉到"某个方向"，但不能直接猜出规则原文。</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🛠️ 工具箱帮你</div>
+        <p>打开<a href="toolbox/rule-board.html" class="term-link">工具箱</a>，里面有：</p>
+        <ul>
+          <li>📊 <strong>公开规则板</strong>——54张规则卡，四分区拖拽管理</li>
+          <li>🗺️ 更多工具开发中：回合追踪、状态面板、结算助手……</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🏆 市长的胜利</div>
+        <p>你没有胜负——你的胜利就是让每个人玩得尽兴。当终局的生存日记被朗读出来，所有人沉浸在那个末世故事里的时候，你就赢了。</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>© 2026 黎明之后. 小马独立桌游设计作品.</p>
+  </div>
+</footer>
+
+<script>
+function openModal(role) {
+  const modal = document.getElementById('modal-' + role);
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    // 滚动到顶部
+    const card = modal.querySelector('.modal-card');
+    if (card) card.scrollTop = 0;
+  }
+}
+function closeModal() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+  document.body.style.overflow = '';
+}
+// 点击遮罩关闭
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal-overlay')) {
+    closeModal();
+  }
+});
+// ESC 关闭
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黎明之后 · 游戏流程图集</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg-card: rgba(255,255,255,0.04);
+  --text: #d0cce0;
+  --text-dim: #8884a8;
+  --purple: #7B6F9E;
+  --coral: #D4756B;
+  --teal: #4A90A4;
+  --amber: #C8923E;
+  --blue: #5B7CB0;
+  --ghost: #c0392b;
+  --human: #27ae60;
+  --border: rgba(255,255,255,0.08);
+  --accent: rgba(255,255,255,0.06);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  padding: 24px 40px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(123,111,158,0.08) 0%, transparent 100%);
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 1px;
+}
+.header .subtitle {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* Tab Navigation */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  padding: 0 40px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  padding: 14px 24px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  white-space: nowrap;
+  position: relative;
+  transition: color 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.tab-btn:hover { color: #fff; }
+.tab-btn.active {
+  color: #fff;
+  border-bottom-color: var(--purple);
+}
+
+/* Main content area */
+.main-area {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-panel {
+  display: none;
+  flex: 1;
+  overflow: auto;
+  padding: 24px 40px;
+}
+.tab-panel.active { display: flex; flex-direction: column; align-items: center; }
+
+.panel-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.panel-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  text-align: center;
+  max-width: 600px;
+}
+
+/* SVG container */
+.svg-container {
+  width: 100%;
+  max-width: 1100px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.svg-container svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* SVG shared styles */
+.node-round { fill: rgba(123,111,158,0.2); stroke: var(--purple); stroke-width: 2; rx: 8; }
+.node-human { fill: rgba(39,174,96,0.2); stroke: var(--human); stroke-width: 2; rx: 8; }
+.node-ghost { fill: rgba(192,57,43,0.2); stroke: var(--ghost); stroke-width: 2; rx: 8; }
+.node-amber { fill: rgba(200,146,62,0.2); stroke: var(--amber); stroke-width: 2; rx: 8; }
+.node-teal { fill: rgba(74,144,164,0.2); stroke: var(--teal); stroke-width: 2; rx: 8; }
+.node-blue { fill: rgba(91,124,176,0.2); stroke: var(--blue); stroke-width: 2; rx: 8; }
+.node-diamond-human { fill: rgba(39,174,96,0.15); stroke: var(--human); stroke-width: 2; }
+.node-diamond-ghost { fill: rgba(192,57,43,0.15); stroke: var(--ghost); stroke-width: 2; }
+.node-diamond-purple { fill: rgba(123,111,158,0.15); stroke: var(--purple); stroke-width: 2; }
+
+.arrow-line { stroke: rgba(255,255,255,0.5); stroke-width: 1.8; fill: none; marker-end: url(#arrow); }
+.arrow-human { stroke: var(--human); stroke-width: 2; fill: none; marker-end: url(#arrow-h); }
+.arrow-ghost { stroke: var(--ghost); stroke-width: 2; fill: none; marker-end: url(#arrow-g); }
+.arrow-amber { stroke: var(--amber); stroke-width: 2; fill: none; marker-end: url(#arrow-a); }
+.arrow-teal { stroke: var(--teal); stroke-width: 2; fill: none; marker-end: url(#arrow-t); }
+.arrow-blue { stroke: var(--blue); stroke-width: 2; fill: none; marker-end: url(#arrow-b); }
+.arrow-dashed { stroke-dasharray: 6 3; }
+
+/* Footer */
+.footer {
+  padding: 16px 40px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+}
+
+/* Hint box */
+.hint-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: rgba(123,111,158,0.1);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.hint-box .key {
+  padding: 3px 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+@media (max-width: 768px) {
+  .header { padding: 16px 20px; }
+  .tab-nav { padding: 0 12px; }
+  .tab-btn { padding: 12px 14px; font-size: 12px; }
+  .tab-panel { padding: 16px 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>黎明之后 · 游戏流程图集</h1>
+  <p class="subtitle">基于 V1.9.2 设计稿 — 6张精确流程线条图（叙事重构：AI市长接管故事生成）</p>
+</div>
+
+<div class="tab-nav" id="tabNav">
+  <button class="tab-btn active" data-tab="0">总时间线</button>
+  <button class="tab-btn" data-tab="1">人类生存循环</button>
+  <button class="tab-btn" data-tab="2">鬼的杀戮循环</button>
+  <button class="tab-btn" data-tab="3">宣言质询博弈</button>
+  <button class="tab-btn" data-tab="4">双维生死判定</button>
+  <button class="tab-btn" data-tab="5">地图探索全链路</button>
+</div>
+
+<div class="main-area">
+
+<!-- ============================================================ -->
+<!-- TAB 0: 游戏总时间线 -->
+<!-- ============================================================ -->
+<div class="tab-panel active" data-panel="0">
+  <div class="panel-title">图一：游戏总时间线</div>
+  <p class="panel-desc">从第0天封锁前夜到终局判定，覆盖全部11步第0天流程 + 第1天黎明地图设置 + 回合循环 + 终局</p>
+  <div class="svg-container">
+<svg viewBox="0 0 1100 1350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="rgba(255,255,255,0.5)"/></marker>
+    <marker id="arrow-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#c0392b"/></marker>
+    <marker id="arrow-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#27ae60"/></marker>
+    <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#7B6F9E"/></marker>
+    <marker id="arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#C8923E"/></marker>
+    <marker id="arrow-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#4A90A4"/></marker>
+  </defs>
+
+  <!-- Background grid -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/>
+  </pattern>
+  <rect width="1100" height="1350" fill="url(#grid)"/>
+
+  <!-- === DAY 0 Section === -->
+  <rect x="30" y="20" width="1040" height="460" rx="10" fill="rgba(123,111,158,0.06)" stroke="rgba(123,111,158,0.2)" stroke-width="1" stroke-dasharray="6 3"/>
+  <text x="55" y="48" fill="#7B6F9E" font-size="16" font-weight="700">第0天：封锁前夜（11步）</text>
+
+  <!-- Step boxes - top row -->
+  <rect x="55" y="65" width="140" height="50" rx="6" fill="rgba(123,111,158,0.15)" stroke="#7B6F9E" stroke-width="1.5"/>
+  <text x="125" y="87" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤1</text>
+  <text x="125" y="104" fill="#d0cce0" font-size="10" text-anchor="middle">选/抽角色</text>
+
+  <rect x="220" y="65" width="140" height="50" rx="6" fill="rgba(200,146,62,0.15)" stroke="#C8923E" stroke-width="1.5"/>
+  <text x="290" y="87" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤2</text>
+  <text x="290" y="104" fill="#d0cce0" font-size="10" text-anchor="middle">秘密填报地点</text>
+
+  <rect x="385" y="65" width="140" height="50" rx="6" fill="rgba(91,124,176,0.15)" stroke="#5B7CB0" stroke-width="1.5"/>
+  <text x="455" y="87" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤3</text>
+  <text x="455" y="104" fill="#d0cce0" font-size="10" text-anchor="middle">分配官方物资</text>
+
+  <rect x="550" y="65" width="140" height="50" rx="6" fill="rgba(39,174,96,0.15)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="620" y="87" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤4</text>
+  <text x="620" y="104" fill="#d0cce0" font-size="10" text-anchor="middle">事件卡初始分配</text>
+
+  <rect x="715" y="65" width="140" height="50" rx="6" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="785" y="87" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤5</text>
+  <text x="785" y="104" fill="#d0cce0" font-size="10" text-anchor="middle">鬼激活怪谈</text>
+
+  <rect x="880" y="65" width="140" height="50" rx="6" fill="rgba(39,174,96,0.15)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="950" y="87" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤6</text>
+  <text x="950" y="104" fill="#d0cce0" font-size="10" text-anchor="middle">人类抽事件卡</text>
+
+  <!-- Arrows between steps 1-6 -->
+  <line x1="195" y1="90" x2="218" y2="90" class="arrow-line"/>
+  <line x1="360" y1="90" x2="383" y2="90" class="arrow-line"/>
+  <line x1="525" y1="90" x2="548" y2="90" class="arrow-line"/>
+  <line x1="690" y1="90" x2="713" y2="90" class="arrow-line"/>
+  <line x1="855" y1="90" x2="878" y2="90" class="arrow-line"/>
+
+  <!-- Sub-detail box for step 4 -->
+  <rect x="530" y="130" width="510" height="70" rx="6" fill="rgba(39,174,96,0.06)" stroke="rgba(39,174,96,0.2)" stroke-width="1"/>
+  <text x="545" y="148" fill="#27ae60" font-size="11" font-weight="600">4a: 基础选取 → 每人从12种基础反击卡中选1张放入未激活区</text>
+  <text x="545" y="166" fill="#d0cce0" font-size="10">4b: 牌库洗切（剩余全部反击卡） → 4c: 抽取两轮（每人共3张：1基础+2随机）</text>
+  <text x="545" y="186" fill="#C8923E" font-size="10">倒霉体质者额外+1张 → 共4张</text>
+
+  <!-- Step 4 → sub-detail arrow -->
+  <line x1="620" y1="115" x2="620" y2="128" class="arrow-line"/>
+
+  <!-- Step 7-11 bottom row -->
+  <rect x="55" y="220" width="175" height="50" rx="6" fill="rgba(74,144,164,0.15)" stroke="#4A90A4" stroke-width="1.5"/>
+  <text x="142" y="242" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤7</text>
+  <text x="142" y="259" fill="#d0cce0" font-size="10" text-anchor="middle">第1天黎明地图设置</text>
+
+  <rect x="260" y="220" width="175" height="50" rx="6" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="347" y="242" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤8</text>
+  <text x="347" y="259" fill="#d0cce0" font-size="10" text-anchor="middle">公开闹鬼地点+特殊规则</text>
+
+  <rect x="465" y="220" width="175" height="50" rx="6" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="552" y="242" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤9</text>
+  <text x="552" y="259" fill="#d0cce0" font-size="10" text-anchor="middle">鬼抽规则卡 X 张</text>
+
+  <rect x="670" y="220" width="175" height="50" rx="6" fill="rgba(91,124,176,0.15)" stroke="#5B7CB0" stroke-width="1.5"/>
+  <text x="757" y="242" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤10</text>
+  <text x="757" y="259" fill="#d0cce0" font-size="10" text-anchor="middle">数值结算+特殊规则生效</text>
+
+  <rect x="875" y="220" width="175" height="50" rx="6" fill="rgba(200,146,62,0.15)" stroke="#C8923E" stroke-width="1.5"/>
+  <text x="962" y="242" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤11</text>
+  <text x="962" y="259" fill="#d0cce0" font-size="10" text-anchor="middle">放回合指示卡</text>
+
+  <!-- Arrows steps 7-11 -->
+  <line x1="230" y1="245" x2="258" y2="245" class="arrow-line"/>
+  <line x1="435" y1="245" x2="463" y2="245" class="arrow-line"/>
+  <line x1="640" y1="245" x2="668" y2="245" class="arrow-line"/>
+  <line x1="845" y1="245" x2="873" y2="245" class="arrow-line"/>
+
+  <!-- Step 6 → 8 connector -->
+  <path d="M950,115 L950,170 L142,170 L142,218" class="arrow-line"/>
+
+  <!-- Step 8 details -->
+  <rect x="240" y="285" width="560" height="80" rx="6" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.2)" stroke-width="1"/>
+  <text x="255" y="304" fill="#c0392b" font-size="11" font-weight="600">市长掷骰子确定闹鬼地点 → 检索该地点2张特殊规则卡 → 置于公开规则栏"影响全体"区</text>
+  <text x="255" y="324" fill="#d0cce0" font-size="10">特殊规则公开即生效（第0天生效）→ 鬼也必须遵守 → 不可宣言抹除 → 人类可质询</text>
+  <text x="255" y="344" fill="#C8923E" font-size="10">倒霉体质者：多人地点直接指定为鬼 | 天生幸运儿：掷到则作废重投</text>
+  <text x="255" y="360" fill="rgba(255,255,255,0.4)" font-size="9">公开规则栏四分区：影响全体 / 只影响人 / 只影响鬼 / 被抹除规则</text>
+
+  <!-- Step 8 → detail -->
+  <line x1="347" y1="270" x2="347" y2="283" class="arrow-line"/>
+
+  <!-- Step 9 detail -->
+  <rect x="440" y="380" width="240" height="55" rx="6" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.2)" stroke-width="1"/>
+  <text x="455" y="399" fill="#c0392b" font-size="11" font-weight="600">X = 人类玩家数目</text>
+  <text x="455" y="417" fill="#d0cce0" font-size="10">6人→5张 | 8人→7张 | 10人→9张 | 12人→11张</text>
+  <text x="455" y="432" fill="rgba(255,255,255,0.4)" font-size="9">鬼私下浏览规则卡+怪谈(36张)</text>
+  <line x1="552" y1="270" x2="552" y2="378" class="arrow-line"/>
+
+  <!-- === DAY 1 DAWN === -->
+  <rect x="30" y="490" width="1040" height="170" rx="10" fill="rgba(74,144,164,0.06)" stroke="rgba(74,144,164,0.2)" stroke-width="1"/>
+  <text x="55" y="518" fill="#4A90A4" font-size="16" font-weight="700">第1天黎明：地图设置（三大判定）</text>
+
+  <rect x="55" y="535" width="300" height="80" rx="6" fill="rgba(74,144,164,0.15)" stroke="#4A90A4" stroke-width="1.5"/>
+  <text x="205" y="558" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">物资设置</text>
+  <text x="205" y="578" fill="#d0cce0" font-size="10" text-anchor="middle">每个地点判定物资数量（1-12）</text>
+  <text x="205" y="598" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">AI:随机数 | 真人:双骰子和-1 或 十二面骰</text>
+
+  <rect x="400" y="535" width="300" height="80" rx="6" fill="rgba(74,144,164,0.15)" stroke="#4A90A4" stroke-width="1.5"/>
+  <text x="550" y="558" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">事件设置</text>
+  <text x="550" y="578" fill="#d0cce0" font-size="10" text-anchor="middle">每个地点判定是否含有事件</text>
+  <text x="550" y="598" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">AI:0/1随机 | 真人:硬币 | 人面=是 鬼面=否</text>
+
+  <rect x="745" y="535" width="300" height="80" rx="6" fill="rgba(74,144,164,0.15)" stroke="#4A90A4" stroke-width="1.5"/>
+  <text x="895" y="558" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">鬼设置</text>
+  <text x="895" y="578" fill="#d0cce0" font-size="10" text-anchor="middle">仅含事件地点再判定是否有鬼</text>
+  <text x="895" y="598" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">AI:0/1随机 | 真人:硬币 | 鬼面=是 人面=否</text>
+
+  <line x1="205" y1="535" x2="400" y2="535" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="550" y1="535" x2="745" y2="535" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- Arrow from Day0 → Day1 -->
+  <path d="M1050,460 L1050,490" class="arrow-line" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+
+  <!-- === ROUND LOOP === -->
+  <rect x="30" y="670" width="1040" height="390" rx="10" fill="rgba(39,174,96,0.06)" stroke="rgba(39,174,96,0.2)" stroke-width="1"/>
+  <text x="55" y="698" fill="#27ae60" font-size="16" font-weight="700">人类回合循环（第1天起，每人1回合 = 1天）</text>
+
+  <rect x="55" y="715" width="160" height="55" rx="6" fill="rgba(39,174,96,0.12)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="135" y="738" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤0: 黎明阶段</text>
+  <text x="135" y="758" fill="#c0392b" font-size="9" text-anchor="middle">递增扣健康：D1-1/D2-2/D3+-3</text>
+
+  <rect x="250" y="715" width="160" height="55" rx="6" fill="rgba(192,57,43,0.12)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="330" y="738" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤1: AI市长讲述故事</text>
+  <text x="330" y="758" fill="#d0cce0" font-size="9" text-anchor="middle">30-60秒故事→人类可推理</text>
+
+  <rect x="445" y="715" width="160" height="55" rx="6" fill="rgba(200,146,62,0.12)" stroke="#C8923E" stroke-width="1.5"/>
+  <text x="525" y="738" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤2: 物资阶段</text>
+  <text x="525" y="758" fill="#d0cce0" font-size="9" text-anchor="middle">官方补给 或 地图探索</text>
+
+  <rect x="640" y="715" width="160" height="55" rx="6" fill="rgba(91,124,176,0.12)" stroke="#5B7CB0" stroke-width="1.5"/>
+  <text x="720" y="738" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤3: 结算物资</text>
+  <text x="720" y="758" fill="#d0cce0" font-size="9" text-anchor="middle">插入角色卡背面·下侧</text>
+
+  <rect x="835" y="715" width="200" height="55" rx="6" fill="rgba(123,111,158,0.12)" stroke="#7B6F9E" stroke-width="1.5"/>
+  <text x="935" y="738" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤4: 自由行动</text>
+  <text x="935" y="758" fill="#d0cce0" font-size="9" text-anchor="middle">宣言/质询/事件卡/个人目的</text>
+
+  <!-- Steps 0-4 arrows -->
+  <line x1="215" y1="742" x2="248" y2="742" class="arrow-line"/>
+  <line x1="410" y1="742" x2="443" y2="742" class="arrow-line"/>
+  <line x1="605" y1="742" x2="638" y2="742" class="arrow-line"/>
+  <line x1="800" y1="742" x2="833" y2="742" class="arrow-line"/>
+
+  <!-- Step 2 detail: official supply vs explore -->
+  <rect x="430" y="785" width="300" height="60" rx="5" fill="rgba(200,146,62,0.08)" stroke="rgba(200,146,62,0.15)" stroke-width="1"/>
+  <text x="440" y="803" fill="#C8923E" font-size="10" font-weight="600">A: 官方补给 → 抽3张保障餐A（18张库存，用完即止）</text>
+  <text x="440" y="821" fill="#d0cce0" font-size="10">B: 地图探索 → 健康-1 → 选地点 → 依次处理物资/事件/鬼</text>
+  <text x="440" y="839" fill="rgba(255,255,255,0.4)" font-size="9">健康≤0不可探索 | 官方牌库空不可补给</text>
+  <line x1="525" y1="770" x2="525" y2="783" class="arrow-line"/>
+
+  <!-- Step 4 detail -->
+  <rect x="430" y="858" width="605" height="80" rx="5" fill="rgba(123,111,158,0.06)" stroke="rgba(123,111,158,0.15)" stroke-width="1"/>
+  <text x="440" y="876" fill="#7B6F9E" font-size="10" font-weight="600">宣言抹除规则(1次/回合) → 猜对:规则移入被抹除区+D智慧奖励(2/4/6次各抽1张) | 猜错:理智-1</text>
+  <text x="440" y="894" fill="#d0cce0" font-size="10">质询鬼(1次/回合) → 成立:鬼受伤害+免费宣言+E奖赏(抽卡) | 不成立:理智-1</text>
+  <text x="440" y="912" fill="#d0cce0" font-size="10">使用已激活反击卡(B效果获取) | 完成个人目的(秘密告知市长)</text>
+  <text x="440" y="930" fill="rgba(255,255,255,0.4)" font-size="9">注：宣言和质询次数分开计算（各1次/回合），自由行动阶段先后顺序由玩家自行决定</text>
+  <line x1="935" y1="770" x2="935" y2="856" class="arrow-line"/>
+
+  <!-- Step 5: Settlement -->
+  <rect x="640" y="953" width="395" height="55" rx="6" fill="rgba(192,57,43,0.12)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="837" y="976" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">步骤5: 回合结束结算</text>
+  <text x="837" y="996" fill="#d0cce0" font-size="10" text-anchor="middle">死亡/化鬼判定 → C不屈获取 → 放四方向回合指示卡 → 终局？</text>
+  <line x1="935" y1="938" x2="935" y2="951" class="arrow-line"/>
+
+  <!-- Loop back arrow -->
+  <path d="M55,742 L35,742 L35,1010 L55,1010" stroke="#27ae60" stroke-width="2" fill="none" stroke-dasharray="8 4"/>
+  <polygon points="55,1010 45,1002 45,1018" fill="#27ae60"/>
+  <text x="20" y="880" fill="#27ae60" font-size="11" transform="rotate(-90,20,880)" text-anchor="middle">循环至下一位玩家回合</text>
+
+  <!-- Living reward -->
+  <rect x="55" y="953" width="220" height="55" rx="6" fill="rgba(39,174,96,0.1)" stroke="#27ae60" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="165" y="974" fill="#27ae60" font-size="11" font-weight="600" text-anchor="middle">F-存活获取机制</text>
+  <text x="165" y="996" fill="#d0cce0" font-size="10" text-anchor="middle">存活到3/6/9/12回合→黎明抽卡</text>
+
+  <!-- === END GAME === -->
+  <path d="M837,1008 L837,1075" class="arrow-line" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+
+  <rect x="30" y="1075" width="1040" height="120" rx="10" fill="rgba(200,146,62,0.06)" stroke="rgba(200,146,62,0.2)" stroke-width="1"/>
+  <text x="55" y="1103" fill="#C8923E" font-size="16" font-weight="700">终局判定</text>
+
+  <rect x="55" y="1115" width="310" height="55" rx="6" fill="rgba(192,57,43,0.12)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="210" y="1138" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">人类全被同化/死亡 → 鬼阵营胜利</text>
+  <text x="210" y="1158" fill="#d0cce0" font-size="10" text-anchor="middle">AI市长生成「全玩家生存日记」</text>
+
+  <rect x="395" y="1115" width="310" height="55" rx="6" fill="rgba(39,174,96,0.12)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="550" y="1138" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">全部隐藏规则被抹除 → 人类阵营胜利</text>
+  <text x="550" y="1158" fill="#d0cce0" font-size="10" text-anchor="middle">AI市长生成「全玩家生存日记」</text>
+
+  <rect x="735" y="1115" width="310" height="55" rx="6" fill="rgba(91,124,176,0.12)" stroke="#5B7CB0" stroke-width="1.5"/>
+  <text x="890" y="1138" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">固定回合数结束 → 存活者个人成功</text>
+  <text x="890" y="1158" fill="#d0cce0" font-size="10" text-anchor="middle">按完成个人目的数评分</text>
+
+  <!-- Legend -->
+  <rect x="30" y="1210" width="1040" height="60" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <rect x="55" y="1228" width="12" height="12" rx="2" fill="rgba(39,174,96,0.3)" stroke="#27ae60" stroke-width="1"/>
+  <text x="75" y="1239" fill="#d0cce0" font-size="11">人类动作</text>
+  <rect x="155" y="1228" width="12" height="12" rx="2" fill="rgba(192,57,43,0.3)" stroke="#c0392b" stroke-width="1"/>
+  <text x="175" y="1239" fill="#d0cce0" font-size="11">鬼/规则动作</text>
+  <rect x="270" y="1228" width="12" height="12" rx="2" fill="rgba(200,146,62,0.3)" stroke="#C8923E" stroke-width="1"/>
+  <text x="290" y="1239" fill="#d0cce0" font-size="11">物资/地图</text>
+  <rect x="390" y="1228" width="12" height="12" rx="2" fill="rgba(74,144,164,0.3)" stroke="#4A90A4" stroke-width="1"/>
+  <text x="410" y="1239" fill="#d0cce0" font-size="11">AI市长/系统</text>
+  <rect x="520" y="1228" width="12" height="12" rx="2" fill="rgba(123,111,158,0.3)" stroke="#7B6F9E" stroke-width="1"/>
+  <text x="540" y="1239" fill="#d0cce0" font-size="11">角色/准备</text>
+  <rect x="635" y="1228" width="12" height="12" rx="2" fill="rgba(91,124,176,0.3)" stroke="#5B7CB0" stroke-width="1"/>
+  <text x="655" y="1239" fill="#d0cce0" font-size="11">终局/结算</text>
+  <rect x="750" y="1228" width="40" height="12" rx="2" fill="none" stroke="rgba(255,255,255,0.3)" stroke-dasharray="6 3" stroke-width="1"/>
+  <text x="798" y="1239" fill="#d0cce0" font-size="11">虚线=循环</text>
+  <text x="55" y="1262" fill="rgba(255,255,255,0.3)" font-size="9">基于《黎明之后》设计稿 V1.9.2 叙事重构版 | 2026-07-06</text>
+</svg>
+  </div>
+  <div class="hint-box">
+    提示：<span class="key">滚轮缩放</span> <span class="key">拖拽平移</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 1: 人类生存循环 -->
+<!-- ============================================================ -->
+<div class="tab-panel" data-panel="1">
+  <div class="panel-title">图二：人类生存循环</div>
+  <p class="panel-desc">从黎明扣除开始的每个回合，人类玩家的完整行动链——二选一物资策略 → 恢复双维 → 博弈宣言 → 生死判定</p>
+  <div class="svg-container">
+<svg viewBox="0 0 1050 1420" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="rgba(255,255,255,0.5)"/></marker>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#27ae60"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#c0392b"/></marker>
+    <marker id="aam" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#C8923E"/></marker>
+  </defs>
+  <pattern id="g2" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/></pattern>
+  <rect width="1050" height="1420" fill="url(#g2)"/>
+
+  <rect x="30" y="20" width="990" height="1380" rx="10" fill="rgba(39,174,96,0.04)" stroke="rgba(39,174,96,0.15)" stroke-width="1"/>
+
+  <!-- START -->
+  <rect x="380" y="45" width="220" height="48" rx="24" fill="rgba(39,174,96,0.3)" stroke="#27ae60" stroke-width="2"/>
+  <text x="490" y="75" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">回合开始：回合玩家</text>
+
+  <!-- Step 0: Dawn -->
+  <line x1="490" y1="93" x2="490" y2="125" stroke="#27ae60" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="340" y="130" width="300" height="55" rx="6" fill="rgba(91,124,176,0.15)" stroke="#5B7CB0" stroke-width="1.5"/>
+  <text x="490" y="152" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">步骤0: 黎明阶段</text>
+  <text x="490" y="174" fill="#c0392b" font-size="10" text-anchor="middle">递增扣除健康值: D1(-1) → D2(-2) → D3+(-3)</text>
+
+  <!-- Step 0 detail -->
+  <rect x="320" y="200" width="340" height="35" rx="5" fill="rgba(39,174,96,0.08)" stroke="rgba(39,174,96,0.15)" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="490" y="223" fill="#27ae60" font-size="10" text-anchor="middle">F-存活获取: 存活到3/6/9/12回合 → 黎明抽1张反击卡</text>
+  <line x1="490" y1="185" x2="490" y2="198" stroke="#27ae60" stroke-width="1" stroke-dasharray="4 2"/>
+
+  <!-- Step 1: Ghost story -->
+  <line x1="490" y1="237" x2="490" y2="268" stroke="#27ae60" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="340" y="273" width="300" height="48" rx="6" fill="rgba(192,57,43,0.12)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="490" y="294" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">步骤1: AI市长讲述故事（30-60秒）</text>
+  <text x="490" y="312" fill="#d0cce0" font-size="10" text-anchor="middle">故事含隐晦规则线索→人类可推理讨论</text>
+
+  <!-- Step 2: Supplies - DECISION DIAMOND -->
+  <line x1="490" y1="321" x2="490" y2="352" stroke="#27ae60" stroke-width="2" marker-end="url(#ah)"/>
+  <polygon points="490,358 580,410 490,462 400,410" fill="rgba(200,146,62,0.2)" stroke="#C8923E" stroke-width="2"/>
+  <text x="490" y="407" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">步骤2</text>
+  <text x="490" y="422" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">物资阶段</text>
+
+  <!-- LEFT: 官方补给 -->
+  <path d="M400,410 L260,410" stroke="#C8923E" stroke-width="2" marker-end="url(#aam)"/>
+  <text x="330" y="400" fill="#C8923E" font-size="9" text-anchor="middle">官方补给</text>
+
+  <rect x="60" y="375" width="200" height="70" rx="6" fill="rgba(91,124,176,0.15)" stroke="#5B7CB0" stroke-width="1.5"/>
+  <text x="160" y="395" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">A: 官方补给</text>
+  <text x="160" y="414" fill="#d0cce0" font-size="10" text-anchor="middle">抽3张保障餐A</text>
+  <text x="160" y="432" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">库存18张 | 用完即止 | 空则不可选</text>
+
+  <!-- RIGHT: 地图探索 -->
+  <path d="M580,410 L720,410" stroke="#C8923E" stroke-width="2" marker-end="url(#aam)"/>
+  <text x="650" y="400" fill="#C8923E" font-size="9" text-anchor="middle">地图探索</text>
+
+  <rect x="720" y="375" width="240" height="70" rx="6" fill="rgba(200,146,62,0.15)" stroke="#C8923E" stroke-width="1.5"/>
+  <text x="840" y="395" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">B: 地图探索</text>
+  <text x="840" y="414" fill="#c0392b" font-size="10" text-anchor="middle">代价: 健康-1（探索体力消耗）</text>
+  <text x="840" y="432" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">健康≤0不可探索</text>
+
+  <!-- Map explore detail -->
+  <rect x="690" y="460" width="300" height="65" rx="5" fill="rgba(200,146,62,0.06)" stroke="rgba(200,146,62,0.12)" stroke-width="1"/>
+  <text x="705" y="478" fill="#C8923E" font-size="10" font-weight="600">探索流程：选地点 → 依次处理</text>
+  <text x="705" y="496" fill="#d0cce0" font-size="10">a. 物资获取 b. 事件抽取 c. 撞鬼判定</text>
+  <text x="705" y="514" fill="rgba(255,255,255,0.4)" font-size="9">回合玩家撞鬼:理智-1+激活特殊规则(不被同化)</text>
+  <line x1="840" y1="445" x2="840" y2="458" stroke="#C8923E" stroke-width="1" stroke-dasharray="4 2"/>
+
+  <!-- Step 3: Apply supplies -->
+  <path d="M260,445 L260,540 L490,540 L490,555" stroke="#27ae60" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+  <path d="M840,525 L840,540 L490,540" stroke="#27ae60" stroke-width="2" fill="none"/>
+
+  <rect x="340" y="558" width="300" height="55" rx="6" fill="rgba(91,124,176,0.12)" stroke="#5B7CB0" stroke-width="1.5"/>
+  <text x="490" y="580" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">步骤3: 结算物资</text>
+  <text x="490" y="602" fill="#d0cce0" font-size="10" text-anchor="middle">物资卡插入角色卡背面·下侧 → 双维即时生效</text>
+
+  <!-- Step 4: Free action -->
+  <line x1="490" y1="613" x2="490" y2="645" stroke="#27ae60" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="290" y="650" width="400" height="60" rx="6" fill="rgba(123,111,158,0.15)" stroke="#7B6F9E" stroke-width="2"/>
+  <text x="490" y="674" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">步骤4: 自由行动（玩家自定顺序）</text>
+  <text x="490" y="698" fill="#d0cce0" font-size="10" text-anchor="middle">可做4件事：宣言抹除 / 质询鬼 / 使用反击卡 / 完成个人目的</text>
+
+  <!-- 4 sub-actions -->
+  <line x1="490" y1="710" x2="490" y2="735" stroke="#7B6F9E" stroke-width="1.5"/>
+
+  <!-- 4 sub-actions in a row -->
+  <rect x="30" y="740" width="230" height="65" rx="5" fill="rgba(39,174,96,0.1)" stroke="#27ae60" stroke-width="1"/>
+  <text x="145" y="762" fill="#27ae60" font-size="11" font-weight="600" text-anchor="middle">宣言抹除规则 (1次/回合)</text>
+  <text x="145" y="780" fill="#d0cce0" font-size="9" text-anchor="middle">猜对→规则移入被抹除区</text>
+  <text x="145" y="796" fill="#d0cce0" font-size="9" text-anchor="middle">猜错→理智-1</text>
+
+  <rect x="280" y="740" width="230" height="65" rx="5" fill="rgba(192,57,43,0.1)" stroke="#c0392b" stroke-width="1"/>
+  <text x="395" y="762" fill="#c0392b" font-size="11" font-weight="600" text-anchor="middle">质询鬼 (1次/回合)</text>
+  <text x="395" y="780" fill="#d0cce0" font-size="9" text-anchor="middle">成立→鬼受伤害+免费宣言</text>
+  <text x="395" y="796" fill="#d0cce0" font-size="9" text-anchor="middle">不成立→理智-1</text>
+
+  <rect x="530" y="740" width="230" height="65" rx="5" fill="rgba(74,144,164,0.1)" stroke="#4A90A4" stroke-width="1"/>
+  <text x="645" y="762" fill="#4A90A4" font-size="11" font-weight="600" text-anchor="middle">使用已激活反击卡</text>
+  <text x="645" y="780" fill="#d0cce0" font-size="9" text-anchor="middle">满足时机+条件+cost → 宣言发动</text>
+  <text x="645" y="796" fill="rgba(255,255,255,0.4)" font-size="9">B-效果获取机制</text>
+
+  <rect x="780" y="740" width="230" height="65" rx="5" fill="rgba(200,146,62,0.1)" stroke="#C8923E" stroke-width="1"/>
+  <text x="895" y="762" fill="#C8923E" font-size="11" font-weight="600" text-anchor="middle">完成个人目的</text>
+  <text x="895" y="780" fill="#d0cce0" font-size="9" text-anchor="middle">满足条件→秘密告知市长</text>
+  <text x="895" y="796" fill="rgba(255,255,255,0.4)" font-size="9">V1.7已重启</text>
+
+  <!-- Rewards D & E -->
+  <rect x="80" y="820" width="130" height="28" rx="4" fill="rgba(39,174,96,0.08)" stroke="rgba(39,174,96,0.2)" stroke-width="1"/>
+  <text x="145" y="838" fill="#27ae60" font-size="9" font-weight="600" text-anchor="middle">D-智慧:2/4/6次各抽卡</text>
+  <line x1="145" y1="805" x2="145" y2="818" stroke="#27ae60" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <rect x="330" y="820" width="130" height="28" rx="4" fill="rgba(192,57,43,0.08)" stroke="rgba(192,57,43,0.2)" stroke-width="1"/>
+  <text x="395" y="838" fill="#c0392b" font-size="9" font-weight="600" text-anchor="middle">E-奖赏:成功抽卡</text>
+  <line x1="395" y1="805" x2="395" y2="818" stroke="#c0392b" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <!-- Step 5: Settlement -->
+  <path d="M490,808 L490,870" stroke="#27ae60" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+
+  <!-- BIG DECISION: Death/convert -->
+  <polygon points="490,878 630,940 490,1002 350,940" fill="rgba(39,174,96,0.15)" stroke="#27ae60" stroke-width="2.5"/>
+  <text x="490" y="930" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">步骤5</text>
+  <text x="490" y="950" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">回合结束结算</text>
+
+  <!-- LEFT: 健康≤0 → DEATH -->
+  <path d="M350,940 L200,940" stroke="#c0392b" stroke-width="2.5" marker-end="url(#ag)"/>
+  <text x="275" y="928" fill="#c0392b" font-size="10" text-anchor="middle">健康≤0</text>
+  <rect x="60" y="905" width="140" height="70" rx="6" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="2"/>
+  <text x="130" y="928" fill="#c0392b" font-size="13" font-weight="700" text-anchor="middle">死亡</text>
+  <text x="130" y="950" fill="#d0cce0" font-size="10" text-anchor="middle">退出游戏</text>
+  <text x="130" y="968" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">触发C-不屈</text>
+
+  <!-- RIGHT: 理智≤0 → CONVERT -->
+  <path d="M630,940 L780,940" stroke="#c0392b" stroke-width="2.5" marker-end="url(#ag)"/>
+  <text x="705" y="928" fill="#c0392b" font-size="10" text-anchor="middle">理智≤0</text>
+  <rect x="780" y="905" width="160" height="70" rx="6" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="2"/>
+  <text x="860" y="928" fill="#c0392b" font-size="13" font-weight="700" text-anchor="middle">化鬼</text>
+  <text x="860" y="950" fill="#d0cce0" font-size="10" text-anchor="middle">加入鬼阵营</text>
+  <text x="860" y="968" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">触发C-不屈</text>
+
+  <!-- BOTTOM: 存活 -->
+  <path d="M490,1002 L490,1040" stroke="#27ae60" stroke-width="2.5" marker-end="url(#ah)"/>
+  <text x="500" y="1025" fill="#27ae60" font-size="10">双维>0</text>
+
+  <rect x="340" y="1043" width="300" height="55" rx="6" fill="rgba(39,174,96,0.18)" stroke="#27ae60" stroke-width="2"/>
+  <text x="490" y="1066" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">存活！放置回合指示卡</text>
+  <text x="490" y="1088" fill="#d0cce0" font-size="10" text-anchor="middle">四方向各插入对应天数分隔符</text>
+
+  <!-- C不屈 detail -->
+  <rect x="200" y="1000" width="180" height="28" rx="4" fill="rgba(192,57,43,0.08)" stroke="rgba(192,57,43,0.15)" stroke-width="1"/>
+  <text x="290" y="1019" fill="#c0392b" font-size="9" font-weight="600" text-anchor="middle">C-不屈: 剩余全员各抽1张</text>
+  <line x1="130" y1="975" x2="130" y2="998" stroke="#c0392b" stroke-width="1" stroke-dasharray="3 2"/>
+  <path d="M130,1014 L290,1014" stroke="#c0392b" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <rect x="680" y="990" width="180" height="28" rx="4" fill="rgba(192,57,43,0.08)" stroke="rgba(192,57,43,0.15)" stroke-width="1"/>
+  <text x="770" y="1009" fill="#c0392b" font-size="9" font-weight="600" text-anchor="middle">C-不屈: 剩余全员各抽1张</text>
+  <line x1="860" y1="975" x2="860" y2="988" stroke="#c0392b" stroke-width="1" stroke-dasharray="3 2"/>
+  <path d="M860,1004 L860,988" stroke="#c0392b" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <!-- Check end -->
+  <line x1="490" y1="1098" x2="490" y2="1130" stroke="#27ae60" stroke-width="2" marker-end="url(#ah)"/>
+  <polygon points="490,1138 580,1175 490,1212 400,1175" fill="rgba(91,124,176,0.2)" stroke="#5B7CB0" stroke-width="2"/>
+  <text x="490" y="1172" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">终局？</text>
+
+  <!-- YES: end -->
+  <path d="M580,1175 L700,1175" stroke="#5B7CB0" stroke-width="2" marker-end="url(#a)"/>
+  <text x="640" y="1165" fill="#5B7CB0" font-size="9" text-anchor="middle">是</text>
+  <rect x="700" y="1148" width="140" height="54" rx="6" fill="rgba(91,124,176,0.15)" stroke="#5B7CB0" stroke-width="1.5"/>
+  <text x="770" y="1172" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">游戏结束</text>
+  <text x="770" y="1192" fill="rgba(255,255,255,0.5)" font-size="9" text-anchor="middle">进入终局判定</text>
+
+  <!-- NO: loop back to TOP -->
+  <path d="M400,1175 L300,1175 L300,70 L378,70" stroke="#27ae60" stroke-width="2.5" fill="none" stroke-dasharray="10 5" marker-end="url(#ah)"/>
+  <text x="290" y="640" fill="#27ae60" font-size="11" font-weight="600" transform="rotate(-90,290,640)" text-anchor="middle">循环至下一位玩家回合</text>
+
+  <!-- Rescue window -->
+  <rect x="330" y="1225" width="320" height="40" rx="5" fill="rgba(39,174,96,0.06)" stroke="rgba(39,174,96,0.12)" stroke-width="1"/>
+  <text x="490" y="1243" fill="#27ae60" font-size="10" font-weight="600" text-anchor="middle">抢救窗口: 结算前若通过交易/物资/事件恢复了数值可免于淘汰</text>
+  <text x="490" y="1258" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">仅限回合内恢复，已结算淘汰不可逆转</text>
+
+  <!-- 反击卡6条获取路径汇总 -->
+  <rect x="30" y="1275" width="990" height="80" rx="8" fill="rgba(74,144,164,0.08)" stroke="rgba(74,144,164,0.2)" stroke-width="1.5"/>
+  <text x="525" y="1298" fill="#4A90A4" font-size="13" font-weight="700" text-anchor="middle">反击卡6条获取路径 (A-F) — 共62张</text>
+  <text x="525" y="1320" fill="#d0cce0" font-size="10" text-anchor="middle">A初始(第0天基础选取+洗抽·开局3张) | B效果(人物技能/卡牌获取) | C不屈(队友化鬼/死亡→剩余各抽1张)</text>
+  <text x="525" y="1340" fill="#d0cce0" font-size="10" text-anchor="middle">D智慧(宣言抹除2/4/6次各1张) | E奖赏(质询鬼成功抽1张) | F存活(存活到3/6/9/12回合黎明抽1张)</text>
+
+  <!-- Legend -->
+  <rect x="30" y="1365" width="990" height="30" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <rect x="55" y="1375" width="10" height="10" rx="2" fill="none" stroke="#27ae60" stroke-width="2"/>
+  <text x="72" y="1385" fill="#d0cce0" font-size="10">人类行动</text>
+  <rect x="150" y="1375" width="10" height="10" rx="2" fill="none" stroke="#c0392b" stroke-width="2"/>
+  <text x="167" y="1385" fill="#d0cce0" font-size="10">鬼/规则</text>
+  <rect x="240" y="1375" width="10" height="10" rx="2" fill="none" stroke="#C8923E" stroke-width="2"/>
+  <text x="257" y="1385" fill="#d0cce0" font-size="10">物资/探索</text>
+  <rect x="340" y="1375" width="10" height="10" rx="2" fill="none" stroke="#5B7CB0" stroke-width="2"/>
+  <text x="357" y="1385" fill="#d0cce0" font-size="10">判定/结算</text>
+  <rect x="440" y="1375" width="10" height="10" rx="2" fill="none" stroke="#7B6F9E" stroke-width="2"/>
+  <text x="457" y="1385" fill="#d0cce0" font-size="10">策略/自由</text>
+  <line x1="540" y1="1380" x2="590" y2="1380" stroke="#27ae60" stroke-width="2" stroke-dasharray="8 4"/>
+  <text x="598" y="1385" fill="#d0cce0" font-size="10">虚线=循环/触发</text>
+</svg>
+  </div>
+  <div class="hint-box">
+    提示：<span class="key">滚轮缩放</span> <span class="key">拖拽平移</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 2: 鬼的杀戮循环 -->
+<!-- ============================================================ -->
+<div class="tab-panel" data-panel="2">
+  <div class="panel-title">图三：鬼的杀戮循环</div>
+  <p class="panel-desc">从秘密填报成为鬼 → AI市长嵌入规则线索讲故事 → 抽取规则卡 → 人类触犯规则降理智 → 激活怪谈加剧压力 → 理智归零同化 → 更多鬼的恶性循环 | 人类以反击卡制衡</p>
+  <div class="svg-container">
+<svg viewBox="0 0 1050 1150" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="rgba(255,255,255,0.5)"/></marker>
+    <marker id="bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#c0392b"/></marker>
+    <marker id="bh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#27ae60"/></marker>
+  </defs>
+  <pattern id="g3" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/></pattern>
+  <rect width="1050" height="1150" fill="url(#g3)"/>
+
+  <rect x="30" y="20" width="990" height="1110" rx="10" fill="rgba(192,57,43,0.04)" stroke="rgba(192,57,43,0.15)" stroke-width="1"/>
+
+  <!-- START: Human player -->
+  <rect x="380" y="45" width="220" height="48" rx="24" fill="rgba(39,174,96,0.25)" stroke="#27ae60" stroke-width="2"/>
+  <text x="490" y="69" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">人类玩家</text>
+  <text x="490" y="85" fill="rgba(255,255,255,0.5)" font-size="9" text-anchor="middle">第0天步骤2:秘密填报地点</text>
+
+  <!-- Step 1: Become ghost -->
+  <line x1="490" y1="93" x2="490" y2="130" stroke="#c0392b" stroke-width="2.5" marker-end="url(#bg)"/>
+  <text x="500" y="115" fill="#c0392b" font-size="10">掷骰子选中</text>
+
+  <rect x="280" y="135" width="420" height="70" rx="8" fill="rgba(192,57,43,0.2)" stroke="#c0392b" stroke-width="2.5"/>
+  <text x="490" y="160" fill="#c0392b" font-size="15" font-weight="700" text-anchor="middle">化鬼！成为煞鬼</text>
+  <text x="490" y="180" fill="#d0cce0" font-size="11" text-anchor="middle">公开闹鬼地点 + 检索2张特殊规则卡 → 置于公开规则栏"影响全体"区</text>
+  <text x="490" y="196" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">特殊规则公开即生效(第0天) + 鬼也须遵守 + 不可宣言抹除</text>
+
+  <!-- Step 2: Draw rule cards -->
+  <line x1="490" y1="205" x2="490" y2="240" stroke="#c0392b" stroke-width="2" marker-end="url(#bg)"/>
+
+  <rect x="220" y="245" width="540" height="65" rx="6" fill="rgba(192,57,43,0.12)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="490" y="268" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">抽取规则卡 X张（X=人类数目）</text>
+  <text x="490" y="288" fill="#d0cce0" font-size="11" text-anchor="middle">成为隐藏规则 → 第1天开始生效 → 人类可宣言抹除</text>
+  <text x="490" y="304" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">+ 浏览怪谈(36张全部可用)</text>
+
+  <!-- Rule card detail boxes -->
+  <rect x="60" y="325" width="190" height="55" rx="5" fill="rgba(192,57,43,0.1)" stroke="#c0392b" stroke-width="1"/>
+  <text x="155" y="345" fill="#c0392b" font-size="10" font-weight="600" text-anchor="middle">T1 规则 (-3 理智)</text>
+  <text x="155" y="365" fill="#d0cce0" font-size="9" text-anchor="middle">极难触犯 · 触犯即重创</text>
+
+  <rect x="270" y="325" width="190" height="55" rx="5" fill="rgba(192,57,43,0.1)" stroke="#c0392b" stroke-width="1"/>
+  <text x="365" y="345" fill="#c0392b" font-size="10" font-weight="600" text-anchor="middle">T2 规则 (-2 理智)</text>
+  <text x="365" y="365" fill="#d0cce0" font-size="9" text-anchor="middle">中等触犯 · 战术核心</text>
+
+  <rect x="480" y="325" width="190" height="55" rx="5" fill="rgba(192,57,43,0.1)" stroke="#c0392b" stroke-width="1"/>
+  <text x="575" y="345" fill="#c0392b" font-size="10" font-weight="600" text-anchor="middle">T3 规则 (-1 理智)</text>
+  <text x="575" y="365" fill="#d0cce0" font-size="9" text-anchor="middle">极易触犯 · 扣罚轻微</text>
+
+  <rect x="690" y="325" width="230" height="55" rx="5" fill="rgba(200,146,62,0.1)" stroke="#C8923E" stroke-width="1"/>
+  <text x="805" y="345" fill="#C8923E" font-size="10" font-weight="600" text-anchor="middle">特殊规则 ×2张 (公开)</text>
+  <text x="805" y="365" fill="#d0cce0" font-size="9" text-anchor="middle">地点绑定 · 公开即生效</text>
+
+  <!-- Details about rule classification -->
+  <line x1="490" y1="310" x2="490" y2="323" stroke="#c0392b" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <!-- Step 3: Hidden rules in play -->
+  <line x1="490" y1="382" x2="490" y2="415" stroke="#c0392b" stroke-width="2" marker-end="url(#bg)"/>
+
+  <!-- CENTER: The killing mechanism -->
+  <rect x="180" y="420" width="620" height="75" rx="6" fill="rgba(192,57,43,0.12)" stroke="#c0392b" stroke-width="2"/>
+  <text x="490" y="445" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">触发规则 → 降低理智值</text>
+  <text x="490" y="465" fill="#d0cce0" font-size="11" text-anchor="middle">人类日常言行触发隐藏规则 → T1:-3 / T2:-2 / T3:-1 理智</text>
+  <text x="490" y="485" fill="rgba(255,255,255,0.4)" font-size="10" text-anchor="middle">持续状态类规则：回合结束若未矫正 → -2</text>
+
+  <!-- Ghost story (step 1 each turn) -->
+  <rect x="320" y="510" width="340" height="40" rx="4" fill="rgba(192,57,43,0.08)" stroke="#c0392b" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="490" y="528" fill="#c0392b" font-size="10" text-anchor="middle">每回合步骤1: AI市长讲述故事(30-60秒) → 故事嵌入规则线索 → 诱导推理</text>
+  <text x="490" y="544" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">人类可宣言推理规则 | 鬼无法干涉市长叙事</text>
+  <line x1="490" y1="495" x2="490" y2="508" stroke="#c0392b" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <!-- ===== Ghost also has whispers! ===== -->
+  <line x1="490" y1="552" x2="490" y2="585" stroke="#c0392b" stroke-width="2" marker-end="url(#bg)"/>
+
+  <rect x="180" y="590" width="620" height="105" rx="6" fill="rgba(192,57,43,0.1)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="490" y="615" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">激活怪谈卡（强化杀戮）— 完整生命周期</text>
+  <text x="490" y="637" fill="#d0cce0" font-size="11" text-anchor="middle">① 全部36张共处共享牌池(初始未激活) → ② 满足激活条件 → ③ 移入全局共享池</text>
+  <text x="490" y="657" fill="#d0cce0" font-size="11" text-anchor="middle">④ 任何鬼均可发动 → ⑤ 效果结算(数值类堆叠/其余弃牌) → ⑥ 使用后进入弃牌堆</text>
+  <text x="490" y="679" fill="rgba(255,255,255,0.4)" font-size="10" text-anchor="middle">流言(16张·轻微) → 异常(10张·中等) → 怪诞(6张·强力) → 灾厄(4张·终极) | 已激活/未激活应显著区分</text>
+
+  <!-- Whispers detail -->
+  <rect x="60" y="710" width="180" height="40" rx="4" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.12)" stroke-width="1"/>
+  <text x="150" y="728" fill="#c0392b" font-size="9" font-weight="600" text-anchor="middle">流言 (16种)</text>
+  <text x="150" y="744" fill="rgba(255,255,255,0.4)" font-size="8" text-anchor="middle">轻微影响+信息扰动</text>
+
+  <rect x="260" y="710" width="180" height="40" rx="4" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.12)" stroke-width="1"/>
+  <text x="350" y="728" fill="#c0392b" font-size="9" font-weight="600" text-anchor="middle">异常 (10种)</text>
+  <text x="350" y="744" fill="rgba(255,255,255,0.4)" font-size="8" text-anchor="middle">中等压迫+数值打击</text>
+
+  <rect x="460" y="710" width="180" height="40" rx="4" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.12)" stroke-width="1"/>
+  <text x="550" y="728" fill="#c0392b" font-size="9" font-weight="600" text-anchor="middle">怪诞 (6种)</text>
+  <text x="550" y="744" fill="rgba(255,255,255,0.4)" font-size="8" text-anchor="middle">强力扭曲+战局改变</text>
+
+  <rect x="660" y="710" width="180" height="40" rx="4" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.12)" stroke-width="1"/>
+  <text x="750" y="728" fill="#c0392b" font-size="9" font-weight="600" text-anchor="middle">灾厄 (4种)</text>
+  <text x="750" y="744" fill="rgba(255,255,255,0.4)" font-size="8" text-anchor="middle">终极压制+不可逆伤害</text>
+
+  <!-- Arrow to result -->
+  <path d="M490,695 L490,760" stroke="#c0392b" stroke-width="2.5" marker-end="url(#bg)"/>
+
+  <!-- DECISION: Sanity threshold -->
+  <polygon points="490,770 640,835 490,900 340,835" fill="rgba(192,57,43,0.2)" stroke="#c0392b" stroke-width="2.5"/>
+  <text x="490" y="825" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">理智值 ≤ 0 ?</text>
+  <text x="490" y="845" fill="rgba(255,255,255,0.5)" font-size="10" text-anchor="middle">回合结束统一结算</text>
+
+  <!-- NO: continue + convert others -->
+  <path d="M340,835 L230,835 L230,420 L178,420" stroke="#c0392b" stroke-width="2" fill="none" stroke-dasharray="8 4" marker-end="url(#bg)"/>
+  <text x="220" y="650" fill="#c0392b" font-size="10" font-weight="600" transform="rotate(-90,220,650)" text-anchor="middle">理智>0 → 继续循环</text>
+
+  <!-- YES: CONVERT -->
+  <path d="M640,835 L770,835" stroke="#c0392b" stroke-width="3" marker-end="url(#bg)"/>
+  <text x="705" y="823" fill="#c0392b" font-size="11" font-weight="700">是！</text>
+
+  <rect x="772" y="800" width="220" height="70" rx="8" fill="rgba(192,57,43,0.25)" stroke="#c0392b" stroke-width="2.5"/>
+  <text x="882" y="825" fill="#c0392b" font-size="14" font-weight="700" text-anchor="middle">被同化为恶鬼</text>
+  <text x="882" y="845" fill="#d0cce0" font-size="10" text-anchor="middle">加入鬼阵营 → 共享怪谈牌池</text>
+  <text x="882" y="862" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">触发C-不屈: 剩余人类各抽1张反击卡</text>
+
+  <!-- More ghosts = stronger -->
+  <line x1="882" y1="870" x2="882" y2="910" stroke="#c0392b" stroke-width="2" marker-end="url(#bg)"/>
+
+  <rect x="720" y="915" width="325" height="60" rx="6" fill="rgba(192,57,43,0.18)" stroke="#c0392b" stroke-width="2"/>
+  <text x="882" y="938" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">鬼数量增加 → 压力加速上升</text>
+  <text x="882" y="958" fill="#d0cce0" font-size="10" text-anchor="middle">更多鬼 → 更多监视压力 → 更难避开规则 → 更易触犯</text>
+  <text x="882" y="972" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">恶性循环加速</text>
+
+  <!-- Loop back to rules section -->
+  <path d="M720,945 L660,945 L660,460 L618,460" stroke="#c0392b" stroke-width="2.5" fill="none" stroke-dasharray="8 4" marker-end="url(#bg)"/>
+  <text x="650" y="710" fill="#c0392b" font-size="10" font-weight="600" transform="rotate(-90,650,710)" text-anchor="middle">更多鬼触发更多规则触犯机会</text>
+
+  <!-- Right: death path -->
+  <rect x="772" y="995" width="220" height="50" rx="6" fill="rgba(155,155,155,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  <text x="882" y="1017" fill="#d0cce0" font-size="11" font-weight="600" text-anchor="middle">健康值≤0 → 直接死亡</text>
+  <text x="882" y="1035" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">退出游戏 · 也触发C-不屈</text>
+
+  <!-- End condition -->
+  <line x1="882" y1="1045" x2="882" y2="1070" stroke="rgba(255,255,255,0.3)" stroke-width="2" marker-end="url(#b)"/>
+  <rect x="730" y="1073" width="305" height="30" rx="5" fill="rgba(192,57,43,0.1)" stroke="#c0392b" stroke-width="1"/>
+  <text x="882" y="1093" fill="#c0392b" font-size="11" font-weight="600" text-anchor="middle">全部人类化鬼/死亡 → 鬼阵营胜利</text>
+</svg>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 3: 宣言质询博弈 -->
+<!-- ============================================================ -->
+<div class="tab-panel" data-panel="3">
+  <div class="panel-title">图四：宣言 · 质询博弈链</div>
+  <p class="panel-desc">人类的两大反击武器——宣言抹除规则的完整流程、质询鬼违规的判定链路，以及各自的成本 / 收益 / 奖励机制</p>
+  <div class="svg-container">
+<svg viewBox="0 0 1100 1050" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="rgba(255,255,255,0.5)"/></marker>
+    <marker id="ch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#27ae60"/></marker>
+    <marker id="cg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#c0392b"/></marker>
+  </defs>
+  <pattern id="g4" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/></pattern>
+  <rect width="1100" height="1050" fill="url(#g4)"/>
+
+  <!-- Title -->
+  <text x="550" y="35" fill="#fff" font-size="18" font-weight="700" text-anchor="middle">步骤4：自由行动 — 宣言 + 质询 两条博弈线</text>
+
+  <!-- LEFT HALF: 宣言 -->
+  <rect x="30" y="55" width="510" height="965" rx="10" fill="rgba(39,174,96,0.04)" stroke="rgba(39,174,96,0.2)" stroke-width="1.5"/>
+  <text x="285" y="82" fill="#27ae60" font-size="15" font-weight="700" text-anchor="middle">宣言抹除规则</text>
+
+  <rect x="80" y="100" width="410" height="48" rx="24" fill="rgba(39,174,96,0.2)" stroke="#27ae60" stroke-width="2"/>
+  <text x="285" y="130" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">玩家宣言某条隐藏规则内容</text>
+
+  <line x1="285" y1="148" x2="285" y2="185" stroke="#27ae60" stroke-width="2" marker-end="url(#ch)"/>
+
+  <polygon points="285,195 405,255 285,315 165,255" fill="rgba(91,124,176,0.2)" stroke="#5B7CB0" stroke-width="2"/>
+  <text x="285" y="248" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">市长(AI)判定</text>
+  <text x="285" y="265" fill="#fff" font-size="11" text-anchor="middle">猜对 或 猜错？</text>
+
+  <!-- RIGHT: 猜对 -->
+  <path d="M405,255 L500,255" stroke="#27ae60" stroke-width="2.5" marker-end="url(#ch)"/>
+  <text x="452" y="243" fill="#27ae60" font-size="11" font-weight="700">猜对</text>
+
+  <rect x="60" y="230" width="200" height="50" rx="6" fill="rgba(39,174,96,0.15)" stroke="#27ae60" stroke-width="2"/>
+  <text x="160" y="252" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">鬼拿出规则卡 → 朗读</text>
+  <text x="160" y="272" fill="#d0cce0" font-size="10" text-anchor="middle">→ 置于「被抹除规则」区</text>
+
+  <line x1="160" y1="280" x2="160" y2="315" stroke="#27ae60" stroke-width="2" marker-end="url(#ch)"/>
+
+  <!-- Result: rule removed -->
+  <rect x="60" y="320" width="200" height="55" rx="6" fill="rgba(39,174,96,0.12)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="160" y="343" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">人类阵营进度+1</text>
+  <text x="160" y="363" fill="#d0cce0" font-size="10" text-anchor="middle">全部隐藏规则抹除 → 人类胜利</text>
+
+  <!-- D-智慧 -->
+  <rect x="60" y="395" width="200" height="45" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="160" y="414" fill="#27ae60" font-size="10" font-weight="600" text-anchor="middle">D-智慧获取: 宣言成功达</text>
+  <text x="160" y="430" fill="#d0cce0" font-size="9" text-anchor="middle">2/4/6次 → 各抽1张反击卡</text>
+
+  <line x1="160" y1="375" x2="160" y2="393" stroke="#27ae60" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <!-- LEFT: 猜错 -->
+  <path d="M165,255 L80,255" stroke="#c0392b" stroke-width="2.5" marker-end="url(#cg)"/>
+  <text x="122" y="243" fill="#c0392b" font-size="11" font-weight="700">猜错</text>
+
+  <rect x="60" y="480" width="200" height="45" rx="6" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="2"/>
+  <text x="160" y="502" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">宣言者理智值 -1</text>
+  <text x="160" y="518" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">公开规则不可宣言抹除</text>
+
+  <path d="M285,315 L285,350 L160,350 L160,478" stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#cg)"/>
+
+  <!-- Notes -->
+  <rect x="60" y="550" width="440" height="120" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="80" y="572" fill="#d0cce0" font-size="10" font-weight="600">关键规则：</text>
+  <text x="80" y="594" fill="rgba(255,255,255,0.6)" font-size="10">• 每位回合玩家每回合可宣言 1 次</text>
+  <text x="80" y="614" fill="rgba(255,255,255,0.6)" font-size="10">• 公开规则（特殊规则+鬼公开宣言的规则）不可被宣言抹除</text>
+  <text x="80" y="634" fill="rgba(255,255,255,0.6)" font-size="10">• 隐藏规则第1天才开始生效，第0天不可宣言</text>
+  <text x="80" y="654" fill="rgba(255,255,255,0.6)" font-size="10">• D-智慧每人最多3次机会（2/4/6次各1次）</text>
+
+  <!-- === RIGHT HALF: 质询 === -->
+  <rect x="560" y="55" width="510" height="965" rx="10" fill="rgba(192,57,43,0.04)" stroke="rgba(192,57,43,0.2)" stroke-width="1.5"/>
+  <text x="815" y="82" fill="#c0392b" font-size="15" font-weight="700" text-anchor="middle">质询鬼</text>
+
+  <rect x="610" y="100" width="410" height="48" rx="24" fill="rgba(192,57,43,0.2)" stroke="#c0392b" stroke-width="2"/>
+  <text x="815" y="130" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">玩家怀疑鬼在某时刻违反了规则</text>
+
+  <line x1="815" y1="148" x2="815" y2="185" stroke="#c0392b" stroke-width="2" marker-end="url(#cg)"/>
+
+  <polygon points="815,195 935,255 815,315 695,255" fill="rgba(91,124,176,0.2)" stroke="#5B7CB0" stroke-width="2"/>
+  <text x="815" y="248" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">市长(AI)判定</text>
+  <text x="815" y="265" fill="#fff" font-size="11" text-anchor="middle">成立 或 不成立？</text>
+
+  <!-- RIGHT: 成立 -->
+  <path d="M935,255 L1030,255" stroke="#27ae60" stroke-width="2.5" marker-end="url(#ch)"/>
+  <text x="982" y="243" fill="#27ae60" font-size="11" font-weight="700">成立</text>
+
+  <rect x="590" y="230" width="200" height="65" rx="6" fill="rgba(39,174,96,0.12)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="690" y="252" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">鬼受到额外伤害</text>
+  <text x="690" y="272" fill="#d0cce0" font-size="10" text-anchor="middle">+ 质询者获得1次免费宣言</text>
+  <text x="690" y="290" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">（猜错不扣理智）</text>
+
+  <line x1="690" y1="295" x2="690" y2="325" stroke="#27ae60" stroke-width="1.5" marker-end="url(#ch)"/>
+
+  <!-- E-奖赏 -->
+  <rect x="590" y="328" width="200" height="45" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="690" y="347" fill="#27ae60" font-size="10" font-weight="600" text-anchor="middle">E-奖赏获取: 质询成功</text>
+  <text x="690" y="363" fill="#d0cce0" font-size="9" text-anchor="middle">抽1张事件卡 或 物资卡</text>
+
+  <!-- LEFT: 不成立 -->
+  <path d="M695,255 L590,255" stroke="#c0392b" stroke-width="2.5" marker-end="url(#cg)"/>
+  <text x="642" y="243" fill="#c0392b" font-size="11" font-weight="700">不成立</text>
+
+  <rect x="590" y="410" width="200" height="45" rx="6" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="2"/>
+  <text x="690" y="432" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">质询者理智值 -1</text>
+  <text x="690" y="448" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">质询不消耗宣言次数</text>
+
+  <path d="M815,315 L815,370 L690,370 L690,408" stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#cg)"/>
+
+  <!-- Notes -->
+  <rect x="590" y="480" width="440" height="140" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="610" y="502" fill="#d0cce0" font-size="10" font-weight="600">关键规则：</text>
+  <text x="610" y="524" fill="rgba(255,255,255,0.6)" font-size="10">• 每位回合玩家每回合可质询 1 次</text>
+  <text x="610" y="544" fill="rgba(255,255,255,0.6)" font-size="10">• 可质询范围：公开规则 + 隐藏规则 均可质询</text>
+  <text x="610" y="564" fill="rgba(255,255,255,0.6)" font-size="10">• 公开规则中的特殊规则：鬼也须遵守人类可质询</text>
+  <text x="610" y="584" fill="rgba(255,255,255,0.6)" font-size="10">• 宣言和质询次数分开计算（各1次/回合）</text>
+  <text x="610" y="604" fill="rgba(255,255,255,0.6)" font-size="10">• 先后顺序由玩家自行决定</text>
+
+  <!-- Common: Both lead to sanity drain on failure -->
+  <rect x="200" y="700" width="700" height="50" rx="6" fill="rgba(192,57,43,0.08)" stroke="#c0392b" stroke-width="1" stroke-dasharray="6 3"/>
+  <text x="550" y="720" fill="#c0392b" font-size="12" font-weight="600" text-anchor="middle">两大反击武器的共同代价: 失败 → 理智-1</text>
+  <text x="550" y="740" fill="rgba(255,255,255,0.5)" font-size="10" text-anchor="middle">这是「惩罚驱动」设计哲学的体现 —— 博弈本身有风险</text>
+
+  <!-- Bottom: Summary table -->
+  <rect x="200" y="770" width="700" height="130" rx="8" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <text x="550" y="795" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">宣言 vs 质询 对比</text>
+
+  <line x1="550" y1="805" x2="550" y2="840" stroke="#27ae60" stroke-width="1"/>
+  <line x1="550" y1="840" x2="550" y2="890" stroke="#c0392b" stroke-width="1"/>
+
+  <text x="300" y="822" fill="#27ae60" font-size="11" font-weight="600" text-anchor="middle">宣言抹除规则</text>
+  <text x="300" y="858" fill="#d0cce0" font-size="10" text-anchor="middle">目标: 隐藏规则 | 成功: 规则被抹除 + D-智慧</text>
+  <text x="300" y="878" fill="#d0cce0" font-size="10" text-anchor="middle">失败: 理智-1 | 限制: 公开规则不可宣言</text>
+
+  <text x="800" y="822" fill="#c0392b" font-size="11" font-weight="600" text-anchor="middle">质询鬼</text>
+  <text x="800" y="858" fill="#d0cce0" font-size="10" text-anchor="middle">目标: 鬼违规行为 | 成功: 鬼受伤害 + 免费宣言 + E-奖赏</text>
+  <text x="800" y="878" fill="#d0cce0" font-size="10" text-anchor="middle">失败: 理智-1 | 范围: 公开+隐藏规则均可</text>
+
+  <!-- Edge cases -->
+  <rect x="200" y="920" width="700" height="70" rx="6" fill="rgba(200,146,62,0.06)" stroke="rgba(200,146,62,0.12)" stroke-width="1"/>
+  <text x="550" y="942" fill="#C8923E" font-size="11" font-weight="600" text-anchor="middle">边缘情形</text>
+  <text x="550" y="962" fill="rgba(255,255,255,0.6)" font-size="10" text-anchor="middle">• 宣言次数和质询次数分开独立计算（各1次/回合，互不占用）</text>
+  <text x="550" y="980" fill="rgba(255,255,255,0.6)" font-size="10" text-anchor="middle">• 质询成功后获得的"免费宣言"不占用宣言次数，且猜错不扣理智</text>
+</svg>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 4: 双维生死判定 -->
+<!-- ============================================================ -->
+<div class="tab-panel" data-panel="4">
+  <div class="panel-title">图五：双维属性 · 生死判定流程</div>
+  <p class="panel-desc">健康值/理智值的全部扣减来源、恢复途径、抢救窗口、以及两条独立的淘汰路径：健康≤0死亡 vs 理智≤0化鬼</p>
+  <div class="svg-container">
+<svg viewBox="0 0 1100 1100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="rgba(255,255,255,0.5)"/></marker>
+    <marker id="dh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#27ae60"/></marker>
+    <marker id="dg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#c0392b"/></marker>
+    <marker id="da" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#C8923E"/></marker>
+  </defs>
+  <pattern id="g5" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/></pattern>
+  <rect width="1100" height="1100" fill="url(#g5)"/>
+
+  <!-- Title row -->
+  <text x="300" y="35" fill="#C8923E" font-size="18" font-weight="700" text-anchor="middle">健康值</text>
+  <line x1="550" y1="10" x2="550" y2="45" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="800" y="35" fill="#5B7CB0" font-size="18" font-weight="700" text-anchor="middle">理智值</text>
+
+  <!-- === HEALTH VALUE (LEFT) === -->
+  <rect x="30" y="55" width="510" height="860" rx="10" fill="rgba(200,146,62,0.04)" stroke="rgba(200,146,62,0.15)" stroke-width="1.5"/>
+
+  <!-- Decrease sources -->
+  <text x="285" y="80" fill="#C8923E" font-size="13" font-weight="700" text-anchor="middle">扣减来源</text>
+
+  <rect x="55" y="95" width="220" height="45" rx="5" fill="rgba(200,146,62,0.1)" stroke="#C8923E" stroke-width="1"/>
+  <text x="165" y="113" fill="#C8923E" font-size="10" font-weight="600" text-anchor="middle">黎明递增扣除（自动）</text>
+  <text x="165" y="130" fill="#d0cce0" font-size="9" text-anchor="middle">D1:-1  D2:-2  D3+:-3(封顶)</text>
+
+  <rect x="295" y="95" width="220" height="45" rx="5" fill="rgba(200,146,62,0.1)" stroke="#C8923E" stroke-width="1"/>
+  <text x="405" y="113" fill="#C8923E" font-size="10" font-weight="600" text-anchor="middle">地图探索cost（主动）</text>
+  <text x="405" y="130" fill="#d0cce0" font-size="9" text-anchor="middle">每次探索: 健康-1</text>
+
+  <rect x="55" y="155" width="220" height="45" rx="5" fill="rgba(200,146,62,0.1)" stroke="#C8923E" stroke-width="1"/>
+  <text x="165" y="173" fill="#C8923E" font-size="10" font-weight="600" text-anchor="middle">怪谈/反击卡效果</text>
+  <text x="165" y="190" fill="#d0cce0" font-size="9" text-anchor="middle">部分卡牌cost扣健康</text>
+
+  <rect x="295" y="155" width="220" height="45" rx="5" fill="rgba(200,146,62,0.1)" stroke="#C8923E" stroke-width="1"/>
+  <text x="405" y="173" fill="#C8923E" font-size="10" font-weight="600" text-anchor="middle">特殊规则(公开)</text>
+  <text x="405" y="190" fill="#d0cce0" font-size="9" text-anchor="middle">地点绑定·公开即生效</text>
+
+  <!-- Recover sources -->
+  <text x="285" y="230" fill="#27ae60" font-size="13" font-weight="700" text-anchor="middle">恢复途径</text>
+
+  <rect x="55" y="245" width="142" height="55" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1"/>
+  <text x="126" y="265" fill="#27ae60" font-size="9" font-weight="600" text-anchor="middle">官方补给</text>
+  <text x="126" y="283" fill="#d0cce0" font-size="8" text-anchor="middle">保障餐A:+1</text>
+  <text x="126" y="295" fill="rgba(255,255,255,0.4)" font-size="7" text-anchor="middle">库存18张</text>
+
+  <rect x="215" y="245" width="142" height="55" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1"/>
+  <text x="286" y="265" fill="#27ae60" font-size="9" font-weight="600" text-anchor="middle">普通物资</text>
+  <text x="286" y="283" fill="#d0cce0" font-size="8" text-anchor="middle">面包泡面等:+1</text>
+  <text x="286" y="295" fill="rgba(255,255,255,0.4)" font-size="7" text-anchor="middle">7种34张</text>
+
+  <rect x="375" y="245" width="142" height="55" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1"/>
+  <text x="446" y="265" fill="#27ae60" font-size="9" font-weight="600" text-anchor="middle">中高级物资</text>
+  <text x="446" y="283" fill="#d0cce0" font-size="8" text-anchor="middle">+2至+5</text>
+  <text x="446" y="295" fill="rgba(255,255,255,0.4)" font-size="7" text-anchor="middle">6+3+3种</text>
+
+  <rect x="55" y="315" width="225" height="30" rx="3" fill="rgba(39,174,96,0.05)" stroke="rgba(39,174,96,0.1)" stroke-width="1"/>
+  <text x="167" y="335" fill="#d0cce0" font-size="9" text-anchor="middle">反击卡: 强壮(+1上限+1) 突破(+1上限+1)</text>
+
+  <rect x="295" y="315" width="222" height="30" rx="3" fill="rgba(39,174,96,0.05)" stroke="rgba(39,174,96,0.1)" stroke-width="1"/>
+  <text x="406" y="335" fill="#d0cce0" font-size="9" text-anchor="middle">绝顶物资: 龙胆风髓+5 / 筑基丹双维+4</text>
+
+  <!-- Flow: decrease → judge -->
+  <path d="M165,200 L165,243" stroke="#C8923E" stroke-width="1.5" marker-end="url(#da)"/>
+  <path d="M405,200 L405,243" stroke="#C8923E" stroke-width="1.5" marker-end="url(#da)"/>
+
+  <!-- Judgment arrow -->
+  <path d="M285,355 L285,395" stroke="#C8923E" stroke-width="2.5" marker-end="url(#da)"/>
+
+  <!-- DECISION DIAMOND -->
+  <polygon points="285,405 415,470 285,535 155,470" fill="rgba(200,146,62,0.2)" stroke="#C8923E" stroke-width="2.5"/>
+  <text x="285" y="462" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">健康值</text>
+  <text x="285" y="482" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">≤ 0 ?</text>
+
+  <!-- LEFT: Death -->
+  <path d="M155,470 L80,470" stroke="#c0392b" stroke-width="3" marker-end="url(#dg)"/>
+  <text x="117" y="458" fill="#c0392b" font-size="12" font-weight="700">是</text>
+
+  <rect x="55" y="435" width="80" height="70" rx="6" fill="rgba(192,57,43,0.2)" stroke="#c0392b" stroke-width="2.5"/>
+  <text x="95" y="462" fill="#c0392b" font-size="13" font-weight="700" text-anchor="middle">死亡</text>
+  <text x="95" y="484" fill="#d0cce0" font-size="9" text-anchor="middle">退出</text>
+  <text x="95" y="500" fill="#d0cce0" font-size="9" text-anchor="middle">游戏</text>
+
+  <!-- RIGHT: Alive -->
+  <path d="M415,470 L490,470" stroke="#27ae60" stroke-width="2.5" marker-end="url(#dh)"/>
+  <text x="452" y="458" fill="#27ae60" font-size="12" font-weight="700">否</text>
+
+  <rect x="490" y="443" width="25" height="54" rx="4" fill="rgba(39,174,96,0.1)" stroke="#27ae60" stroke-width="1"/>
+
+  <!-- === SANITY VALUE (RIGHT) === -->
+  <rect x="560" y="55" width="510" height="860" rx="10" fill="rgba(91,124,176,0.04)" stroke="rgba(91,124,176,0.15)" stroke-width="1.5"/>
+
+  <!-- Decrease sources -->
+  <text x="815" y="80" fill="#5B7CB0" font-size="13" font-weight="700" text-anchor="middle">扣减来源</text>
+
+  <rect x="585" y="95" width="220" height="45" rx="5" fill="rgba(91,124,176,0.1)" stroke="#5B7CB0" stroke-width="1"/>
+  <text x="695" y="113" fill="#5B7CB0" font-size="10" font-weight="600" text-anchor="middle">触犯隐藏规则（自动）</text>
+  <text x="695" y="130" fill="#d0cce0" font-size="9" text-anchor="middle">T1:-3  T2:-2  T3:-1</text>
+
+  <rect x="825" y="95" width="220" height="45" rx="5" fill="rgba(91,124,176,0.1)" stroke="#5B7CB0" stroke-width="1"/>
+  <text x="935" y="113" fill="#5B7CB0" font-size="10" font-weight="600" text-anchor="middle">宣言猜错（主动风险）</text>
+  <text x="935" y="130" fill="#d0cce0" font-size="9" text-anchor="middle">每次宣言猜错: -1</text>
+
+  <rect x="585" y="155" width="220" height="45" rx="5" fill="rgba(91,124,176,0.1)" stroke="#5B7CB0" stroke-width="1"/>
+  <text x="695" y="173" fill="#5B7CB0" font-size="10" font-weight="600" text-anchor="middle">质询不成立（主动风险）</text>
+  <text x="695" y="190" fill="#d0cce0" font-size="9" text-anchor="middle">每次质询不成立: -1</text>
+
+  <rect x="825" y="155" width="220" height="45" rx="5" fill="rgba(91,124,176,0.1)" stroke="#5B7CB0" stroke-width="1"/>
+  <text x="935" y="173" fill="#5B7CB0" font-size="10" font-weight="600" text-anchor="middle">撞鬼（探索）</text>
+  <text x="935" y="190" fill="#d0cce0" font-size="9" text-anchor="middle">回合玩家撞鬼: -1</text>
+
+  <rect x="585" y="215" width="220" height="30" rx="3" fill="rgba(192,57,43,0.08)" stroke="rgba(192,57,43,0.12)" stroke-width="1"/>
+  <text x="695" y="235" fill="#c0392b" font-size="9" text-anchor="middle">怪谈卡效果: 部分怪谈直扣理智</text>
+
+  <rect x="825" y="215" width="220" height="30" rx="3" fill="rgba(192,57,43,0.08)" stroke="rgba(192,57,43,0.12)" stroke-width="1"/>
+  <text x="935" y="235" fill="#c0392b" font-size="9" text-anchor="middle">持续状态规则: 回合结束-2</text>
+
+  <!-- Recover sources -->
+  <text x="815" y="275" fill="#27ae60" font-size="13" font-weight="700" text-anchor="middle">恢复途径</text>
+
+  <rect x="585" y="290" width="142" height="55" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1"/>
+  <text x="656" y="310" fill="#27ae60" font-size="9" font-weight="600" text-anchor="middle">官方补给</text>
+  <text x="656" y="328" fill="#d0cce0" font-size="8" text-anchor="middle">保障餐A:+1</text>
+  <text x="656" y="340" fill="rgba(255,255,255,0.4)" font-size="7" text-anchor="middle">库存18张</text>
+
+  <rect x="745" y="290" width="142" height="55" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1"/>
+  <text x="816" y="310" fill="#27ae60" font-size="9" font-weight="600" text-anchor="middle">水类物资</text>
+  <text x="816" y="328" fill="#d0cce0" font-size="8" text-anchor="middle">可乐/豆汁:+1</text>
+  <text x="816" y="340" fill="rgba(255,255,255,0.4)" font-size="7" text-anchor="middle">中级:+2 高级:+3</text>
+
+  <rect x="905" y="290" width="142" height="55" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1"/>
+  <text x="976" y="310" fill="#27ae60" font-size="9" font-weight="600" text-anchor="middle">绝顶+反击卡</text>
+  <text x="976" y="328" fill="#d0cce0" font-size="8" text-anchor="middle">宫廷玉液酒:+5</text>
+  <text x="976" y="340" fill="rgba(255,255,255,0.4)" font-size="7" text-anchor="middle">振奋/突破+上限</text>
+
+  <rect x="585" y="358" width="462" height="30" rx="3" fill="rgba(39,174,96,0.05)" stroke="rgba(39,174,96,0.08)" stroke-width="1"/>
+  <text x="816" y="378" fill="#d0cce0" font-size="9" text-anchor="middle">注意：「逻辑严谨理科生」代价——宣言连击后 无法通过任何方式恢复理智值</text>
+
+  <!-- Judgment arrow -->
+  <path d="M815,393 L815,435" stroke="#5B7CB0" stroke-width="2.5" marker-end="url(#da)"/>
+
+  <!-- DECISION DIAMOND -->
+  <polygon points="815,445 945,510 815,575 685,510" fill="rgba(91,124,176,0.2)" stroke="#5B7CB0" stroke-width="2.5"/>
+  <text x="815" y="502" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">理智值</text>
+  <text x="815" y="522" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">≤ 0 ?</text>
+
+  <!-- LEFT: Alive -->
+  <path d="M685,510 L620,510" stroke="#27ae60" stroke-width="2.5" marker-end="url(#dh)"/>
+  <text x="652" y="498" fill="#27ae60" font-size="12" font-weight="700">否</text>
+
+  <rect x="595" y="483" width="25" height="54" rx="4" fill="rgba(39,174,96,0.1)" stroke="#27ae60" stroke-width="1"/>
+
+  <!-- RIGHT: Convert -->
+  <path d="M945,510 L1020,510" stroke="#c0392b" stroke-width="3" marker-end="url(#dg)"/>
+  <text x="982" y="498" fill="#c0392b" font-size="12" font-weight="700">是</text>
+
+  <rect x="1020" y="475" width="25" height="70" rx="4" fill="rgba(192,57,43,0.2)" stroke="#c0392b" stroke-width="2.5"/>
+
+  <!-- Bottom: common section -->
+  <rect x="55" y="560" width="990" height="100" rx="8" fill="rgba(39,174,96,0.06)" stroke="rgba(39,174,96,0.12)" stroke-width="1"/>
+  <text x="550" y="585" fill="#27ae60" font-size="13" font-weight="700" text-anchor="middle">抢救窗口机制</text>
+  <text x="550" y="608" fill="#d0cce0" font-size="11" text-anchor="middle">健康值和理智值均在回合结束统一结算——结算前通过交易/事件卡/物资恢复数值，可免于淘汰</text>
+  <text x="550" y="628" fill="d0cce0" font-size="11" text-anchor="middle">黎明扣除可降至负数但不立即死亡(结算时才判定) | 已结算淘汰不可逆转</text>
+  <text x="550" y="648" fill="rgba(255,255,255,0.4)" font-size="10" text-anchor="middle">递增黎明扣除对所有角色一视同仁 —— 上限越低者生存空间越小</text>
+
+  <!-- Role comparison -->
+  <rect x="55" y="680" width="990" height="160" rx="8" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="550" y="705" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">角色上限差异性</text>
+
+  <rect x="75" y="718" width="180" height="50" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1"/>
+  <text x="165" y="740" fill="#27ae60" font-size="10" font-weight="600" text-anchor="middle">标准人类</text>
+  <text x="165" y="758" fill="#d0cce0" font-size="9" text-anchor="middle">健康6→5(D1黎明-1)</text>
+
+  <rect x="275" y="718" width="180" height="50" rx="5" fill="rgba(39,174,96,0.08)" stroke="#27ae60" stroke-width="1"/>
+  <text x="365" y="740" fill="#27ae60" font-size="10" font-weight="600" text-anchor="middle">乐天派幸存者</text>
+  <text x="365" y="758" fill="#d0cce0" font-size="9" text-anchor="middle">上限7 开局6→D1-1: 5/7</text>
+
+  <rect x="475" y="718" width="180" height="50" rx="5" fill="rgba(192,57,43,0.08)" stroke="#c0392b" stroke-width="1"/>
+  <text x="565" y="740" fill="#c0392b" font-size="10" font-weight="600" text-anchor="middle">沉寂上班族·懦弱</text>
+  <text x="565" y="758" fill="#d0cce0" font-size="9" text-anchor="middle">上限4 满值→D1-1: 3/4</text>
+
+  <rect x="675" y="718" width="180" height="50" rx="5" fill="rgba(192,57,43,0.08)" stroke="#c0392b" stroke-width="1"/>
+  <text x="765" y="740" fill="#c0392b" font-size="10" font-weight="600" text-anchor="middle">豪门之后</text>
+  <text x="765" y="758" fill="#d0cce0" font-size="9" text-anchor="middle">上限3 不可突破 最脆弱</text>
+
+  <text x="550" y="800" fill="rgba(255,255,255,0.5)" font-size="10" text-anchor="middle">强壮(+1健康上限) 振奋(+1理智上限) 突破(双维上限各+1) — 可突破基础上限</text>
+  <text x="550" y="820" fill="#c0392b" font-size="10" text-anchor="middle">豪门之后「稚嫩之躯」: 上限3 不可通过任何方式突破 —— 包括事件卡增益</text>
+
+  <!-- Legend -->
+  <rect x="55" y="860" width="990" height="40" rx="6" fill="rgba(255,255,255,0.02)"/>
+  <rect x="75" y="875" width="10" height="10" rx="2" fill="rgba(192,57,43,0.3)" stroke="#c0392b" stroke-width="1"/>
+  <text x="92" y="885" fill="#d0cce0" font-size="9">淘汰路径</text>
+  <rect x="170" y="875" width="10" height="10" rx="2" fill="rgba(39,174,96,0.3)" stroke="#27ae60" stroke-width="1"/>
+  <text x="187" y="885" fill="#d0cce0" font-size="9">恢复途径</text>
+  <rect x="275" y="875" width="10" height="10" rx="2" fill="rgba(200,146,62,0.3)" stroke="#C8923E" stroke-width="1"/>
+  <text x="292" y="885" fill="#d0cce0" font-size="9">扣减来源</text>
+  <rect x="380" y="875" width="10" height="10" rx="2" fill="rgba(91,124,176,0.3)" stroke="#5B7CB0" stroke-width="1"/>
+  <text x="397" y="885" fill="#d0cce0" font-size="9">判定节点</text>
+</svg>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB 5: 地图探索全链路 -->
+<!-- ============================================================ -->
+<div class="tab-panel" data-panel="5">
+  <div class="panel-title">图六：地图探索全链路</div>
+  <p class="panel-desc">回合玩家选择地图探索后的完整流程——健康-1代价 → 选地点 → 三线并行处理（物资/事件/鬼）→ 撞鬼的分支处理</p>
+  <div class="svg-container">
+<svg viewBox="0 0 1100 1150" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="rgba(255,255,255,0.5)"/></marker>
+    <marker id="eh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#27ae60"/></marker>
+    <marker id="eg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#c0392b"/></marker>
+    <marker id="ea" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#C8923E"/></marker>
+    <marker id="et" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#4A90A4"/></marker>
+  </defs>
+  <pattern id="g6" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/></pattern>
+  <rect width="1100" height="1150" fill="url(#g6)"/>
+
+  <rect x="30" y="20" width="1040" height="1110" rx="10" fill="rgba(200,146,62,0.04)" stroke="rgba(200,146,62,0.15)" stroke-width="1"/>
+
+  <!-- START -->
+  <rect x="370" y="45" width="250" height="50" rx="25" fill="rgba(200,146,62,0.2)" stroke="#C8923E" stroke-width="2"/>
+  <text x="495" y="76" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">回合玩家选择「地图探索」</text>
+
+  <!-- Step 1: Cost -->
+  <line x1="495" y1="95" x2="495" y2="130" stroke="#C8923E" stroke-width="2" marker-end="url(#ea)"/>
+  <rect x="370" y="133" width="250" height="45" rx="6" fill="rgba(192,57,43,0.12)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="495" y="153" fill="#c0392b" font-size="12" font-weight="600" text-anchor="middle">代价: 健康值 -1</text>
+  <text x="495" y="170" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">健康≤0不可探索</text>
+
+  <!-- Step 2: Choose location -->
+  <line x1="495" y1="178" x2="495" y2="213" stroke="#C8923E" stroke-width="2" marker-end="url(#ea)"/>
+
+  <!-- 12 Locations grid -->
+  <rect x="55" y="218" width="880" height="100" rx="8" fill="rgba(74,144,164,0.06)" stroke="rgba(74,144,164,0.15)" stroke-width="1"/>
+  <text x="495" y="240" fill="#4A90A4" font-size="12" font-weight="700" text-anchor="middle">选择一个地点</text>
+
+  <rect x="75" y="253" width="120" height="28" rx="4" fill="rgba(74,144,164,0.1)" stroke="rgba(74,144,164,0.2)" stroke-width="1"/>
+  <text x="135" y="271" fill="#d0cce0" font-size="9" text-anchor="middle">东1: 医院</text>
+  <rect x="205" y="253" width="120" height="28" rx="4" fill="rgba(74,144,164,0.1)" stroke="rgba(74,144,164,0.2)" stroke-width="1"/>
+  <text x="265" y="271" fill="#d0cce0" font-size="9" text-anchor="middle">东2: 大学</text>
+  <rect x="335" y="253" width="120" height="28" rx="4" fill="rgba(74,144,164,0.1)" stroke="rgba(74,144,164,0.2)" stroke-width="1"/>
+  <text x="395" y="271" fill="#d0cce0" font-size="9" text-anchor="middle">东3: 酒吧</text>
+  <rect x="465" y="253" width="120" height="28" rx="4" fill="rgba(74,144,164,0.1)" stroke="rgba(74,144,164,0.2)" stroke-width="1"/>
+  <text x="525" y="271" fill="#d0cce0" font-size="9" text-anchor="middle">东4: 市图书馆</text>
+  <rect x="595" y="253" width="120" height="28" rx="4" fill="rgba(74,144,164,0.1)" stroke="rgba(74,144,164,0.2)" stroke-width="1"/>
+  <text x="655" y="271" fill="#d0cce0" font-size="9" text-anchor="middle">东5: 大厂写字楼</text>
+  <rect x="725" y="253" width="120" height="28" rx="4" fill="rgba(74,144,164,0.1)" stroke="rgba(74,144,164,0.2)" stroke-width="1"/>
+  <text x="785" y="271" fill="#d0cce0" font-size="9" text-anchor="middle">东6: 菜市场</text>
+
+  <rect x="75" y="286" width="120" height="25" rx="4" fill="rgba(74,144,164,0.07)" stroke="rgba(74,144,164,0.12)" stroke-width="1"/>
+  <text x="135" y="302" fill="#d0cce0" font-size="8" text-anchor="middle">西7: 大排档</text>
+  <rect x="205" y="286" width="120" height="25" rx="4" fill="rgba(74,144,164,0.07)" stroke="rgba(74,144,164,0.12)" stroke-width="1"/>
+  <text x="265" y="302" fill="#d0cce0" font-size="8" text-anchor="middle">西8: 羽毛球馆</text>
+  <rect x="335" y="286" width="120" height="25" rx="4" fill="rgba(74,144,164,0.07)" stroke="rgba(74,144,164,0.12)" stroke-width="1"/>
+  <text x="395" y="302" fill="#d0cce0" font-size="8" text-anchor="middle">西9: 市博物馆</text>
+  <rect x="465" y="286" width="120" height="25" rx="4" fill="rgba(74,144,164,0.07)" stroke="rgba(74,144,164,0.12)" stroke-width="1"/>
+  <text x="525" y="302" fill="#d0cce0" font-size="8" text-anchor="middle">西10: 商业步行街</text>
+  <rect x="595" y="286" width="120" height="25" rx="4" fill="rgba(74,144,164,0.07)" stroke="rgba(74,144,164,0.12)" stroke-width="1"/>
+  <text x="655" y="302" fill="#d0cce0" font-size="8" text-anchor="middle">西11: 网吧</text>
+  <rect x="725" y="286" width="120" height="25" rx="4" fill="rgba(74,144,164,0.07)" stroke="rgba(74,144,164,0.12)" stroke-width="1"/>
+  <text x="785" y="302" fill="#d0cce0" font-size="8" text-anchor="middle">西12: KTV</text>
+
+  <!-- Three parallel processes -->
+  <path d="M495,318 L495,350" stroke="#C8923E" stroke-width="2" marker-end="url(#ea)"/>
+
+  <rect x="390" y="353" width="210" height="35" rx="5" fill="rgba(74,144,164,0.15)" stroke="#4A90A4" stroke-width="1.5"/>
+  <text x="495" y="376" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">按第1天黎明设置依次处理</text>
+
+  <line x1="495" y1="388" x2="495" y2="415" stroke="#C8923E" stroke-width="2" marker-end="url(#ea)"/>
+
+  <!-- Three branches -->
+  <!-- Branch A: 物资 -->
+  <line x1="495" y1="420" x2="160" y2="420" stroke="#27ae60" stroke-width="2"/>
+  <line x1="160" y1="420" x2="160" y2="450" stroke="#27ae60" stroke-width="2" marker-end="url(#eh)"/>
+  <text x="327" y="412" fill="#27ae60" font-size="10" font-weight="600" text-anchor="middle">A</text>
+
+  <rect x="55" y="453" width="210" height="70" rx="6" fill="rgba(39,174,96,0.12)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="160" y="475" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">a. 物资获取</text>
+  <text x="160" y="495" fill="#d0cce0" font-size="10" text-anchor="middle">从物资牌库顶抽取该地点</text>
+  <text x="160" y="512" fill="#d0cce0" font-size="10" text-anchor="middle">设定的物资数量张物资卡</text>
+
+  <rect x="55" y="540" width="210" height="30" rx="3" fill="rgba(39,174,96,0.06)" stroke="rgba(39,174,96,0.1)" stroke-width="1"/>
+  <text x="160" y="560" fill="rgba(255,255,255,0.5)" font-size="9" text-anchor="middle">普通(34) 中级(18) 高级(8) 绝顶(3)</text>
+
+  <!-- Branch B: 事件 -->
+  <line x1="495" y1="420" x2="495" y2="453" stroke="#4A90A4" stroke-width="2" marker-end="url(#et)"/>
+  <text x="465" y="440" fill="#4A90A4" font-size="10" font-weight="600" text-anchor="middle">B</text>
+
+  <polygon points="495,460 610,510 495,560 380,510" fill="rgba(74,144,164,0.15)" stroke="#4A90A4" stroke-width="1.5"/>
+  <text x="495" y="518" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">含事件?</text>
+
+  <path d="M610,510 L680,510 L680,575" stroke="#4A90A4" stroke-width="2" fill="none" marker-end="url(#et)"/>
+  <text x="645" y="500" fill="#4A90A4" font-size="9" font-weight="700">是</text>
+
+  <rect x="580" y="578" width="200" height="55" rx="6" fill="rgba(39,174,96,0.12)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="680" y="600" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">b. 事件抽取</text>
+  <text x="680" y="618" fill="#d0cce0" font-size="9" text-anchor="middle">回合玩家从反击卡牌库顶</text>
+  <text x="680" y="632" fill="#d0cce0" font-size="9" text-anchor="middle">抽1张反击卡</text>
+
+  <path d="M380,510 L310,510 L310,555" stroke="#4A90A4" stroke-width="2" fill="none"/>
+  <text x="345" y="500" fill="#4A90A4" font-size="9" font-weight="700">否</text>
+  <text x="325" y="575" fill="rgba(255,255,255,0.3)" font-size="9">跳过</text>
+
+  <!-- Branch C: 鬼 -->
+  <line x1="495" y1="420" x2="830" y2="420" stroke="#c0392b" stroke-width="2"/>
+  <line x1="830" y1="420" x2="830" y2="453" stroke="#c0392b" stroke-width="2" marker-end="url(#eg)"/>
+  <text x="662" y="412" fill="#c0392b" font-size="10" font-weight="600" text-anchor="middle">C</text>
+
+  <polygon points="830,460 930,510 830,560 730,510" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="830" y="518" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">有鬼?</text>
+
+  <path d="M930,510 L1000,510 L1000,650" stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#eg)"/>
+  <text x="965" y="500" fill="#c0392b" font-size="9" font-weight="700">是</text>
+
+  <!-- GHOST ENCOUNTER detail -->
+  <rect x="720" y="578" width="330" height="35" rx="5" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="2"/>
+  <text x="885" y="600" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">c. 撞鬼处理 ⚠</text>
+
+  <line x1="885" y1="613" x2="885" y2="642" stroke="#c0392b" stroke-width="1.5" marker-end="url(#eg)"/>
+
+  <!-- Two sub-branches for ghost encounter -->
+  <rect x="720" y="645" width="160" height="55" rx="5" fill="rgba(39,174,96,0.1)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="800" y="666" fill="#27ae60" font-size="10" font-weight="600" text-anchor="middle">回合玩家撞鬼</text>
+  <text x="800" y="684" fill="#d0cce0" font-size="9" text-anchor="middle">理智-1 + 激活特殊规则</text>
+  <text x="800" y="698" fill="#27ae60" font-size="9" font-weight="600" text-anchor="middle">不被同化(主角保护)</text>
+
+  <rect x="900" y="645" width="150" height="55" rx="5" fill="rgba(192,57,43,0.1)" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="975" y="666" fill="#c0392b" font-size="10" font-weight="600" text-anchor="middle">非回合玩家撞鬼</text>
+  <text x="975" y="684" fill="#c0392b" font-size="9" text-anchor="middle">被同化→立刻化鬼</text>
+  <text x="975" y="698" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">无主角保护</text>
+
+  <!-- Special rule activation -->
+  <rect x="720" y="718" width="330" height="40" rx="4" fill="rgba(200,146,62,0.08)" stroke="rgba(200,146,62,0.15)" stroke-width="1"/>
+  <text x="885" y="736" fill="#C8923E" font-size="10" font-weight="600" text-anchor="middle">激活地点绑定特殊规则（2张）</text>
+  <text x="885" y="752" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">置于公开规则栏「仅对人类」分区 · 立刻生效</text>
+
+  <line x1="885" y1="700" x2="885" y2="716" stroke="#C8923E" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <path d="M730,510 L660,510 L660,555" stroke="#c0392b" stroke-width="2" fill="none"/>
+  <text x="695" y="500" fill="#c0392b" font-size="9" font-weight="700">否</text>
+  <text x="675" y="575" fill="rgba(255,255,255,0.3)" font-size="9">跳过</text>
+
+  <!-- All merge back -->
+  <path d="M160,570 L160,790 L495,790 L495,800" stroke="#C8923E" stroke-width="2" fill="none" marker-end="url(#ea)"/>
+  <path d="M680,633 L680,790 L495,790" stroke="#C8923E" stroke-width="2" fill="none"/>
+  <path d="M885,758 L885,790 L495,790" stroke="#C8923E" stroke-width="2" fill="none"/>
+
+  <!-- Step 3: Settlement -->
+  <rect x="340" y="803" width="310" height="45" rx="6" fill="rgba(200,146,62,0.15)" stroke="#C8923E" stroke-width="1.5"/>
+  <text x="495" y="823" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">结算物资 → 插入角色卡背面·下侧</text>
+  <text x="495" y="840" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="middle">永久不可移动</text>
+
+  <!-- End -->
+  <line x1="495" y1="848" x2="495" y2="885" stroke="#27ae60" stroke-width="2" marker-end="url(#eh)"/>
+  <rect x="370" y="888" width="250" height="38" rx="19" fill="rgba(39,174,96,0.15)" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="495" y="912" fill="#27ae60" font-size="12" font-weight="600" text-anchor="middle">进入步骤3: 结算物资</text>
+
+  <!-- Summary box -->
+  <rect x="55" y="940" width="990" height="100" rx="8" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="550" y="965" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">地图探索 vs 官方补给 对比</text>
+
+  <rect x="75" y="978" width="450" height="45" rx="5" fill="rgba(200,146,62,0.06)" stroke="rgba(200,146,62,0.1)" stroke-width="1"/>
+  <text x="300" y="998" fill="#C8923E" font-size="11" font-weight="600" text-anchor="middle">地图探索: 健康-1 → 可能获取中高级物资 → 可能撞鬼</text>
+  <text x="300" y="1016" fill="#d0cce0" font-size="10" text-anchor="middle">高风险 高回报 · 健康≤0不可选 · 物资牌库耗尽时洗切弃牌堆</text>
+
+  <rect x="545" y="978" width="480" height="45" rx="5" fill="rgba(91,124,176,0.06)" stroke="rgba(91,124,176,0.1)" stroke-width="1"/>
+  <text x="785" y="998" fill="#5B7CB0" font-size="11" font-weight="600" text-anchor="middle">官方补给: 抽3张保障餐A(健康+1/理智+1) → 18张库存用完即止</text>
+  <text x="785" y="1016" fill="#d0cce0" font-size="10" text-anchor="middle">低风险 低回报 · 牌库空不可选 · 每次最多拿到3张同款</text>
+</svg>
+  </div>
+</div>
+
+</div>  <!-- end main-area -->
+
+<div class="footer">
+  基于《黎明之后》设计稿 V1.9.2 完整版 · 6张精确流程线条图（叙事重构版） · 2026-07-06
+</div>
+
+<script>
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelector(`[data-panel="${btn.dataset.tab}"]`).classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡牌详情 — 黎明之后</title>
+<link rel="stylesheet" href="css/main.css?v=2026071017">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单"><span></span><span></span><span></span></button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container page-section" id="detailContent">
+  <p style="color:var(--text-muted);text-align:center;padding:100px 0;">加载中...</p>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+  </div>
+</footer>
+
+<script src="js/data.js?v=2026071017"></script>
+<script src="js/app.js?v=2026071017"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const id = getParam('id');
+  const type = getParam('type');
+
+  if (!id || !type) {
+    document.getElementById('detailContent').innerHTML =
+      '<p style="color:var(--text-muted);text-align:center;padding:100px 0;">未指定卡牌</p>';
+    return;
+  }
+
+  const cards = CARD_DB[type];
+  if (!cards) {
+    document.getElementById('detailContent').innerHTML =
+      '<p style="color:var(--text-muted);text-align:center;padding:100px 0;">卡牌类型不存在</p>';
+    return;
+  }
+
+  const card = cards.find(c => c.id === id);
+  if (!card) {
+    document.getElementById('detailContent').innerHTML =
+      '<p style="color:var(--text-muted);text-align:center;padding:100px 0;">卡牌未找到: ' + id + '</p>';
+    return;
+  }
+
+  const typeClass = TYPE_CSS_CLASS[type] || '';
+  const typeName = TYPE_MAP[type] || type;
+  const level = card.level || card.difficulty || card.category || '';
+  const levelInfo = LEVEL_MAP[level] || { cn: level, css: '' };
+
+  // Build detail sections based on card type
+  let sections = '';
+
+  if (type === 'whispers' || type === 'countermeasures') {
+    sections += buildSection('激活条件', card.activation_condition);
+    sections += buildSection('发动时机', card.trigger_condition);
+    sections += buildSection('效果', card.effect);
+    if (card.cost) sections += buildSection('代价', card.cost);
+  } else if (type === 'rules') {
+    sections += buildSection('规则文本', card.rule_text);
+    sections += buildSection('惩罚', card.penalty);
+    if (card.trigger_limit) sections += buildSection('触发限制', card.trigger_limit);
+  } else if (type === 'characters') {
+    sections += `
+      <div class="detail-section">
+        <h4>属性</h4>
+        <div class="content" style="display:flex;gap:var(--space-xl);">
+          <div><span style="color:var(--text-muted);">健康值</span> <strong style="color:var(--success);font-size:1.2rem;">${card.health}</strong></div>
+          <div><span style="color:var(--text-muted);">理智值</span> <strong style="color:var(--info);font-size:1.2rem;">${card.sanity}</strong></div>
+        </div>
+      </div>
+    `;
+    sections += buildSection('技能：' + (card.skill_name || ''), card.skill_effect);
+  } else if (type === 'personal_goals') {
+    sections += buildSection('目标', card.goal_text);
+    if (card.condition) sections += buildSection('达成条件', card.condition);
+  }
+
+  // Flavor
+  if (card.flavor) {
+    sections += buildSection('背景故事', card.flavor);
+  }
+
+  // Meta
+  sections += `
+    <div class="detail-section">
+      <h4>信息</h4>
+      <div class="content" style="font-size:0.85rem;color:var(--text-muted);">
+        <div>ID: ${card.id}</div>
+        <div>副本数量: ${card.copies || 1} 张</div>
+      </div>
+    </div>
+  `;
+
+  // Navigation
+  const cardIndex = cards.findIndex(c => c.id === id);
+  const prevCard = cardIndex > 0 ? cards[cardIndex - 1] : null;
+  const nextCard = cardIndex < cards.length - 1 ? cards[cardIndex + 1] : null;
+
+  let navHtml = '<div style="display:flex;justify-content:space-between;margin-top:var(--space-xl);">';
+  if (prevCard) {
+    navHtml += `<a href="card-detail.html?id=${prevCard.id}&type=${type}" class="btn btn-ghost">← ${prevCard.name}</a>`;
+  } else {
+    navHtml += '<span></span>';
+  }
+  if (nextCard) {
+    navHtml += `<a href="card-detail.html?id=${nextCard.id}&type=${type}" class="btn btn-ghost">${nextCard.name} →</a>`;
+  } else {
+    navHtml += '<span></span>';
+  }
+  navHtml += '</div>';
+
+  // Horizontal cards: rules & personal goals (2640×930)
+  const isHorizontal = type === 'rules' || type === 'personal_goals';
+  const imgBlock = isHorizontal
+    ? `<div class="card-img-wrap horizontal" style="max-width:600px;margin:0 auto var(--space-lg) auto;">
+        <img src="${getCardImagePath({...card, _type: type})}" 
+             alt="${card.name}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="img-placeholder" style="display:none;">
+          <span class="ph-icon">🃏</span>
+          <span class="ph-label">${typeName} · ${levelInfo.cn}</span>
+          <span class="ph-size">2640×930</span>
+        </div>
+      </div>`
+    : `<div style="float:right;width:220px;margin-left:var(--space-xl);margin-bottom:var(--space-md);">
+        <div class="card-img-wrap">
+          <img src="${getCardImagePath({...card, _type: type})}" 
+               alt="${card.name}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="img-placeholder" style="display:none;">
+            <span class="ph-icon">🃏</span>
+            <span class="ph-label">${typeName} · ${levelInfo.cn}</span>
+            <span class="ph-size">630×880</span>
+          </div>
+        </div>
+      </div>`;
+
+  document.getElementById('detailContent').innerHTML = `
+    <a href="cards.html" class="detail-back">← 返回卡牌图鉴</a>
+    ${isHorizontal ? imgBlock : ''}
+    <div class="detail-header">
+      ${isHorizontal ? '' : imgBlock}
+      <div style="display:flex;align-items:center;gap:var(--space-md);margin-bottom:var(--space-sm);flex-wrap:wrap;">
+        <h1>${card.name}</h1>
+        <span class="card-badge ${typeClass}">${typeName}</span>
+        ${levelInfo.cn ? `<span class="badge-rarity ${levelInfo.css}">${levelInfo.cn}</span>` : ''}
+      </div>
+    </div>
+    <div class="detail-grid">
+      ${sections}
+    </div>
+    ${navHtml}
+  `;
+});
+
+function buildSection(title, content) {
+  if (!content) return '';
+  return `
+    <div class="detail-section">
+      <h4>${title}</h4>
+      <div class="content">${content}</div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>

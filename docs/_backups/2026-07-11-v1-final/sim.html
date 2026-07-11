@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>机制模拟 — 黎明之后</title>
+<meta name="description" content="《黎明之后》游戏机制模拟：抽卡概率、规则推理、回合推演等机制的可视化模拟工具。">
+<link rel="stylesheet" href="css/main.css?v=2026071107">
+<style>
+.sim-hero {
+  text-align: center;
+  padding: var(--space-3xl) var(--space-lg);
+  background: var(--bg-deep);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.sim-hero h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+  background: linear-gradient(135deg, var(--color-rule-glow), var(--color-counter-glow));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.sim-hero p {
+  color: var(--text-secondary);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+.sim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.sim-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  transition: all var(--transition-base);
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}
+.sim-card:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.sim-card .sc-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-sm);
+}
+.sim-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+.sim-card p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.sim-card .sc-badge {
+  display: inline-block;
+  margin-top: var(--space-sm);
+  padding: 2px 10px;
+  border-radius: var(--radius-xl);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.sc-badge.ready { background: rgba(39,174,96,0.15); color: var(--color-goal-glow); }
+.sc-badge.soon { background: rgba(142,68,173,0.15); color: var(--color-character-glow); }
+
+/* sim-card internal pages use main.css only — no extra styles needed */
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">黎明<span>之后</span></a>
+    <button class="nav-toggle" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="cards.html">卡牌图鉴</a></li>
+      <li><a href="rules.html">规则</a></li>
+      <li><a href="designer.html">设计师对话</a></li>
+      <li><a href="sim.html">机制模拟</a></li>
+      <li><a href="#" class="drawer-trigger" onclick="openDrawer();return false">黎明论坛</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="sim-hero">
+  <h1>机制模拟</h1>
+  <p>探索《黎明之后》游戏机制的运作方式。抽卡概率、规则推理、回合推演——用数据和可视化理解游戏的内在逻辑。</p>
+</section>
+
+<section class="page-section">
+  <div class="container">
+    <div class="sim-grid">
+
+      <a href="randomizer.html" class="sim-card">
+        <div class="sc-icon">🎲</div>
+        <h3>随机抽卡器</h3>
+        <p>从完整的牌库中随机抽取卡牌，查看所有类型和等级的分布。</p>
+        <span class="sc-badge ready">已可用</span>
+      </a>
+
+      <a href="抽卡概率报告.html" class="sim-card">
+        <div class="sc-icon">📊</div>
+        <h3>抽卡概率报告</h3>
+        <p>各等级卡牌的抽取概率与分布统计，了解你抽到关键卡牌的可能性。</p>
+        <span class="sc-badge ready">已可用</span>
+      </a>
+
+      <a href="游戏流程图集.html" class="sim-card">
+        <div class="sc-icon">🔀</div>
+        <h3>游戏流程图集</h3>
+        <p>回合流转、规则判定、反击触发——全部机制以可视化流程图呈现。</p>
+        <span class="sc-badge ready">已可用</span>
+      </a>
+
+      <a href="ai-mayor.html" class="sim-card">
+        <div class="sc-icon">🏛️</div>
+        <h3>AI 市长</h3>
+        <p>AI 以末世书记官身份主持游戏：生成煞鬼故事、判定宣言、记录事件。</p>
+        <span class="sc-badge ready">已可用</span>
+      </a>
+
+      <div class="sim-card" style="opacity:0.5; cursor:default;">
+        <div class="sc-icon">🧪</div>
+        <h3>规则推理沙盒</h3>
+        <p>模拟怪谈规则环境，练习宣言推理与逻辑排除——即将推出。</p>
+        <span class="sc-badge soon">开发中</span>
+      </div>
+
+      <div class="sim-card" style="opacity:0.5; cursor:default;">
+        <div class="sc-icon">⚔️</div>
+        <h3>回合推演模拟器</h3>
+        <p>演练完整的12回合流程，测试不同策略路线的可行性——即将推出。</p>
+        <span class="sc-badge soon">开发中</span>
+      </div>
+
+      <div class="sim-card" style="opacity:0.5; cursor:default;">
+        <div class="sc-icon">📈</div>
+        <h3>牌池数据分析</h3>
+        <p>深入分析267张物理卡的数值平衡、获取机制概率与对局影响——即将推出。</p>
+        <span class="sc-badge soon">开发中</span>
+      </div>
+
+      <a href="stack-viz.html" class="sim-card">
+        <div class="sc-icon">📚</div>
+        <h3>堆叠可视化</h3>
+        <p>反击卡从右侧平行插入角色卡下方，每张等距露出25%数值栏，无上限堆叠。</p>
+        <span class="sc-badge ready">已可用</span>
+      </a>
+
+      <a href="map.html" class="sim-card">
+        <div class="sc-icon">🗺️</div>
+        <h3>A市地图</h3>
+        <p>末世A市全貌——12个地点，东西双区，探索路线与资源分布一目了然。</p>
+        <span class="sc-badge ready">已可用</span>
+      </a>
+
+      <a href="toolbox/rule-board.html" class="sim-card">
+        <div class="sc-icon">📋</div>
+        <h3>公开规则板</h3>
+        <p>五大规则区自由拖拽排列——市长主导，全员监督，宣言即合法。</p>
+        <span class="sc-badge ready">已可用</span>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <p>《黎明之后》— 规则怪谈 · 推理反击 社交派对游戏</p>
+    <p style="margin-top:4px;font-size:0.8rem;">项目版本 V2.0 · 六个图鉴全部竣工 · 267张物理卡</p>
+  </div>
+</footer>
+
+<!-- 黎明论坛 侧滑抽屉 -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer-panel" id="drawerPanel">
+  <div class="drawer-header">
+    <h3>黎明论坛</h3>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-footer-note">所有数据仅存储在本地浏览器 · 不会上传</div>
+</div>
+
+<script>
+function openDrawer() { renderDrawer();
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('drawerPanel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('drawerPanel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+/* ─── 角色数据（抽屉登录用） ─── */
+var CHARACTERS = [
+  { id:'ch_001', name:'乐天派幸存者', category:'命运操控者', health:7, sanity:7, img:'角色卡_命运操控者_乐天派幸存者.png' },
+  { id:'ch_002', name:'天生幸运儿', category:'命运操控者', health:6, sanity:6, img:'角色卡_命运操控者_天生幸运儿.png' },
+  { id:'ch_003', name:'倒霉体质者', category:'命运操控者', health:6, sanity:6, img:'角色卡_命运操控者_倒霉体质者.png' },
+  { id:'ch_004', name:'逻辑严谨理科生', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_逻辑严谨理科生.png' },
+  { id:'ch_005', name:'内向社恐大学生', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_内向社恐大学生.png' },
+  { id:'ch_006', name:'街道社区主任', category:'攻击者', health:6, sanity:6, img:'角色卡_攻击者_街道社区主任.png' },
+  { id:'ch_007', name:'灵异研究者', category:'情报型', health:6, sanity:6, img:'角色卡_情报型_灵异研究者.png' },
+  { id:'ch_008', name:'法医侦探', category:'情报型', health:6, sanity:7, img:'角色卡_情报型_法医侦探.png' },
+  { id:'ch_009', name:'沉寂的上班族', category:'自保型', health:6, sanity:6, img:'角色卡_自保型_沉寂的上班族.png' },
+  { id:'ch_010', name:'整顿末世零零后', category:'自保型', health:6, sanity:6, img:'角色卡_自保型_整顿末世零零后.png' },
+  { id:'ch_011', name:'豪门之后', category:'资源型', health:3, sanity:3, img:'角色卡_资源型_豪门之后.png' },
+  { id:'ch_012', name:'外卖单王', category:'资源型', health:5, sanity:6, img:'角色卡_资源型_外卖单王.png' }
+];
+
+var selectedCharacterId = null;
+
+function renderDrawer() {
+  var body = document.getElementById('drawerBody');
+  var session = localStorage.getItem('dawn_session');
+  if (!session) { body.innerHTML = getLoginHTML(); bindLoginEvents(); return; }
+  try { var data = JSON.parse(session); body.innerHTML = getSessionHTML(data); } catch(e) { body.innerHTML = getLoginHTML(); bindLoginEvents(); }
+}
+function getLoginHTML() {
+  return '<div class="drawer-tabs">'
+    + '<button class="drawer-tab mayor-tab active" data-dtab="mayor">🏛️ 市长</button>'
+    + '<button class="drawer-tab citizen-tab" data-dtab="citizen">👤 市民</button>'
+    + '</div>'
+    + '<div class="drawer-content active" id="dcontent-mayor">'
+    + '<div class="drawer-mayor-options">'
+    + '<button class="drawer-mayor-btn" onclick="drawerLoginMayor(\'real\')">'
+    + '<div class="d-icon real">🏛️</div><div class="d-info"><div class="d-title">真人市长登入</div><div class="d-desc">解锁工具箱 · 全图视野 · 牌库中枢</div></div><div class="d-arrow">→</div></button>'
+    + '<button class="drawer-mayor-btn ai-disabled" disabled>'
+    + '<div class="d-icon ai">🤖</div><div class="d-info"><div class="d-title">AI 市长登入</div><div class="d-desc">AI 接管故事生成与规则管理</div></div><div class="d-arrow">→</div><div class="drawer-badge">即将开放</div></button>'
+    + '</div></div>'
+    + '<div class="drawer-content" id="dcontent-citizen">'
+    + '<form class="drawer-form" onsubmit="return drawerLoginCitizen(event)">'
+    + '<div class="drawer-avatar-section"><div class="drawer-avatar-preview" id="dAvatar" onclick="document.getElementById(\'dAvatarInput\').click()"><span class="ph">点击上传<br>头像</span></div>'
+    + '<span class="drawer-avatar-hint">可选 · 仅存本地</span><input type="file" id="dAvatarInput" accept="image/*" style="display:none" onchange="handleDrawerAvatar(event)"></div>'
+    + '<div class="drawer-form-group"><label for="dUsername">用户名</label><input class="drawer-form-input" id="dUsername" type="text" placeholder="输入名字…" maxlength="16" autocomplete="off"></div>'
+    + '<div class="drawer-char-section"><label>选择您的身份 <span style="color:var(--color-counter-glow)">*</span></label><div class="drawer-char-grid" id="dCharGrid"></div></div>'
+    + '<div class="drawer-error" id="dError"></div><button class="drawer-submit" type="submit" id="dSubmit">进入游戏</button></form></div>';
+}
+function getSessionHTML(data) {
+  var roleLabel = '', roleClass = '', links = '';
+  if (data.role === 'mayor') {
+    roleLabel = '市长'; roleClass = 'mayor';
+    links = '<a class="s-link" href="toolbox/rule-board.html"><span class="sl-icon">📋</span>公开规则板</a>'
+          + '<a class="s-link" href="toolbox/dashboard.html"><span class="sl-icon">🏛️</span>市长工具箱</a>'
+          + '<a class="s-link" href="map.html"><span class="sl-icon">🗺️</span>A市地图</a>';
+  } else {
+    roleLabel = data.status === 'ghost' ? '煞鬼' : (data.status === 'evil' ? '恶鬼' : '市民');
+    roleClass = data.status === 'ghost' ? 'ghost' : (data.status === 'evil' ? 'ghost' : 'citizen');
+    links = '<a class="s-link" href="citizen.html"><span class="sl-icon">🎮</span>我的面板</a>'
+          + '<a class="s-link" href="cards.html"><span class="sl-icon">🃏</span>卡牌图鉴</a>'
+          + '<a class="s-link" href="map.html"><span class="sl-icon">🗺️</span>A市地图</a>';
+  }
+  var avatarHTML = data.avatar ? '<img src="' + data.avatar + '" alt="头像">' : '<span style="font-size:2rem;">👤</span>';
+  return '<div class="drawer-session"><div class="s-avatar">' + avatarHTML + '</div><div class="s-name">' + (data.username || '市长') + '</div>'
+    + '<div class="s-role ' + roleClass + '">' + roleLabel + '</div><div class="s-links">' + links + '</div>'
+    + '<button class="drawer-logout" onclick="drawerLogout()">退出登录</button></div>';
+}
+function bindLoginEvents() {
+  document.querySelectorAll('.drawer-tab').forEach(function(t) {
+    t.onclick = function() {
+      document.querySelectorAll('.drawer-tab').forEach(function(x){ x.classList.remove('active'); });
+      document.querySelectorAll('.drawer-content').forEach(function(x){ x.classList.remove('active'); });
+      t.classList.add('active');
+      document.getElementById('dcontent-' + t.dataset.dtab).classList.add('active');
+    };
+  });
+  var grid = document.getElementById('dCharGrid'); if (!grid) return;
+  selectedCharacterId = null; grid.innerHTML = '';
+  CHARACTERS.forEach(function(ch) {
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'drawer-char-opt';
+    btn.innerHTML = ch.name + '<span class="ch-cat">' + ch.category + ' · 健康' + ch.health + ' 理智' + ch.sanity + '</span>';
+    btn.onclick = function() { document.querySelectorAll('.drawer-char-opt').forEach(function(x){ x.classList.remove('selected'); }); btn.classList.add('selected'); selectedCharacterId = ch.id; };
+    grid.appendChild(btn);
+  });
+}
+function handleDrawerAvatar(event) {
+  var file = event.target.files[0]; if (!file) return;
+  if (file.size > 2*1024*1024) { drawerError('图片太大，请小于2MB'); event.target.value=''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image(); img.onload = function() {
+      var size = Math.min(img.width, img.height);
+      var c = document.createElement('canvas'); c.width = 200; c.height = 200;
+      var ctx = c.getContext('2d');
+      ctx.drawImage(img, (img.width-size)/2, (img.height-size)/2, size, size, 0, 0, 200, 200);
+      var b64 = c.toDataURL('image/jpeg', 0.85);
+      var p = document.getElementById('dAvatar'); p.innerHTML = ''; var th = document.createElement('img'); th.src = b64; p.appendChild(th);
+      p.classList.add('has-img'); p.dataset.avatarData = b64;
+    }; img.src = e.target.result;
+  }; reader.readAsDataURL(file);
+}
+function drawerError(msg) { var el = document.getElementById('dError'); el.textContent = msg; setTimeout(function(){ el.textContent = ''; }, 3000); }
+function drawerLoginMayor(type) { localStorage.setItem('dawn_session', JSON.stringify({ role:'mayor', type:type, loginTime:Date.now() })); closeDrawer(); window.location.href = 'toolbox/dashboard.html'; }
+function drawerLoginCitizen(event) { event.preventDefault();
+  var username = document.getElementById('dUsername').value.trim();
+  var avatar = document.getElementById('dAvatar').dataset.avatarData || '';
+  if (!username) { drawerError('请输入用户名'); return false; }
+  if (!selectedCharacterId) { drawerError('请选择您的身份角色'); return false; }
+  var character = null; for (var i = 0; i < CHARACTERS.length; i++) { if (CHARACTERS[i].id === selectedCharacterId) { character = CHARACTERS[i]; break; } }
+  if (!character) { drawerError('角色选择有误，请重新选择'); return false; }
+  localStorage.setItem('dawn_session', JSON.stringify({ role:'citizen', username:username, status:'citizen', avatar:avatar, loginTime:Date.now(), character:character }));
+  closeDrawer(); window.location.href = 'citizen.html'; return false;
+}
+function drawerLogout() { localStorage.removeItem('dawn_session'); renderDrawer(); }
+</script>
+<script src="js/app.js?v=2026071105"></script>
+</body>
+</html>

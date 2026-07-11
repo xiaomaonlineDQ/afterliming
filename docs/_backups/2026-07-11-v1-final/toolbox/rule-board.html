@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>公开规则板 · 黎明之后 市长工具箱</title>
+<link rel="stylesheet" href="../css/main.css?v=2026070818">
+<style>
+/* ========== 公开规则板专用样式 ========== */
+:root {
+  --rb-zone-all: #e74c3c;
+  --rb-zone-human: #3498db;
+  --rb-zone-ghost: #9b59b6;
+  --rb-zone-erased: #7f8c8d;
+  --rb-header-h: 48px;
+}
+
+.rb-page {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.rb-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 6px var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex-shrink: 0;
+  min-height: var(--rb-header-h);
+}
+.rb-header h1 {
+  font-size: 1.1rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rb-header .rb-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.rb-status {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ===== 主布局：锁死在视口内，不产生页面滚动条 ===== */
+.rb-main {
+  flex: 1;
+  height: 0;       /* 配合flex让浏览器正确计算剩余高度 */
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ===== 左侧卡池面板 ===== */
+.rb-pool {
+  width: 300px;
+  min-width: 260px;
+  max-width: 340px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.rb-pool-header {
+  padding: 10px var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.rb-pool-header h2 {
+  font-size: 0.95rem;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rb-pool-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+.rb-pool-tabs {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.rb-pool-tab {
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  border: 1px solid var(--border-medium);
+  border-radius: 3px;
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.rb-pool-tab:hover { background: var(--bg-hover); }
+.rb-pool-tab.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.rb-pool-cards {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* ===== 卡池中的规则卡缩略图（紧凑列表） ===== */
+.rb-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 2px solid var(--border-medium);
+  border-radius: 6px;
+  padding: 3px;
+  cursor: grab;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+}
+.rb-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.rb-card:active { cursor: grabbing; }
+.rb-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+.rb-card.selected {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(52,152,219,0.3);
+  background: rgba(52,152,219,0.08);
+}
+
+/* 卡池中：紧凑缩略图 + 文字 */
+.rb-card-img {
+  width: 110px;
+  height: 39px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.rb-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rb-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.rb-card-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.rb-card-text {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rb-card-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-top: 2px;
+  font-weight: 500;
+}
+.rb-badge-t1 { background: #27ae60; color: #fff; }
+.rb-badge-t2 { background: #f39c12; color: #fff; }
+.rb-badge-t3 { background: #e74c3c; color: #fff; }
+.rb-badge-s  { background: #8e44ad; color: #fff; }
+
+/* ===== 分区中的规则卡：显示真正的美术卡面（横版全宽） ===== */
+.rb-card.in-zone {
+  display: block;
+  padding: 2px;
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  cursor: grab;
+  position: relative;
+}
+.rb-card.in-zone .rb-card-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2640 / 930;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.rb-card.in-zone .rb-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* 隐藏卡池中的文字信息 */
+.rb-card.in-zone .rb-card-info { display: none; }
+
+/* 返回卡池按钮：覆盖在卡面右下角 */
+.rb-card-return {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 0.65rem;
+  color: #fff;
+  background: rgba(231,76,60,0.85);
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: none;
+  z-index: 5;
+}
+.rb-card.in-zone .rb-card-return { display: inline-block; }
+.rb-card-return:hover { background: rgba(192,57,43,0.95); }
+
+/* ===== 右侧规则板 ===== */
+.rb-board {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+/* ===== 单个分区 ===== */
+.rb-zone {
+  background: var(--bg-surface);
+  border: 2px dashed var(--border-medium);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+.rb-zone.drag-over {
+  border-color: var(--color-primary);
+  background: rgba(52,152,219,0.05);
+  border-style: solid;
+}
+.rb-zone-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.rb-zone-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rb-zone-dot.all    { background: var(--rb-zone-all); }
+.rb-zone-dot.human  { background: var(--rb-zone-human); }
+.rb-zone-dot.ghost  { background: var(--rb-zone-ghost); }
+.rb-zone-dot.erased { background: var(--rb-zone-erased); }
+
+.rb-zone h3 {
+  font-size: 0.82rem;
+  margin: 0;
+  flex: 1;
+}
+.rb-zone-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.rb-zone-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.rb-zone-empty {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-align: center;
+  padding: var(--space-md);
+  font-style: italic;
+}
+
+/* ===== 移动端适配 ===== */
+@media (max-width: 820px) {
+  .rb-page { height: 100dvh; }
+  .rb-main {
+    flex-direction: column;
+  }
+  .rb-pool {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    max-height: 38vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .rb-pool-header { padding: 8px 10px; }
+  .rb-pool-header h2 { font-size: 0.85rem; margin-bottom: 4px; }
+  .rb-pool-cards { padding: 4px; gap: 4px; }
+  .rb-board {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 6px;
+    padding: 6px;
+  }
+  .rb-zone {
+    padding: 6px 8px;
+    border-radius: 6px;
+    min-height: 0;
+  }
+  .rb-zone h3 { font-size: 0.72rem; }
+  .rb-zone-header { margin-bottom: 4px; padding-bottom: 4px; }
+  .rb-card { padding: 2px; gap: 4px; }
+  .rb-card-img { width: 64px; height: 23px; }
+  .rb-card-name { font-size: 0.68rem; }
+  .rb-card-text { font-size: 0.6rem; }
+  .rb-zone-empty { font-size: 0.7rem; padding: 6px; }
+  .rb-pool-tab { font-size: 0.65rem; padding: 2px 6px; }
+  /* 分区真卡面：移动端保持全宽 */
+  .rb-card.in-zone .rb-card-img { width: 100%; }
+  .rb-card-return { font-size: 0.55rem; padding: 2px 6px; top: 4px; right: 4px; }
+}
+@media (max-width: 420px) {
+  .rb-board {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+  }
+  .rb-zone { padding: 4px 6px; }
+  .rb-zone h3 { font-size: 0.66rem; }
+  .rb-zone-dot { width: 8px; height: 8px; }
+  .rb-card-img { width: 56px; height: 20px; }
+  .rb-card-name { font-size: 0.62rem; }
+  .rb-card-badge { font-size: 0.55rem; padding: 0 4px; }
+  .rb-header h1 { font-size: 0.9rem; }
+  .rb-header { padding: 4px 8px; min-height: 40px; }
+  .btn-sm { padding: 3px 8px; font-size: 0.7rem; }
+  /* 分区真卡面保持全宽 */
+  .rb-card.in-zone .rb-card-img { width: 100%; }
+  .rb-card-return { font-size: 0.5rem; padding: 1px 4px; top: 3px; right: 3px; }
+}
+</style>
+</head>
+<body class="rb-page">
+
+<!-- 顶部栏 -->
+<header class="rb-header">
+  <h1>
+    <span style="font-size:1.4rem;">📋</span> 公开规则板
+    <span class="rb-status" id="saveStatus"></span>
+  </h1>
+  <div class="rb-actions">
+    <button class="btn btn-sm" onclick="resetBoard()" title="清空所有分区，全部规则返回卡池">🔄 重置</button>
+    <a href="../index.html" class="btn btn-ghost btn-sm">← 返回首页</a>
+  </div>
+</header>
+
+<!-- 主体 -->
+<div class="rb-main">
+  <!-- 左侧：规则卡池 -->
+  <aside class="rb-pool" id="poolPanel">
+    <div class="rb-pool-header">
+      <h2>📦 规则卡池 <span class="rb-pool-count" id="poolCount"></span></h2>
+      <div class="rb-pool-tabs" id="poolTabs"></div>
+    </div>
+    <div class="rb-pool-cards" id="poolCards"></div>
+  </aside>
+
+  <!-- 右侧：四分区板 -->
+  <main class="rb-board" id="ruleBoard">
+    <div class="rb-zone" data-zone="1" id="zone1">
+      <div class="rb-zone-header">
+        <span class="rb-zone-dot all"></span>
+        <h3>影响全体的公开规则</h3>
+        <span class="rb-zone-count" id="zone1Count">0</span>
+      </div>
+      <div class="rb-zone-body" id="zone1Body">
+        <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+      </div>
+    </div>
+
+    <div class="rb-zone" data-zone="2" id="zone2">
+      <div class="rb-zone-header">
+        <span class="rb-zone-dot human"></span>
+        <h3>只影响人的公开规则</h3>
+        <span class="rb-zone-count" id="zone2Count">0</span>
+      </div>
+      <div class="rb-zone-body" id="zone2Body">
+        <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+      </div>
+    </div>
+
+    <div class="rb-zone" data-zone="3" id="zone3">
+      <div class="rb-zone-header">
+        <span class="rb-zone-dot ghost"></span>
+        <h3>只影响鬼的公开规则</h3>
+        <span class="rb-zone-count" id="zone3Count">0</span>
+      </div>
+      <div class="rb-zone-body" id="zone3Body">
+        <div class="rb-zone-empty">从卡池拖拽规则卡到此处</div>
+      </div>
+    </div>
+
+    <div class="rb-zone" data-zone="4" id="zone4">
+      <div class="rb-zone-header">
+        <span class="rb-zone-dot erased"></span>
+        <h3>被抹除规则</h3>
+        <span class="rb-zone-count" id="zone4Count">0</span>
+      </div>
+      <div class="rb-zone-body" id="zone4Body">
+        <div class="rb-zone-empty">宣言成功抹除的规则置于此处</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/data.js?v=2026070723"></script>
+<script src="../js/app.js?v=2026070723"></script>
+<script>
+// ==================== 公开规则板引擎 ====================
+const STORAGE_KEY = 'dawn_rule_board_v1';
+const ZONES = { 1: 'all', 2: 'human', 3: 'ghost', 4: 'erased' };
+
+// --- 数据准备 ---
+function getAllRules() {
+  if (typeof CARD_DB === 'undefined' || !CARD_DB.rules) return [];
+  return CARD_DB.rules.map(r => ({ ...r, _type: 'rules' }));
+}
+
+// 规则卡图片路径（自含版本，不依赖app.js的getCardImagePath；加../因为本页在toolbox/子目录）
+function getRuleImagePath(card) {
+  const name = card.name;
+  const safeName = name.replace(/[\/\\:*?"<>|]/g, '_');
+  const BASE = '../';
+
+  // 普通规则: 规则卡/规则卡_T1-01.png
+  if (name.startsWith('规则 ')) {
+    const code = name.replace('规则 ', '');
+    return BASE + 'images/cards/规则卡/规则卡_' + code + '.png';
+  }
+  // 特殊规则: r_031→S-01A, r_032→S-01B, ...
+  if (name.startsWith('特殊规则')) {
+    const rulesArr = CARD_DB.rules || [];
+    const idx = rulesArr.findIndex(r => r.id === card.id);
+    if (idx >= 30) {
+      const offset = idx - 30;
+      const pairNum = String(Math.floor(offset / 2) + 1).padStart(2, '0');
+      const letter = offset % 2 === 0 ? 'A' : 'B';
+      return BASE + 'images/cards/规则卡/规则卡_S-' + pairNum + letter + '.png';
+    }
+  }
+  return null;
+}
+
+function getRuleDifficulty(card) {
+  const d = card.difficulty || '';
+  if (d.startsWith('T')) return d;
+  if (d.startsWith('S') || card.category === '特殊规则') return 'S';
+  return 'S'; // fallback for 特殊规则 cards
+}
+
+function getRuleBadgeClass(card) {
+  const d = getRuleDifficulty(card);
+  if (d === 'T1') return 'rb-badge-t1';
+  if (d === 'T2') return 'rb-badge-t2';
+  if (d === 'T3') return 'rb-badge-t3';
+  return 'rb-badge-s';
+}
+
+// --- 状态管理 ---
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const state = JSON.parse(raw);
+      // Validate
+      if (state && typeof state === 'object') return state;
+    }
+  } catch(e) {}
+  return { 1: [], 2: [], 3: [], 4: [] };
+}
+
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const el = document.getElementById('saveStatus');
+  el.textContent = '已保存 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+  setTimeout(() => { el.textContent = ''; }, 2000);
+}
+
+function getZoneCards(state, zoneId) {
+  return state[zoneId] || [];
+}
+
+function isCardInAnyZone(state, cardId) {
+  for (const z of [1,2,3,4]) {
+    if ((state[z] || []).includes(cardId)) return z;
+  }
+  return null;
+}
+
+function moveCard(state, cardId, fromZone, toZone) {
+  const newState = JSON.parse(JSON.stringify(state));
+  if (fromZone !== null && newState[fromZone]) {
+    newState[fromZone] = newState[fromZone].filter(id => id !== cardId);
+  }
+  if (toZone !== null && newState[toZone] !== undefined) {
+    if (!newState[toZone].includes(cardId)) {
+      newState[toZone].push(cardId);
+    }
+  }
+  return newState;
+}
+
+// --- 渲染 ---
+let allRules = [];
+let state = {};
+let activeTab = 'all';
+let selectedCardId = null; // 触屏选择模式
+
+function init() {
+  allRules = getAllRules();
+  state = loadState();
+  buildPoolTabs();
+  applyTabFilter();
+  renderAllZones();
+  setupDragDrop();
+  setupTouch();
+}
+
+function buildPoolTabs() {
+  const diffs = {};
+  allRules.forEach(r => {
+    const d = getRuleDifficulty(r);
+    diffs[d] = (diffs[d] || 0) + 1;
+  });
+  const tabs = [
+    { key: 'all', label: '全部', count: allRules.length },
+    { key: 'T1', label: 'T1', count: diffs['T1'] || 0 },
+    { key: 'T2', label: 'T2', count: diffs['T2'] || 0 },
+    { key: 'T3', label: 'T3', count: diffs['T3'] || 0 },
+    { key: 'S',  label: '特殊规则', count: diffs['S'] || 0 },
+  ];
+  const container = document.getElementById('poolTabs');
+  container.innerHTML = tabs.map(t =>
+    `<button class="rb-pool-tab${activeTab === t.key ? ' active' : ''}" data-tab="${t.key}">
+      ${t.label} <small style="opacity:0.7">${t.count}</small>
+    </button>`
+  ).join('');
+  container.querySelectorAll('.rb-pool-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeTab = btn.dataset.tab;
+      document.querySelectorAll('.rb-pool-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyTabFilter();
+    });
+  });
+}
+
+function applyTabFilter() {
+  const poolCards = allRules.filter(r => !isCardInAnyZone(state, r.id));
+  let filtered = poolCards;
+  if (activeTab !== 'all') {
+    filtered = poolCards.filter(r => getRuleDifficulty(r) === activeTab);
+  }
+  renderPoolCards(filtered);
+  document.getElementById('poolCount').textContent = `(${filtered.length})`;
+}
+
+function renderPoolCards(cards) {
+  const container = document.getElementById('poolCards');
+  if (cards.length === 0) {
+    container.innerHTML = '<div class="rb-zone-empty">卡池已空</div>';
+    return;
+  }
+  container.innerHTML = cards.map(c => buildCardHTML(c, 'pool')).join('');
+  bindCardEvents(container);
+}
+
+function renderAllZones() {
+  for (const z of [1,2,3,4]) {
+    renderZone(z);
+  }
+}
+
+function renderZone(zoneId) {
+  const body = document.getElementById(`zone${zoneId}Body`);
+  const count = document.getElementById(`zone${zoneId}Count`);
+  const cardIds = getZoneCards(state, zoneId);
+  const cards = cardIds.map(id => allRules.find(r => r.id === id)).filter(Boolean);
+
+  count.textContent = cards.length;
+
+  if (cards.length === 0) {
+    body.innerHTML = `<div class="rb-zone-empty">${
+      zoneId === 4 ? '宣言成功抹除的规则置于此处' : '从卡池拖拽规则卡到此处'
+    }</div>`;
+    return;
+  }
+
+  body.innerHTML = cards.map(c => buildCardHTML(c, 'zone', zoneId)).join('');
+  bindCardEvents(body);
+}
+
+function buildCardHTML(card, location, zoneId) {
+  const imgPath = getRuleImagePath(card) || '';
+  const text = card.rule_text || '';
+  const badgeClass = getRuleBadgeClass(card);
+  const diff = card.difficulty || 'S';
+
+  // 分区中：只显示完整卡面图片（横版真卡面）
+  if (location === 'zone') {
+    return `
+    <div class="rb-card in-zone"
+         data-card-id="${card.id}"
+         data-from="zone"
+         data-zone="${zoneId || ''}"
+         draggable="true">
+      <button class="rb-card-return" data-action="return" data-card-id="${card.id}" data-zone="${zoneId}">← 返回卡池</button>
+      <div class="rb-card-img">
+        ${imgPath ? `<img src="${imgPath}" alt="${card.name}" loading="lazy"
+             onerror="this.innerHTML='<div style=display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:0.75rem>${card.name}</div>'">` 
+             : `<div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:60px;color:var(--text-muted);font-size:0.75rem">${card.name}</div>`}
+      </div>
+    </div>`;
+  }
+
+  // 卡池中：紧凑缩略图 + 文字
+  return `
+    <div class="rb-card"
+         data-card-id="${card.id}"
+         data-from="pool"
+         data-zone=""
+         draggable="true">
+      <div class="rb-card-img">
+        ${imgPath ? `<img src="${imgPath}" alt="${card.name}" loading="lazy"
+             onerror="this.parentElement.innerHTML='<span style=font-size:0.6rem;padding:4px>🃏</span>'">` : '🃏'}
+      </div>
+      <div class="rb-card-info">
+        <div class="rb-card-name">${card.name}</div>
+        <div class="rb-card-text">${text}</div>
+        <span class="rb-card-badge ${badgeClass}">${diff}</span>
+      </div>
+    </div>
+  `;
+}
+
+function bindCardEvents(container) {
+  // "返回卡池"按钮
+  container.querySelectorAll('[data-action="return"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cardId = btn.dataset.cardId;
+      const fromZone = parseInt(btn.dataset.zone);
+      state = moveCard(state, cardId, fromZone, null);
+      saveState(state);
+      renderZone(fromZone);
+      applyTabFilter();
+    });
+  });
+
+  // PC拖拽事件
+  container.querySelectorAll('.rb-card[draggable]').forEach(card => {
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragend', handleDragEnd);
+  });
+}
+
+// ============ PC 拖拽 ============
+function setupDragDrop() {
+  // 四个分区作为 drop target
+  for (const z of [1,2,3,4]) {
+    const zone = document.getElementById(`zone${z}`);
+    zone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave', () => {
+      zone.classList.remove('drag-over');
+    });
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const cardId = e.dataTransfer.getData('text/plain');
+      if (!cardId) return;
+      const fromZone = isCardInAnyZone(state, cardId);
+      if (fromZone === z) return; // 同区不操作
+      state = moveCard(state, cardId, fromZone, z);
+      saveState(state);
+      if (fromZone) renderZone(fromZone);
+      renderZone(z);
+      applyTabFilter();
+    });
+  }
+
+  // 卡池面板也可以接收拖回
+  const pool = document.getElementById('poolPanel');
+  pool.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  });
+  pool.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const cardId = e.dataTransfer.getData('text/plain');
+    if (!cardId) return;
+    const fromZone = isCardInAnyZone(state, cardId);
+    if (!fromZone) return;
+    state = moveCard(state, cardId, fromZone, null);
+    saveState(state);
+    renderZone(fromZone);
+    applyTabFilter();
+  });
+}
+
+function handleDragStart(e) {
+  const cardId = this.dataset.cardId;
+  e.dataTransfer.setData('text/plain', cardId);
+  e.dataTransfer.effectAllowed = 'move';
+  this.classList.add('dragging');
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+}
+
+// ============ 触屏选择模式 ============
+function setupTouch() {
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.rb-card');
+    if (!card) {
+      // 点击空白取消选择
+      if (selectedCardId) {
+        deselectAll();
+        selectedCardId = null;
+      }
+      return;
+    }
+    // 点击了"返回卡池"按钮 → 不处理（已在bindCardEvents中）
+    if (e.target.closest('[data-action="return"]')) return;
+
+    const cardId = card.dataset.cardId;
+
+    // 如果这张卡已经被选中，取消选择
+    if (selectedCardId === cardId) {
+      deselectAll();
+      selectedCardId = null;
+      return;
+    }
+
+    // 如果没有已选卡片，选择这张
+    if (!selectedCardId) {
+      selectCard(cardId);
+      return;
+    }
+
+    // 已有选中的卡片，且点击了另一张（或分区内空白）
+    // 判断目标：如果点击的卡在分区内 → 移动到该分区
+    const clickedCardZone = card.dataset.zone ? parseInt(card.dataset.zone) : null;
+
+    if (clickedCardZone) {
+      // 点击了分区内的卡片 → 将选中的卡片移到这个分区
+      const fromZone = isCardInAnyZone(state, selectedCardId);
+      if (fromZone !== clickedCardZone) {
+        state = moveCard(state, selectedCardId, fromZone, clickedCardZone);
+        saveState(state);
+        if (fromZone) renderZone(fromZone);
+        renderZone(clickedCardZone);
+        applyTabFilter();
+      }
+    } else {
+      // 点击了卡池内的卡片 → 如果选中的在分区，移回卡池
+      const fromZone = isCardInAnyZone(state, selectedCardId);
+      if (fromZone) {
+        state = moveCard(state, selectedCardId, fromZone, null);
+        saveState(state);
+        renderZone(fromZone);
+        applyTabFilter();
+      }
+    }
+
+    deselectAll();
+    selectedCardId = null;
+  });
+
+  // 点击分区空白 → 将选中卡片移到该分区
+  for (const z of [1,2,3,4]) {
+    document.getElementById(`zone${z}`).addEventListener('click', function(e) {
+      if (!selectedCardId) return;
+      // 只有点击分区背景（非卡片）时才生效
+      if (e.target.closest('.rb-card')) return;
+      const fromZone = isCardInAnyZone(state, selectedCardId);
+      if (fromZone === z) {
+        deselectAll();
+        selectedCardId = null;
+        return;
+      }
+      state = moveCard(state, selectedCardId, fromZone, z);
+      saveState(state);
+      if (fromZone) renderZone(fromZone);
+      renderZone(z);
+      applyTabFilter();
+      deselectAll();
+      selectedCardId = null;
+    });
+  }
+}
+
+function selectCard(cardId) {
+  deselectAll();
+  selectedCardId = cardId;
+  document.querySelectorAll(`.rb-card[data-card-id="${cardId}"]`).forEach(c => c.classList.add('selected'));
+  // 提示信息
+  const zoneNames = { 1: '影响全体', 2: '只影响人', 3: '只影响鬼', 4: '被抹除' };
+  document.getElementById('saveStatus').textContent = '已选择：点击目标分区放置（或再次点击取消）';
+  setTimeout(() => {
+    const el = document.getElementById('saveStatus');
+    if (el.textContent.includes('已选择')) el.textContent = '';
+  }, 3000);
+}
+
+function deselectAll() {
+  document.querySelectorAll('.rb-card.selected').forEach(c => c.classList.remove('selected'));
+}
+
+// ============ 重置 ============
+function resetBoard() {
+  if (!confirm('确定要清空所有分区？全部规则卡将返回卡池。')) return;
+  state = { 1: [], 2: [], 3: [], 4: [] };
+  saveState(state);
+  selectedCardId = null;
+  deselectAll();
+  for (const z of [1,2,3,4]) renderZone(z);
+  applyTabFilter();
+}
+
+// ============ 启动 ============
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

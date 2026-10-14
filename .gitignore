@@ -1,4 +1,16 @@
+# 本地脚本
 *.bat
 *.ps1
+
+# 系统文件
 .DS_Store
 Thumbs.db
+Desktop.ini
+
+# 重复备份目录（同一张 2.9MB 卡图存了 3 份，不参与版本控制）
+# 注意：加规则不会移除已跟踪的文件，只对新增生效
+docs/_backups/
+
+# Python 缓存
+__pycache__/
+*.pyc
